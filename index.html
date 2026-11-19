@@ -45,6 +45,20 @@ label.nm input{font:inherit;font-size:17px;border:2px solid rgba(11,61,107,.25);
 .fl{padding:0 10px;height:32px;min-width:40px;font-size:18px;background:#0b3d6b;color:#fff8e7;box-shadow:none;border:3px solid transparent}
 .fl.on{border-color:var(--sun)}
 .small{font-size:14px;opacity:.85}
+.card{position:relative}
+.book{position:absolute;top:14px;left:14px;font-size:13px;padding:4px 8px;border-radius:10px;background:transparent;color:var(--ink);box-shadow:none;border:2px solid currentColor;display:inline-flex;flex-direction:column;align-items:center;gap:3px;line-height:1;opacity:.85}
+.book:hover{opacity:1}.book svg{width:26px;height:20px;display:block}
+.gt{position:relative;display:grid;grid-template-columns:repeat(5,minmax(104px,1fr));gap:10px;overflow-x:auto;padding:4px 2px 10px;margin:8px 0}
+.gcol{display:grid;grid-template-rows:auto 1fr;gap:4px;position:relative;z-index:1}.gcol>div{display:flex;flex-direction:column;justify-content:space-around;gap:8px}
+.gcol h4{margin:0 0 2px;font-size:13px;opacity:.8}
+.gn{font-size:12px;padding:3px 4px 5px;border-radius:12px;background:rgba(127,160,200,.18);color:var(--ink);box-shadow:none;border:2px solid transparent;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.gn canvas{width:100px;height:56px;display:block}.gn.leg{border-color:var(--sun)}.gn.on{border-color:var(--accent);background:rgba(255,107,87,.15)}
+.gl{position:absolute;left:0;top:0;pointer-events:none;z-index:0}.gl path{fill:none;stroke:currentColor;stroke-width:2;opacity:.22}.gl path.hi{stroke:var(--accent);opacity:1;stroke-width:3}
+.gtip{position:absolute;z-index:5;width:250px;background:var(--ink);color:var(--card);border-radius:12px;padding:10px 12px;font-size:13px;text-align:left;line-height:1.4;pointer-events:none;box-shadow:0 6px 16px rgba(0,0,0,.3)}
+.gtip b{font-size:15px}.gtip .lg{color:var(--sun);font-weight:800}
+.gb{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;text-align:left;font-size:13px;margin:6px 0 14px}.gb div{background:rgba(127,160,200,.18);border-radius:10px;padding:6px 8px}
+@media (max-width:540px){.book{top:10px;left:10px}}
+
 .brand{display:flex;align-items:center;justify-content:center;gap:12px}.brand img{border-radius:12px;box-shadow:0 3px 0 rgba(0,0,0,.2)}
 .langs{display:flex;gap:6px;justify-content:flex-end;margin:-6px -6px 4px 0}
 .langs button{display:inline-flex;flex-direction:column;align-items:center;gap:3px;line-height:1}
@@ -165,7 +179,7 @@ function langBtns(){return '<div class="langs" role="group" aria-label="'+tr('la
 function wireLang(re){ov.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{I.setLang(b.dataset.lang);offerKey=null;if(curOffer&&state==='play')renderOffer(curOffer);re()})}
 function menu(msg){lastMenuMsg=msg||'';state='menu';offerEl.hidden=true;offerKey=null;ov.hidden=false;
 const sw=(arr,key,nf)=>arr.map(([c],i)=>{const n=nf(i);return '<button class="dot'+(cfg[key]===c?' on':'')+'" data-k="'+key+'" data-v="'+c+'" style="background:'+c+'" aria-label="'+n+'" title="'+n+'"></button>'}).join('');
-const build=()=>'<div class="card wide">'+langBtns()+'<h1 class="brand"><img src="/icon-180.png" alt="" width="52" height="52">RivalSea</h1>'+(msg?'<p><b>'+msg+'</b></p>':'')+
+const build=()=>'<div class="card wide">'+bookBtn()+langBtns()+'<h1 class="brand"><img src="/icon-180.png" alt="" width="52" height="52">RivalSea</h1>'+(msg?'<p><b>'+msg+'</b></p>':'')+
 '<p>'+tr('intro')+'</p>'+
 '<div class="cust"><canvas id="pv" width="340" height="212" aria-label="'+tr('preview')+'"></canvas><div class="fields">'+
 '<label class="nm">'+tr('name')+' <input id="nmi" maxlength="14" placeholder="'+tr('namePh')+'" value="'+(cfg.name||'').replace(/[&"<>]/g,'')+'"></label>'+
@@ -180,7 +194,33 @@ ov.innerHTML=build();sameH(build);
 wireLang(()=>menu(lastMenuMsg&&tr('lost')));
 ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{cfg[b.dataset.k]=b.dataset.v;saveCfg();ov.querySelectorAll('[data-k="'+b.dataset.k+'"]').forEach(o=>o.classList.toggle('on',o===b));prev()});
 const ni=document.getElementById('nmi');ni.oninput=()=>{cfg.name=ni.value.trim().slice(0,14);saveCfg()};
-document.getElementById('go').onclick=join;updStatus();prev()}
+document.getElementById('go').onclick=join;document.getElementById('gd').onclick=guide;updStatus();prev()}
+// ——— Guide : arbre des navires ———
+const BOOKSVG='<svg viewBox="0 0 26 20" aria-hidden="true"><path d="M13 4C10 1.6 5.5 1.3 1.5 2.2V18c4-.9 8.5-.6 11.5 1.8C16 17.4 20.5 17.1 24.5 18V2.2C20.5 1.3 16 1.6 13 4z" fill="currentColor" opacity=".18"/><path d="M13 4C10 1.6 5.5 1.3 1.5 2.2V18c4-.9 8.5-.6 11.5 1.8C16 17.4 20.5 17.1 24.5 18V2.2C20.5 1.3 16 1.6 13 4zM13 4v15.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+function bookBtn(){return '<button class="book" id="gd" title="'+tr('guideTitle')+'" aria-label="'+tr('guideTitle')+'">'+BOOKSVG+'<span>'+tr('guide')+'</span></button>'}
+function treeCols(){const cols=[];for(const k in CL)(cols[CL[k].t]=cols[CL[k].t]||[]).push(k);
+for(let t=1;t<cols.length;t++){const prev=cols[t-1],bc=k=>{const ps=prev.map((p,i)=>CL[p].next.includes(k)?i:-1).filter(i=>i>=0);return ps.length?ps.reduce((a,b)=>a+b,0)/ps.length:99};cols[t].sort((a,b)=>bc(a)-bc(b))}return cols}
+function tipHTML(k){const c=CL[k],x=I.cls(k),nx=c.next.map(n=>I.cls(n).n);
+return '<b>'+x.n+'</b>'+(c.leg?' <span class="lg">'+tr('legendary')+'</span>':'')+'<br>'+x.d+'<br><br>'+tr('weapon')+tr('colon')+'<b style="font-size:13px">'+x.w+'</b><br>'+stat(c)+'<br>'+tr('skill')+tr('colon')+I.sk(c.sk).n+' — '+tr('skd.'+c.sk)+' ('+tr('cd',{s:SK[c.sk].cd})+')<br><br>'+(nx.length?tr('evolvesTo')+tr('colon')+nx.join(', '):tr('finalShip'))}
+function guide(){lastBuild=null;state='menu';offerEl.hidden=true;ov.hidden=false;const cols=treeCols();
+ov.innerHTML='<div class="card wide">'+langBtns()+'<h2>'+BOOKSVG.replace('<svg','<svg style="width:30px;height:23px;vertical-align:-4px;margin-right:8px"')+tr('guideTitle')+'</h2><p class="small">'+tr('guideHint')+'</p>'+
+'<div class="gt"><svg class="gl" aria-hidden="true"></svg>'+cols.map((col,t)=>'<div class="gcol"><h4>'+(t?tr('tierLvl',{l:EVO[t-1]}):tr('start'))+'</h4><div>'+col.map(k=>'<button class="gn'+(CL[k].leg?' leg':'')+'" data-s="'+k+'"><canvas width="200" height="112"></canvas>'+I.cls(k).n+'</button>').join('')+'</div></div>').join('')+'</div>'+
+'<h3 style="margin:6px 0">'+tr('upgradesTitle')+'</h3><div class="gb">'+BON.map((b,i)=>'<div><b>'+I.bon(i).n+'</b><br>'+I.bon(i).d+'</div>').join('')+'</div>'+
+'<button id="gbk">'+tr('back')+'</button><div class="gtip" hidden></div></div>';
+const card=ov.firstElementChild,gt=card.querySelector('.gt'),svg=card.querySelector('.gl'),tip=card.querySelector('.gtip'),nodes={};
+card.querySelectorAll('.gn').forEach(b=>{const k=b.dataset.s,c=CL[k];nodes[k]=b;const x=b.querySelector('canvas').getContext('2d');x.scale(2,2);x.translate(50,29);x.rotate(-.35);ship(x,c,Math.min(13,34/c.L),cfg.hull,.35,0,{sail:cfg.sail,flag:cfg.flag})});
+let paths=[];const draw=()=>{const W=gt.scrollWidth,H=gt.scrollHeight,g=gt.getBoundingClientRect();svg.setAttribute('width',W);svg.setAttribute('height',H);svg.setAttribute('viewBox','0 0 '+W+' '+H);
+const pos=(el,side)=>{const r=el.getBoundingClientRect();return [r.left-g.left+gt.scrollLeft+(side?r.width:0),r.top-g.top+gt.scrollTop+r.height/2]};
+let h='';paths=[];for(const k in CL)for(const n of CL[k].next){const [x1,y1]=pos(nodes[k],1),[x2,y2]=pos(nodes[n],0),m=(x1+x2)/2;h+='<path d="M'+x1+' '+y1+'C'+m+' '+y1+' '+m+' '+y2+' '+x2+' '+y2+'"/>';paths.push([k,n])}svg.innerHTML=h};
+draw();
+const show=b=>{const k=b.dataset.s;card.querySelectorAll('.gn').forEach(o=>o.classList.toggle('on',o===b));svg.querySelectorAll('path').forEach((p,i)=>p.classList.toggle('hi',paths[i][0]===k||paths[i][1]===k));
+tip.innerHTML=tipHTML(k);tip.hidden=false;const cr=card.getBoundingClientRect(),r=b.getBoundingClientRect(),tw=tip.offsetWidth,th=tip.offsetHeight;
+let x=r.right-cr.left+8;if(x+tw>cr.width-6)x=r.left-cr.left-tw-8;if(x<6)x=Math.max(6,Math.min(cr.width-tw-6,r.left-cr.left+r.width/2-tw/2));
+let y=r.top-cr.top+r.height/2-th/2;if(x===r.right-cr.left+8||x===r.left-cr.left-tw-8){}else y=r.bottom-cr.top+6;y=Math.max(6,Math.min(y,cr.height-th-6));tip.style.left=x+'px';tip.style.top=y+'px'};
+const hide=()=>{tip.hidden=true;card.querySelectorAll('.gn.on').forEach(o=>o.classList.remove('on'));svg.querySelectorAll('.hi').forEach(p=>p.classList.remove('hi'))};
+card.querySelectorAll('.gn').forEach(b=>{b.onmouseenter=()=>show(b);b.onfocus=()=>show(b);b.onmouseleave=hide;b.onblur=hide;b.onclick=e=>{e.stopPropagation();show(b)}});
+card.addEventListener('click',hide);gt.addEventListener('scroll',hide);window.addEventListener('resize',function rs(){if(!document.body.contains(gt)){window.removeEventListener('resize',rs);return}draw()});
+wireLang(guide);document.getElementById('gbk').onclick=()=>menu(lastMenuMsg)}
 function showDead(d){ov.hidden=false;
 const by=d.by?String(d.by).replace(/[&<>]/g,''):d.byk?tr('theKraken'):'';
 const build=()=>'<div class="card">'+langBtns()+'<h2>'+tr('sunkTitle')+'</h2><p>'+(by?tr('sunkBy',{n:by})+'<br>':'')+tr('sunkStats',{c:I.cls(d.c).n,l:d.lvl,s:d.sc})+'</p><div id="stat">'+statusHTML()+'</div><div class="btns"><button id="go">'+tr('again')+'</button><button class="ghost" id="mn">'+tr('edit')+'</button></div></div>';

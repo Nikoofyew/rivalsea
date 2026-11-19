@@ -161,7 +161,7 @@ function sink(v) {
     let kx = Math.round(Math.min(40 + v.tot * .12, need(k.lvl) * 1.5) * (k.lvl - v.lvl > 6 ? .3 : 1));
     if (v.id === leaderId) { kx += need(k.lvl); banner('leaderSunk', { n: k.name, v: v.name }); }
     k.sc++; gain(k, kx); say(k, v.x, v.y, 'sunk', { x: kx }, '#ffcf3f', 1.4);
-    heal(k, mhp(k) * KILL_HEAL); // chaque navire coulé rend 30 % de vie
+    heal(k, mhp(k) * (k.id === leaderId ? KILL_HEAL / 2 : KILL_HEAL)); // chaque navire coulé rend 30 % de vie (15 % pour le meneur)
   }
   // le navire coulé laisse des épaves à piller
   const n = cl(2 + Math.floor(v.lvl / 4), 2, 8), each = Math.round(Math.min(15 + v.tot * .08, 500) / n);
