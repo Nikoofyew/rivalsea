@@ -5,9 +5,10 @@ const S = require('./shared.js');
 const { CL, LT, SK, BON, EVO, WS, TAU, SEE, TEAMS, NAMES, COLS, SAILS, HULLS, FLAGS, rnd, ri, cl, pick, angD, need } = S;
 
 const MODE = process.env.MODE === 'team' ? 'team' : 'ffa';          // ffa = chacun pour soi, team = équipages
-const BOTS = Math.max(0, parseInt(process.env.BOTS || '12', 10));   // nombre de navires visé (joueurs + bots)
+const BOTS = Math.max(0, parseInt(process.env.BOTS || '20', 10));   // nombre de navires visé (joueurs + bots)
 const BOT_DMG = .7;   // les bots font 30 % de dégâts en moins que les joueurs
 const BOT_HOLD = 4;   // un bot qui apparaît ne peut pas tirer pendant 4 s
+const AREA = Math.round((WS / 3400) ** 2); // carte agrandie : on multiplie îles, brouillard et butin d'autant
 const KILL_HEAL = .3; // couler un navire rend 30 % de la vie max
 let plankT = 20;      // prochaine apparition de planches de réparation
 
@@ -27,10 +28,15 @@ function zoneAt(x, y) { for (const f of fogs) if ((x - f.x) ** 2 + (y - f.y) ** 
 // on voit un navire s'il n'est pas caché, si on est dans le même banc de brouillard, ou s'il est tout proche
 const seen = (o, by) => !canHide(o) || o.fz < 0 || o.fz === by.fz || Math.hypot(o.x - by.x, o.y - by.y) < SEE;
 const seenL = (l, by) => l.fz < 0 || l.fz === by.fz || Math.hypot(l.x - by.x, l.y - by.y) < SEE || l.k === 'kraken';
-const inRock = (x, y, m) => rocks.some(k => Math.hypot(x - k.x, y - k.y) < k.r + m);
+// grille des rochers : chaque case ne contient que les rochers proches, pour ne pas tous les tester à chaque fois
+const RC = 400; let rgrid = new Map();
+function buildRockGrid() { rgrid = new Map(); for (const k of rocks) { const r = k.r + 260; for (let cx = Math.floor((k.x - r) / RC); cx <= Math.floor((k.x + r) / RC); cx++) for (let cy = Math.floor((k.y - r) / RC); cy <= Math.floor((k.y + r) / RC); cy++) { const key = cx * 1000 + cy; if (!rgrid.has(key)) rgrid.set(key, []); rgrid.get(key).push(k); } } }
+const EMPTY = [];
+const rocksNear = (x, y) => rgrid.get(Math.floor(x / RC) * 1000 + Math.floor(y / RC)) || EMPTY;
+const inRock = (x, y, m) => m > 250 ? rocks.some(k => Math.hypot(x - k.x, y - k.y) < k.r + m) : rocksNear(x, y).some(k => Math.hypot(x - k.x, y - k.y) < k.r + m);
 function freeSpot(m, pad) { for (let i = 0; i < 40; i++) { const x = rnd(m, WS - m), y = rnd(m, WS - m); if (!inRock(x, y, pad || 60)) return { x, y }; } return { x: WS / 2, y: WS / 2 }; }
-function pushOut(o, rad) { for (const k of rocks) { const dx = o.x - k.x, dy = o.y - k.y, d = Math.hypot(dx, dy), m = k.r + rad; if (d < m && d > 0) { o.x = k.x + dx / d * m; o.y = k.y + dy / d * m; } } }
-function avoid(o, a, rad) { const px = o.x + Math.cos(a) * (rad + 90), py = o.y + Math.sin(a) * (rad + 90); for (const k of rocks) { if (Math.hypot(px - k.x, py - k.y) < k.r + rad * .7) { const s = Math.sign(Math.sin(Math.atan2(k.y - o.y, k.x - o.x) - a)) || 1; return a - s * 1.3; } } return a; }
+function pushOut(o, rad) { for (const k of rocksNear(o.x, o.y)) { const dx = o.x - k.x, dy = o.y - k.y, d = Math.hypot(dx, dy), m = k.r + rad; if (d < m && d > 0) { o.x = k.x + dx / d * m; o.y = k.y + dy / d * m; } } }
+function avoid(o, a, rad) { const px = o.x + Math.cos(a) * (rad + 90), py = o.y + Math.sin(a) * (rad + 90); for (const k of rocksNear(px, py)) { if (Math.hypot(px - k.x, py - k.y) < k.r + rad * .7) { const s = Math.sign(Math.sin(Math.atan2(k.y - o.y, k.x - o.x) - a)) || 1; return a - s * 1.3; } } return a; }
 // les textes sont envoyés sous forme de code (id) + paramètres (p) : chaque navigateur les affiche dans sa langue
 const say = (b, x, y, id, p, col, l) => { if (b && b.p) fx.push({ k: 'txt', x: Math.round(x), y: Math.round(y), id, p, col, l: l || 1, to: b.id }); };
 const banner = (id, p) => fx.push({ k: 'banner', id, p });
@@ -92,15 +98,18 @@ function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.
 function genWorld() {
   rocks = []; fogs = []; FZ = 0;
   const isl = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 6 * AREA; i++) {
     let cx, cy, t = 0; do { cx = rnd(400, WS - 400); cy = rnd(400, WS - 400); t++; } while (t < 50 && isl.some(o => Math.hypot(o.x - cx, o.y - cy) < 650)); isl.push({ x: cx, y: cy });
     const n = ri(2, 3); for (let j = 0; j < n; j++) { const a = rnd(0, TAU), q = j ? rnd(60, 100) : 0; rocks.push({ x: cx + Math.cos(a) * q, y: cy + Math.sin(a) * q, r: j ? rnd(55, 95) : rnd(90, 140), k: 'ile', ph: rnd(0, TAU) }); }
   }
-  for (let i = 0; i < 7; i++) { const s = freeSpot(250, 120), n = ri(4, 6); for (let j = 0; j < n; j++) rocks.push({ x: s.x + rnd(-70, 70), y: s.y + rnd(-70, 70), r: rnd(12, 24), k: 'recif', ph: rnd(0, TAU) }); }
-  for (let z = 0; z < 7; z++) {
+  buildRockGrid();
+  for (let i = 0; i < 7 * AREA; i++) { const s = freeSpot(250, 120), n = ri(4, 6); for (let j = 0; j < n; j++) rocks.push({ x: s.x + rnd(-70, 70), y: s.y + rnd(-70, 70), r: rnd(12, 24), k: 'recif', ph: rnd(0, TAU) }); }
+  buildRockGrid();
+  for (let z = 0; z < 7 * AREA; z++) {
     let cx, cy, ok, t = 0; do { cx = rnd(450, WS - 450); cy = rnd(450, WS - 450); ok = fogs.every(f => Math.hypot(f.x - cx, f.y - cy) > 560); t++; } while (!ok && t < 40);
     const n = ri(3, 4), id = FZ++; for (let i = 0; i < n; i++) fogs.push({ x: cx + rnd(-150, 150), y: cy + rnd(-150, 150), r: rnd(160, 230), z: id, ph: rnd(0, TAU) });
   }
+  buildRockGrid();
 }
 function smoke(x, y) { const id = FZ++; for (let i = 0; i < 3; i++) fogs.push({ x: x + rnd(-60, 60), y: y + rnd(-60, 60), r: rnd(120, 160), z: id, ph: rnd(0, TAU), life: 8, L: 8 }); }
 
@@ -200,7 +209,7 @@ function startEv(k) {
 }
 function events(dt) {
   plankT -= dt;
-  if (plankT <= 0) { plankT = rnd(25, 40); if (loot.filter(l => l.k === 'planche' && !l.dead).length < 3) { const l = mkL('planche'); l.life = 60; loot.push(l); } }
+  if (plankT <= 0) { plankT = rnd(25, 40) / AREA * 2; if (loot.filter(l => l.k === 'planche' && !l.dead).length < 3 * AREA) { const l = mkL('planche'); l.life = 60; loot.push(l); } }
   ev.t -= dt;
   if (ev.t <= 0) { ev.t = rnd(40, 65); const o = []; if (!loot.some(l => l.k === 'kraken')) o.push('kraken'); if (!storm) o.push('storm'); if (!convoy) o.push('convoy'); if (!loot.some(l => l.k === 'tresor')) o.push('tresor'); if (o.length) startEv(pick(o)); }
   if (storm) { storm.x += storm.vx * dt; storm.y += storm.vy * dt; storm.flash -= dt; if (Math.random() < dt * .5) storm.flash = .18; if (storm.x < -700 || storm.x > WS + 700 || storm.y < -700 || storm.y > WS + 700) storm = null; }
@@ -373,6 +382,6 @@ function stats() { return { humains: humans().length, navires: boats.length, but
 // Démarrage du monde
 genWorld();
 for (let i = 0; i < BOTS; i++) boats.push(mk({ lvl: ri(1, 5) }));
-for (const k in LT) for (let i = 0; i < LT[k].n; i++) loot.push(mkL(k));
+for (const k in LT) for (let i = 0; i < LT[k].n * AREA; i++) loot.push(mkL(k));
 
 module.exports = { tick, addPlayer, removePlayer, input, skill, pickOffer, welcome, snapshotFor, drainDeaths, clearFx, alive, stats, MODE, _debug: { startEv, get boats() { return boats; }, get loot() { return loot; } } };

@@ -99,7 +99,7 @@ try{Object.assign(cfg,JSON.parse(localStorage.getItem('flottille-cfg')||'{}'))}c
 const saveCfg=()=>{try{localStorage.setItem('flottille-cfg',JSON.stringify(cfg))}catch(e){}};
 
 // ——— État reçu du serveur ———
-let ws=null,conn='wait',world=null,WSZ=3400,mode='ffa',myId=0,state='menu',snap=null,me=null,nSnap=0,fullMsg='';
+let ws=null,conn='wait',world=null,WSZ=6800,mode='ffa',myId=0,state='menu',snap=null,me=null,nSnap=0,fullMsg='';
 const ents=new Map(); // positions affichées, lissées entre deux messages du serveur
 let shotsL=[],parts=[],rings=[],txts=[],hits=[],hitBy=null,banner=null,cam={x:1700,y:1700},T=0,last=0,mx=0,my=0,joy=null,touchMode=false,SKB={x:0,y:0,r:0},offerKey=null,curOffer=null;
 
@@ -142,7 +142,7 @@ const endJoy=e=>{if(joy&&e.pointerId===joy.id)joy=null};
 addEventListener('pointerup',endJoy);addEventListener('pointercancel',endJoy);
 addEventListener('keydown',e=>{if(state!=='play'||e.target.tagName==='INPUT')return;
 if(e.code==='Space'){e.preventDefault();sendM({t:'sk'})}
-const n=['1','2','3'].indexOf(e.key);if(n>=0&&curOffer&&!offerEl.hidden&&n<curOffer.o.length)pickOffer(n)});
+let n=['Digit1','Digit2','Digit3'].indexOf(e.code);if(n<0)n=['Numpad1','Numpad2','Numpad3'].indexOf(e.code);if(n<0)n=['1','2','3'].indexOf(e.key);if(n>=0&&curOffer&&!offerEl.hidden&&n<curOffer.o.length)pickOffer(n)});
 const zoom=()=>me?cl(1.12/(.7+.3*CL[me.c].sz)-me.l*.006,.45,1.1):.8;
 // envoi de la direction au serveur 20 fois par seconde
 setInterval(()=>{const z=zoom(),view={vw:Math.round(W/2/z),vh:Math.round(H/2/z)};

@@ -2,7 +2,7 @@
 // Modifier une valeur ici change le jeu des deux côtés.
 (function (root) {
 'use strict';
-const WS = 3400, TAU = Math.PI * 2, EVO = [5, 10, 15, 20], SEE = 130;
+const WS = 6800, TAU = Math.PI * 2, EVO = [5, 10, 15, 20], SEE = 130;
 const CREAM = '#fff8e7', NAVY = '#0b3d6b', WOOD = '#7a4a24';
 const COLS = ['#ff6b57', '#ffcf3f', '#8b5cf6', '#5be3a1', '#ff8fc7', '#ff9f43', '#4dabf7'];
 const HULLS = [['#ff6b57', 'Corail'], ['#ffcf3f', 'Soleil'], ['#8b5cf6', 'Lavande'], ['#5be3a1', 'Menthe'], ['#ff8fc7', 'Rose'], ['#ff9f43', 'Orange'], ['#4dabf7', 'Azur'], ['#5c6b80', 'Ardoise']];
