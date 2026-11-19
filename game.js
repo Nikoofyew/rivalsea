@@ -8,6 +8,8 @@ const MODE = process.env.MODE === 'team' ? 'team' : 'ffa';          // ffa = cha
 const BOTS = Math.max(0, parseInt(process.env.BOTS || '12', 10));   // nombre de navires visé (joueurs + bots)
 const BOT_DMG = .7;   // les bots font 30 % de dégâts en moins que les joueurs
 const BOT_HOLD = 4;   // un bot qui apparaît ne peut pas tirer pendant 4 s
+const KILL_HEAL = .3; // couler un navire rend 30 % de la vie max
+let plankT = 20;      // prochaine apparition de planches de réparation
 
 let rocks = [], fogs = [], boats = [], loot = [], shots = [], fx = [], deaths = [];
 let ev = { t: 30 }, storm = null, convoy = null, UID = 0, FZ = 0, T = 0, boardCache = null, boardT = -1, leaderId = 0;
@@ -137,6 +139,10 @@ function useSkill(b) {
   else if (k === 'salvo') { if (b.hold > 0) return false; b.inv = 0; if (!fire(b, true)) return false; }
   b.skcd = SK[k].cd * b.s.skr * (b.p ? 1 : 1.3); say(b, b.x, b.y - R(b) - 26, 'skill', { s: k }, '#fff', 1); return true;
 }
+function heal(b, n) {
+  const m = mhp(b), x = Math.round(Math.min(n, m - b.hp)); if (x < 1) return;
+  b.hp += x; burst(b.x, b.y, '#5be3a1', 12, 140); say(b, b.x, b.y - R(b) - 18, 'heal', { x }, '#5be3a1', 1.2);
+}
 function hurt(o, d, by) {
   if (o.dead || o.hp <= 0 || o.inv > 0) return;
   if (o.s && by && by.s && by.lvl - o.lvl > 4) d *= Math.max(.35, 1 - .08 * (by.lvl - o.lvl - 4)); // un gros navire écrase moins facilement un petit
@@ -155,6 +161,7 @@ function sink(v) {
     let kx = Math.round(Math.min(40 + v.tot * .12, need(k.lvl) * 1.5) * (k.lvl - v.lvl > 6 ? .3 : 1));
     if (v.id === leaderId) { kx += need(k.lvl); banner('leaderSunk', { n: k.name, v: v.name }); }
     k.sc++; gain(k, kx); say(k, v.x, v.y, 'sunk', { x: kx }, '#ffcf3f', 1.4);
+    heal(k, mhp(k) * KILL_HEAL); // chaque navire coulé rend 30 % de vie
   }
   // le navire coulé laisse des épaves à piller
   const n = cl(2 + Math.floor(v.lvl / 4), 2, 8), each = Math.round(Math.min(15 + v.tot * .08, 500) / n);
@@ -164,7 +171,8 @@ function sink(v) {
 function crack(l) {
   const d = LT[l.k], k = l.hit; if (l.gone) return;
   burst(l.x, l.y, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : l.k === 'kraken' ? '#7a4fb3' : '#b5713a', l.k === 'tonneau' || l.k === 'epave' ? 10 : l.k === 'kraken' ? 60 : 18, l.k === 'kraken' ? 400 : 200);
-  if (k && k.s && !k.dead) { const x = Math.round((l.xpo || d.xp) * k.s.loot); gain(k, x); say(k, l.x, l.y, 'xp', { x }, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
+  if (k && k.s && !k.dead && (l.xpo || d.xp)) { const x = Math.round((l.xpo || d.xp) * k.s.loot); gain(k, x); say(k, l.x, l.y, 'xp', { x }, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
+  if (d.heal && k && k.s && !k.dead) heal(k, mhp(k) * d.heal);
   if (l.k === 'kraken') banner('krakenDead', { n: k && k.s ? k.name : null });
   if (l.k === 'tresor') banner('treasureDead', { n: k && k.s ? k.name : null });
   if (d.n > 0 && !l.cv) loot.push(mkL(l.k));
@@ -191,6 +199,8 @@ function startEv(k) {
   else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('treasure'); }
 }
 function events(dt) {
+  plankT -= dt;
+  if (plankT <= 0) { plankT = rnd(25, 40); if (loot.filter(l => l.k === 'planche' && !l.dead).length < 3) { const l = mkL('planche'); l.life = 60; loot.push(l); } }
   ev.t -= dt;
   if (ev.t <= 0) { ev.t = rnd(40, 65); const o = []; if (!loot.some(l => l.k === 'kraken')) o.push('kraken'); if (!storm) o.push('storm'); if (!convoy) o.push('convoy'); if (!loot.some(l => l.k === 'tresor')) o.push('tresor'); if (o.length) startEv(pick(o)); }
   if (storm) { storm.x += storm.vx * dt; storm.y += storm.vy * dt; storm.flash -= dt; if (Math.random() < dt * .5) storm.flash = .18; if (storm.x < -700 || storm.x > WS + 700 || storm.y < -700 || storm.y > WS + 700) storm = null; }
@@ -255,7 +265,7 @@ function tick(dt) {
     const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1);
     b.vx = Math.cos(b.a) * sp; b.vy = Math.sin(b.a) * sp; let wx = 0, wy = 0; if (inStorm(b.x, b.y)) [wx, wy] = wind(b);
     b.svx = b.vx + wx; b.svy = b.vy + wy; b.x = cl(b.x + (b.vx + wx) * dt, 20, WS - 20); b.y = cl(b.y + (b.vy + wy) * dt, 20, WS - 20); pushOut(b, R(b) * .7);
-    b.hp = Math.min(mhp(b), b.hp + (b.s.reg + (c.reg || 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt;
+    b.hp = Math.min(mhp(b), b.hp + (b.s.reg * mhp(b) / 100 + (c.reg || 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt;
     if (b.cd <= 0 && b.hold <= 0) fire(b);
     const ta = b.tgt && !b.tgt.dead ? Math.atan2(b.tgt.y - b.y, b.tgt.x - b.x) : b.a; b.aim += angD(ta, b.aim) * Math.min(1, dt * 8);
   }
@@ -339,7 +349,7 @@ function welcome() {
 function snapshotFor(id, vw, vh, px, py) {
   const me = byId(id), viewer = me || { x: px, y: py, fz: -1, team: null };
   const hw = Math.min(vw || 1200, 2600) + 200, hh = Math.min(vh || 900, 2000) + 200, inV = o => Math.abs(o.x - viewer.x) < hw && Math.abs(o.y - viewer.y) < hh;
-  const big = loot.filter(l => l.k === 'tresor' || l.k === 'kraken' || l.k === 'coffre' || l.k === 'marchand');
+  const big = loot.filter(l => l.k === 'tresor' || l.k === 'kraken' || l.k === 'coffre' || l.k === 'marchand' || l.k === 'planche');
   return {
     t: 'st', cx: r0(viewer.x), cy: r0(viewer.y), ld: leaderId,
     me: me ? { i: me.id, x: r0(me.x), y: r0(me.y), l: me.lvl, xp: r0(me.xp), nd: need(me.lvl), sc: me.sc, c: me.c, h: r0(me.hp), H: r0(mhp(me)), sk: r2(Math.max(0, me.skcd)), skm: r2(SK[CL[me.c].sk].cd * me.s.skr), fz: me.fz, tm: me.team, rng: r0(CL[me.c].w.rng * me.s.rng), of: me.offer } : null,

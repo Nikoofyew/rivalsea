@@ -20,7 +20,7 @@ fr: {
   crew: 'Équipages', board: 'Classement', you: '(vous)', lvl: 'niv. {l}', lvlLong: 'Niv. {l}', sunkCount: 'Coulés : {n}', flanks: '(flancs)',
   evoAt: 'Évolution au niveau {l}', evoMax: 'Évolution maximale', hidden: 'Caché dans le brouillard', tooBig: 'Trop grand pour se cacher ici',
   space: 'Espace', hitBy: 'Touché par {n}', protected: 'Protégé (attaquer un navire met fin à la protection)', someone: 'Quelqu’un', theKraken: 'le kraken',
-  'fx.sunk': 'Coulé ! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': 'Éperonnage !', 'fx.evo': '{c} !', 'fx.skill': '{s}',
+  'fx.sunk': 'Coulé ! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': 'Éperonnage !', 'fx.heal': '+{x} PV', 'fx.evo': '{c} !', 'fx.skill': '{s}',
   'ev.kraken': 'Un kraken a surgi des profondeurs !', 'ev.storm': 'Une tempête approche !', 'ev.convoy': 'Un convoi marchand escorté traverse la mer !', 'ev.treasure': 'Un trésor géant est apparu !',
   'ev.krakenDead': '{n} a vaincu le kraken !', 'ev.treasureDead': '{n} a pillé le trésor !', 'ev.krakenGone': 'Le kraken replonge dans les abysses…', 'ev.convoyGone': 'Le convoi s’est échappé.',
   'ev.leaderSunk': '{n} a coulé le chef de la flotte, {v} !'
@@ -42,7 +42,7 @@ en: {
   crew: 'Crews', board: 'Leaderboard', you: '(you)', lvl: 'lvl {l}', lvlLong: 'Lvl {l}', sunkCount: 'Sunk: {n}', flanks: '(sides)',
   evoAt: 'Upgrade at level {l}', evoMax: 'Fully upgraded', hidden: 'Hidden in the fog', tooBig: 'Too big to hide here',
   space: 'Space', hitBy: 'Hit by {n}', protected: 'Protected (attacking a ship ends the protection)', someone: 'Someone', theKraken: 'the kraken',
-  'fx.sunk': 'Sunk! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': 'Rammed!', 'fx.evo': '{c}!', 'fx.skill': '{s}',
+  'fx.sunk': 'Sunk! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': 'Rammed!', 'fx.heal': '+{x} HP', 'fx.evo': '{c}!', 'fx.skill': '{s}',
   'ev.kraken': 'A kraken has risen from the deep!', 'ev.storm': 'A storm is coming!', 'ev.convoy': 'An escorted merchant convoy is crossing the sea!', 'ev.treasure': 'A giant treasure has appeared!',
   'ev.krakenDead': '{n} has slain the kraken!', 'ev.treasureDead': '{n} has looted the treasure!', 'ev.krakenGone': 'The kraken sinks back into the abyss…', 'ev.convoyGone': 'The convoy got away.',
   'ev.leaderSunk': '{n} sank the fleet leader, {v}!'
@@ -64,7 +64,7 @@ es: {
   crew: 'Tripulaciones', board: 'Clasificación', you: '(tú)', lvl: 'niv. {l}', lvlLong: 'Niv. {l}', sunkCount: 'Hundidos: {n}', flanks: '(flancos)',
   evoAt: 'Evolución en el nivel {l}', evoMax: 'Evolución máxima', hidden: 'Escondido en la niebla', tooBig: 'Demasiado grande para esconderse aquí',
   space: 'Espacio', hitBy: 'Alcanzado por {n}', protected: 'Protegido (atacar un barco termina la protección)', someone: 'Alguien', theKraken: 'el kraken',
-  'fx.sunk': '¡Hundido! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': '¡Embestida!', 'fx.evo': '¡{c}!', 'fx.skill': '{s}',
+  'fx.sunk': '¡Hundido! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': '¡Embestida!', 'fx.heal': '+{x} PV', 'fx.evo': '¡{c}!', 'fx.skill': '{s}',
   'ev.kraken': '¡Un kraken ha surgido de las profundidades!', 'ev.storm': '¡Se acerca una tormenta!', 'ev.convoy': '¡Un convoy mercante escoltado cruza el mar!', 'ev.treasure': '¡Ha aparecido un tesoro gigante!',
   'ev.krakenDead': '¡{n} ha vencido al kraken!', 'ev.treasureDead': '¡{n} ha saqueado el tesoro!', 'ev.krakenGone': 'El kraken vuelve a hundirse en el abismo…', 'ev.convoyGone': 'El convoy ha escapado.',
   'ev.leaderSunk': '¡{n} ha hundido al jefe de la flota, {v}!'
@@ -83,8 +83,8 @@ es: { chaloupe: ['Bote de remos', 'Pequeño bote de remos.', 'Mosquete'], cotre:
 };
 // Bonus (même ordre que BON dans shared.js) : [nom, description]
 const BONX = {
-en: [['Light cannons', 'Fire rate +20%'], ['Heavy calibre', 'Damage +25%'], ['New sails', 'Speed +10%'], ['Spyglass', 'Range +15%'], ['Reinforced hull', '+30 max hit points'], ['Multi-shot', 'One more projectile per shot'], ['Carpenter', 'Repairs 1.5 HP per second'], ['Salvage nets', 'XP from wrecks and barrels +30%'], ['Ram bow', 'Ramming damage +50%'], ['Boatswain', 'Special skill ready 25% faster']],
-es: [['Cañones ligeros', 'Cadencia de tiro +20 %'], ['Gran calibre', 'Daño +25 %'], ['Velas nuevas', 'Velocidad +10 %'], ['Catalejo', 'Alcance +15 %'], ['Casco reforzado', '+30 puntos de vida máx.'], ['Salva múltiple', 'Un proyectil más por disparo'], ['Carpintero', 'Repara 1,5 puntos de vida por segundo'], ['Redes de rescate', 'XP de restos y barriles +30 %'], ['Espolón de proa', 'Daño de embestida +50 %'], ['Contramaestre', 'Habilidad especial lista un 25 % antes']]
+en: [['Light cannons', 'Fire rate +20%'], ['Heavy calibre', 'Damage +25%'], ['New sails', 'Speed +10%'], ['Spyglass', 'Range +15%'], ['Reinforced hull', '+30 max hit points'], ['Multi-shot', 'One more projectile per shot'], ['Carpenter', 'Repairs 2% of max HP per second'], ['Salvage nets', 'XP from wrecks and barrels +30%'], ['Ram bow', 'Ramming damage +50%'], ['Boatswain', 'Special skill ready 25% faster']],
+es: [['Cañones ligeros', 'Cadencia de tiro +20 %'], ['Gran calibre', 'Daño +25 %'], ['Velas nuevas', 'Velocidad +10 %'], ['Catalejo', 'Alcance +15 %'], ['Casco reforzado', '+30 puntos de vida máx.'], ['Salva múltiple', 'Un proyectil más por disparo'], ['Carpintero', 'Repara un 2 % de la vida máx. por segundo'], ['Redes de rescate', 'XP de restos y barriles +30 %'], ['Espolón de proa', 'Daño de embestida +50 %'], ['Contramaestre', 'Habilidad especial lista un 25 % antes']]
 };
 // Compétences : [nom, abréviation du bouton]
 const SKX = {

@@ -53,6 +53,7 @@ const LT = {
   peche: { hp: 30, xp: 55, r: 14, n: 9, mv: 120, nm: 'Pêcheur', col: '#4dabf7', sh: { L: 1.3, Wd: .6, masts: [{ x: .05, k: 'tri' }] } },
   marchand: { hp: 120, xp: 180, r: 22, n: 3, mv: 85, nm: 'Marchand', col: '#c98a4b', sh: { L: 1.5, Wd: .85, masts: [{ x: .3, k: 'sq' }, { x: -.25, k: 'sq' }], ports: 2 } },
   epave: { hp: 8, xp: 0, r: 11, n: 0 },
+  planche: { hp: 10, xp: 0, r: 15, n: 0, heal: .2 },   // planches de réparation : rares, soignent 20 % de la vie
   tresor: { hp: 450, xp: 1000, r: 28, n: 0, nm: 'Trésor' },
   kraken: { hp: 1400, xp: 1500, r: 52, n: 0, nm: 'Kraken' }
 };
@@ -64,7 +65,7 @@ const BON = [
   { n: 'Longue-vue', d: 'Portée +15 %', f: s => s.rng *= 1.15, ok: s => s.rng < 1.6 },
   { n: 'Coque renforcée', d: '+30 points de vie max', f: s => s.hp += 30 },
   { n: 'Salve multiple', d: 'Un projectile de plus par tir', f: s => s.multi++, ok: s => s.multi < 2 },
-  { n: 'Charpentier', d: 'Répare 1,5 point de vie par seconde', f: s => s.reg += 1.5 },
+  { n: 'Charpentier', d: 'Répare 2 % de la vie max par seconde', f: s => s.reg += 2 },
   { n: 'Filets de récupération', d: 'XP des épaves et tonneaux +30 %', f: s => s.loot *= 1.3 },
   { n: 'Éperon de proue', d: 'Dégâts d’éperonnage +50 %', f: s => s.ram *= 1.5 },
   { n: 'Maître d’équipage', d: 'Compétence spéciale prête 25 % plus vite', f: s => s.skr *= .75, ok: s => s.skr > .45 }
