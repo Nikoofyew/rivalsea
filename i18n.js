@@ -104,6 +104,7 @@ const fill = (s, p) => String(s).replace(/\{(\w+)\}/g, (m, k) => p && p[k] !== u
 const I = {
   LANGS,
   get lang() { return lang; },
+  withLang(l, fn) { const o = lang; lang = l; try { return fn(); } finally { lang = o; } },
   setLang(l) { if (!UI[l]) return; lang = l; try { localStorage.setItem('flottille-lang', l); } catch (e) {} document.documentElement.lang = l; },
   t(k, p) { return fill(UI[lang][k] !== undefined ? UI[lang][k] : (UI.fr[k] !== undefined ? UI.fr[k] : k), p); },
   cls(k) { const S = root.S, c = S.CL[k], x = CLX[lang] && CLX[lang][k]; return x ? { n: x[0], d: x[1], w: x[2] } : { n: c.n, d: c.d, w: c.w.nm }; },
