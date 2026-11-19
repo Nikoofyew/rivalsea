@@ -1,4 +1,4 @@
-// Simulation du monde de Flottille. C'est le serveur qui fait foi : il calcule les déplacements,
+// Simulation du monde de RivalSea. C'est le serveur qui fait foi : il calcule les déplacements,
 // les tirs, les dégâts et l'XP, puis envoie à chaque joueur ce qu'il a le droit de voir.
 'use strict';
 const S = require('./shared.js');
@@ -6,6 +6,8 @@ const { CL, LT, SK, BON, EVO, WS, TAU, SEE, TEAMS, NAMES, COLS, SAILS, HULLS, FL
 
 const MODE = process.env.MODE === 'team' ? 'team' : 'ffa';          // ffa = chacun pour soi, team = équipages
 const BOTS = Math.max(0, parseInt(process.env.BOTS || '12', 10));   // nombre de navires visé (joueurs + bots)
+const BOT_DMG = .7;   // les bots font 30 % de dégâts en moins que les joueurs
+const BOT_HOLD = 4;   // un bot qui apparaît ne peut pas tirer pendant 4 s
 
 let rocks = [], fogs = [], boats = [], loot = [], shots = [], fx = [], deaths = [];
 let ev = { t: 30 }, storm = null, convoy = null, UID = 0, FZ = 0, T = 0, boardCache = null, boardT = -1, leaderId = 0;
@@ -49,7 +51,7 @@ function spawnSpot(lvl) {
 function mk(opt) {
   const sp = spawnSpot(opt.lvl || 1);
   const b = { p: !!opt.p, id: ++UID, name: opt.name || pick(NAMES), col: opt.hull || pick(COLS), sail: opt.sail || pick(SAILS)[0], flag: opt.flag || pick(Object.keys(FLAGS)),
-    x: sp.x, y: sp.y, a: rnd(0, TAU), aim: 0, vx: 0, vy: 0, lvl: 1, xp: 0, tot: 0, sc: 0, c: 'chaloupe', cd: rnd(0, 1), skcd: 3, boost: 0, rc: 0, inv: opt.p ? 6 : 3,
+    x: sp.x, y: sp.y, a: rnd(0, TAU), aim: 0, vx: 0, vy: 0, lvl: 1, xp: 0, tot: 0, sc: 0, c: 'chaloupe', cd: rnd(0, 1), skcd: 3, boost: 0, rc: 0, inv: opt.p ? 6 : 3, hold: opt.p ? 0 : BOT_HOLD,
     tx: 0, ty: 0, f: 1, t: 0, wx: WS / 2, wy: WS / 2, pend: [], offer: null, oid: 0, fl: 0, fz: -1, inp: { a: 0, f: 0 }, npc: !!opt.npc,
     s: { rate: 1, dmg: 1, spd: 1, rng: 1, hp: 0, multi: 0, reg: 0, loot: 1, ram: 1, skr: 1 }, hp: 1 };
   b.aim = b.a; b.inp.a = b.a;
@@ -111,7 +113,7 @@ function targets(b, rng, n) {
 function fire(b, salvo) {
   const c = CL[b.c], w = c.w, rng = w.rng * b.s.rng, ts = targets(b, rng, w.tg); if (!ts.length) return false;
   if (!salvo) b.cd = w.rate * b.s.rate; b.tgt = ts[0];
-  const n = w.n + b.s.multi + (salvo ? 2 : 0), sp = w.sp || 0, par = w.par || (sp ? 0 : 12), dm = w.dmg * b.s.dmg * (salvo ? 1.6 : 1), r = R(b);
+  const n = w.n + b.s.multi + (salvo ? 2 : 0), sp = w.sp || 0, par = w.par || (sp ? 0 : 12), dm = w.dmg * b.s.dmg * (salvo ? 1.6 : 1) * (b.p ? 1 : BOT_DMG), r = R(b);
   for (const e of ts) {
     let ex = e.x, ey = e.y;
     if (w.spl) { const vx = e.vx || 0, vy = e.vy || 0; for (let it = 0; it < 3; it++) { const tt = Math.hypot(ex - b.x, ey - b.y) / w.v; ex = e.x + vx * tt; ey = e.y + vy * tt; } } // l'obus vise là où sera la cible
@@ -132,7 +134,7 @@ function useSkill(b) {
   if (k === 'boost') { b.boost = 2.5; burst(b.x, b.y, '#fff', 10, 160); }
   else if (k === 'smoke') { smoke(b.x, b.y); burst(b.x, b.y, '#e8eef2', 16, 120); }
   else if (k === 'repair') { b.hp = Math.min(mhp(b), b.hp + mhp(b) * .35); burst(b.x, b.y, '#5be3a1', 14, 140); }
-  else if (k === 'salvo') { b.inv = 0; if (!fire(b, true)) return false; }
+  else if (k === 'salvo') { if (b.hold > 0) return false; b.inv = 0; if (!fire(b, true)) return false; }
   b.skcd = SK[k].cd * b.s.skr * (b.p ? 1 : 1.3); say(b, b.x, b.y - R(b) - 26, 'skill', { s: k }, '#fff', 1); return true;
 }
 function hurt(o, d, by) {
@@ -253,8 +255,8 @@ function tick(dt) {
     const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1);
     b.vx = Math.cos(b.a) * sp; b.vy = Math.sin(b.a) * sp; let wx = 0, wy = 0; if (inStorm(b.x, b.y)) [wx, wy] = wind(b);
     b.svx = b.vx + wx; b.svy = b.vy + wy; b.x = cl(b.x + (b.vx + wx) * dt, 20, WS - 20); b.y = cl(b.y + (b.vy + wy) * dt, 20, WS - 20); pushOut(b, R(b) * .7);
-    b.hp = Math.min(mhp(b), b.hp + (b.s.reg + (c.reg || 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt;
-    if (b.cd <= 0) fire(b);
+    b.hp = Math.min(mhp(b), b.hp + (b.s.reg + (c.reg || 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt;
+    if (b.cd <= 0 && b.hold <= 0) fire(b);
     const ta = b.tgt && !b.tgt.dead ? Math.atan2(b.tgt.y - b.y, b.tgt.x - b.x) : b.a; b.aim += angD(ta, b.aim) * Math.min(1, dt * 8);
   }
   // collisions entre navires et éperonnage
@@ -264,7 +266,7 @@ function tick(dt) {
     a.x -= nx * ov * mb / (ma + mb); a.y -= ny * ov * mb / (ma + mb); b.x += nx * ov * ma / (ma + mb); b.y += ny * ov * ma / (ma + mb);
     const cs = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
     if (cs > 35 && a.team !== b.team && a.rc <= 0 && b.rc <= 0) {
-      const da = Math.min(30, .07 * cs * Math.sqrt(mb / ma) * b.s.ram), db = Math.min(30, .07 * cs * Math.sqrt(ma / mb) * a.s.ram);
+      const da = Math.min(30, .07 * cs * Math.sqrt(mb / ma) * b.s.ram) * (b.p ? 1 : BOT_DMG), db = Math.min(30, .07 * cs * Math.sqrt(ma / mb) * a.s.ram) * (a.p ? 1 : BOT_DMG);
       hurt(a, da, b); hurt(b, db, a); a.rc = b.rc = .6; burst((a.x + b.x) / 2, (a.y + b.y) / 2, '#c98a4b', 8, 160);
       if (db > 8) say(a, b.x, b.y - R(b), 'ram', null, '#ff9f43', 1); if (da > 8) say(b, a.x, a.y - R(a), 'ram', null, '#ff9f43', 1);
     }
