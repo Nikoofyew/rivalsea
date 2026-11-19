@@ -173,7 +173,7 @@ let lastMenuMsg='';
 const FLAGSVG={fr:'<svg viewBox="0 0 3 2" aria-hidden="true"><rect width="1" height="2" fill="#0055A4"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#EF4135"/></svg>',
 en:'<svg viewBox="0 0 60 30" preserveAspectRatio="none" aria-hidden="true"><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="2"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></svg>',
 es:'<svg viewBox="0 0 3 2" aria-hidden="true"><rect width="3" height="2" fill="#AA151B"/><rect y=".5" width="3" height="1" fill="#F1BF00"/></svg>'};
-let lastBuild=null;
+let lastBuild=null,mmCv=null,mmKey='';
 function sameH(build){lastBuild=build;const card=ov.firstElementChild;if(!card)return;card.classList.add('eq');card.style.minHeight='';const m=document.createElement('div');m.className='ovm';m.setAttribute('aria-hidden','true');ov.appendChild(m);let h=0;for(const [l] of I.LANGS){m.innerHTML=I.withLang(l,build);const c=m.firstElementChild;if(c)h=Math.max(h,c.offsetHeight)}m.remove();card.style.minHeight=h+'px'}
 function langBtns(){return '<div class="langs" role="group" aria-label="'+tr('language')+'">'+I.LANGS.map(([c,ab,nm])=>'<button data-lang="'+c+'" class="'+(I.lang===c?'on':'')+'" title="'+nm+'" aria-label="'+nm+'"><span>'+ab+'</span>'+(FLAGSVG[c]||'')+'</button>').join('')+'</div>'}
 function wireLang(re){ov.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{I.setLang(b.dataset.lang);offerKey=null;if(curOffer&&state==='play')renderOffer(curOffer);re()})}
@@ -341,8 +341,8 @@ g.textAlign='left';g.font='800 15px "Baloo 2",system-ui,sans-serif';g.fillStyle=
 g.font='600 14px "Baloo 2",system-ui,sans-serif';rows.forEach((r,i)=>{g.fillStyle=r.c;g.textAlign='left';g.fillText(r.n.slice(0,18),lx+12,ly+42+i*22);g.textAlign='right';g.fillText(r.v,lx+162,ly+42+i*22)});
 // mini-carte
 const mm=Math.min(130,W*.28),m0=12,sc=mm/WSZ;g.fillStyle='rgba(11,61,107,.6)';g.beginPath();g.roundRect(m0,m0,mm,mm,10);g.fill();
-g.fillStyle='rgba(235,245,248,.35)';for(const f of fogs){g.beginPath();g.arc(m0+f.x*sc,m0+f.y*sc,f.r*sc*.9,0,TAU);g.fill()}
-g.fillStyle='#f4d58d';for(const k of world.rocks)if(k.k==='ile'){g.beginPath();g.arc(m0+k.x*sc,m0+k.y*sc,Math.max(2,k.r*sc),0,TAU);g.fill()}
+{const key=mm+'|'+dpr+'|'+WSZ+'|'+world.rocks.length+'|'+world.fogs.length;if(mmKey!==key){mmKey=key;mmCv=document.createElement('canvas');mmCv.width=mmCv.height=Math.ceil(mm*dpr);const c=mmCv.getContext('2d');c.scale(dpr,dpr);c.fillStyle='rgba(235,245,248,.35)';for(const f of world.fogs){c.beginPath();c.arc(f.x*sc,f.y*sc,f.r*sc*.9,0,TAU);c.fill()}c.fillStyle='#f4d58d';for(const k of world.rocks)if(k.k==='ile'){c.beginPath();c.arc(k.x*sc,k.y*sc,Math.max(2,k.r*sc),0,TAU);c.fill()}}g.drawImage(mmCv,m0,m0,mm,mm)}
+g.fillStyle='rgba(235,245,248,.35)';for(const f of snap.fg){g.beginPath();g.arc(m0+f[0]*sc,m0+f[1]*sc,f[2]*sc*.9,0,TAU);g.fill()}
 if(st){g.strokeStyle='#c8d6ff';g.lineWidth=1.5;g.beginPath();g.arc(m0+st.x*sc,m0+st.y*sc,st.r*sc,0,TAU);g.stroke()}
 for(const [x,y,k,cvy] of snap.mb){g.fillStyle=k==='planche'?'#5be3a1':k==='kraken'?'#c9a6ff':k==='marchand'?(cvy?'#e8b04a':'#c98a4b'):'#ffcf3f';const s=k==='tresor'||k==='kraken'?5:3;g.fillRect(m0+x*sc-s/2,m0+y*sc-s/2,s,s)}
 for(const [x,y,col,own,lead] of snap.mi){g.fillStyle=own?'#fff':col;g.beginPath();g.arc(m0+x*sc,m0+y*sc,own?3.5:2.2,0,TAU);g.fill();if(lead){g.strokeStyle='#ffcf3f';g.lineWidth=2;g.beginPath();g.arc(m0+x*sc,m0+y*sc,5.5,0,TAU);g.stroke()}}

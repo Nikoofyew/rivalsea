@@ -32,6 +32,10 @@ const seenL = (l, by) => l.fz < 0 || l.fz === by.fz || Math.hypot(l.x - by.x, l.
 const RC = 400; let rgrid = new Map();
 function buildRockGrid() { rgrid = new Map(); for (const k of rocks) { const r = k.r + 260; for (let cx = Math.floor((k.x - r) / RC); cx <= Math.floor((k.x + r) / RC); cx++) for (let cy = Math.floor((k.y - r) / RC); cy <= Math.floor((k.y + r) / RC); cy++) { const key = cx * 1000 + cy; if (!rgrid.has(key)) rgrid.set(key, []); rgrid.get(key).push(k); } } }
 const EMPTY = [];
+// grille du butin, refaite à chaque pas : on ne teste que le butin des cases voisines
+const LC = 300; let lgrid = new Map(), TN = 0;
+function buildLootGrid() { lgrid = new Map(); for (const l of loot) { if (l.dead) continue; const key = Math.floor(l.x / LC) * 1000 + Math.floor(l.y / LC); let a = lgrid.get(key); if (!a) lgrid.set(key, a = []); a.push(l); } }
+function lootNear(x, y, r) { const out = [], c0 = Math.floor((x - r) / LC), c1 = Math.floor((x + r) / LC), d0 = Math.floor((y - r) / LC), d1 = Math.floor((y + r) / LC); for (let cx = c0; cx <= c1; cx++) for (let cy = d0; cy <= d1; cy++) { const a = lgrid.get(cx * 1000 + cy); if (a) for (const l of a) out.push(l); } return out; }
 const rocksNear = (x, y) => rgrid.get(Math.floor(x / RC) * 1000 + Math.floor(y / RC)) || EMPTY;
 const inRock = (x, y, m) => m > 250 ? rocks.some(k => Math.hypot(x - k.x, y - k.y) < k.r + m) : rocksNear(x, y).some(k => Math.hypot(x - k.x, y - k.y) < k.r + m);
 function freeSpot(m, pad) { for (let i = 0; i < 40; i++) { const x = rnd(m, WS - m), y = rnd(m, WS - m); if (!inRock(x, y, pad || 60)) return { x, y }; } return { x: WS / 2, y: WS / 2 }; }
@@ -118,7 +122,7 @@ const sideOK = (b, o) => !CL[b.c].w.bs || Math.abs(Math.sin(Math.atan2(o.y - b.y
 function targets(b, rng, n) {
   const out = [], near = (arr, rad, f) => arr.filter(o => !o.dead && f(o)).map(o => [o, Math.hypot(o.x - b.x, o.y - b.y) - rad(o)]).filter(e => e[1] < rng && sideOK(b, e[0])).sort((a, c) => a[1] - c[1]);
   if (b.inv <= 0) for (const e of near(boats, R, o => o !== b && o.team !== b.team && o.inv <= 0 && seen(o, b))) { if (out.length >= n) break; out.push(e[0]); } // protégé : on ne vise que le butin
-  if (out.length < n) for (const e of near(loot, o => LT[o.k].r, o => seenL(o, b) && !(b.npc && o.cv))) { if (out.length >= n) break; out.push(e[0]); }
+  if (out.length < n) for (const e of near(lootNear(b.x, b.y, rng + 80), o => LT[o.k].r, o => seenL(o, b) && !(b.npc && o.cv))) { if (out.length >= n) break; out.push(e[0]); }
   return out;
 }
 function fire(b, salvo) {
@@ -246,8 +250,9 @@ function ai(b, dt) {
   }
   else if (e) { engage(b, e, ed, rng); if (b.skcd <= 0 && c.sk === 'salvo') useSkill(b); }
   else {
-    let l = null, ld = 750;
-    for (const o of loot) { if (!seenL(o, b)) continue; const d = Math.hypot(o.x - b.x, o.y - b.y) * (o.k === 'tresor' || o.k === 'kraken' ? (b.lvl > 8 ? .5 : 3) : 1); if (d < ld) { ld = d; l = o; } }
+    let l = b.lt && !b.lt.dead && (b.ltT || 0) > T ? b.lt : null, ld = 750;
+    if (!l) for (const o of lootNear(b.x, b.y, 750)) { if (o.dead || !seenL(o, b)) continue; const d = Math.hypot(o.x - b.x, o.y - b.y) * (o.k === 'tresor' || o.k === 'kraken' ? (b.lvl > 8 ? .5 : 3) : 1); if (d < ld) { ld = d; l = o; } }
+    if (l && l !== b.lt) { b.lt = l; b.ltT = T + .5; }
     if (l) { b.tx = l.x; b.ty = l.y; b.f = Math.hypot(l.x - b.x, l.y - b.y) < rng * .6 ? .2 : .8; }
   }
   if (b.skcd <= 0 && c.sk === 'repair' && hpR < .45) useSkill(b);
@@ -264,7 +269,7 @@ function tick(dt) {
   // chef de la flotte : le navire le plus avancé (niveau 8 minimum)
   { let top = null; for (const b of boats) if (!b.npc && !b.dead && (!top || b.lvl > top.lvl || (b.lvl === top.lvl && b.sc > top.sc))) top = b; leaderId = top && top.lvl >= 8 ? top.id : 0; }
   for (const f of fogs) if (f.life !== undefined) f.life -= dt; fogs = fogs.filter(f => f.life === undefined || f.life > 0);
-  for (const b of boats) b.fz = zoneAt(b.x, b.y); for (const l of loot) l.fz = zoneAt(l.x, l.y);
+  for (const b of boats) b.fz = zoneAt(b.x, b.y); TN++; for (const l of loot) if (LT[l.k].mv || l.cv || l.k === 'kraken' || (l.id + TN) % 10 === 0 || l.fz === undefined) l.fz = zoneAt(l.x, l.y);
   events(dt);
   for (const b of boats) {
     if (b.dead) continue; const c = CL[b.c];
@@ -308,15 +313,16 @@ function tick(dt) {
       l.x = cl(l.x + Math.cos(l.a) * d.mv * f * dt, 30, WS - 30); l.y = cl(l.y + Math.sin(l.a) * d.mv * f * dt, 30, WS - 30); l.vx = Math.cos(l.a) * d.mv * f; l.vy = Math.sin(l.a) * d.mv * f;
     } else { l.x = cl(l.x + Math.cos(l.ph) * 6 * dt, 30, WS - 30); l.y = cl(l.y + Math.sin(l.ph) * 6 * dt, 30, WS - 30); l.a += dt * .15; }
     if (inStorm(l.x, l.y)) { const [wx, wy] = wind(l); l.x = cl(l.x + wx * .6 * dt, 30, WS - 30); l.y = cl(l.y + wy * .6 * dt, 30, WS - 30); }
-    pushOut(l, d.r);
+    if (d.mv || (l.id + TN) % 10 === 0) pushOut(l, d.r); // le petit butin dérive à peine : on le repousse des rochers moins souvent
   }
+  buildLootGrid();
   for (const s of shots) {
     if (inStorm(s.x, s.y)) { const r = rnd(-2.2, 2.2) * dt, c = Math.cos(r), sn = Math.sin(r), vx = s.vx; s.vx = vx * c - s.vy * sn; s.vy = vx * sn + s.vy * c; }
     s.x += s.vx * dt; s.y += s.vy * dt; s.l -= dt; if (s.l <= 0) { if (s.spl) boom(s); continue; }
     if (s.spl && s.l > s.L * .25) continue; // l'obus de mortier vole au-dessus de tout jusqu'à la fin de sa course
     if (inRock(s.x, s.y, 0)) { s.l = 0; burst(s.x, s.y, '#f4d58d', 4, 90); continue; }
     let hit = null; for (const o of boats) if (o !== s.o && o.team !== s.tm && !o.dead && Math.hypot(o.x - s.x, o.y - s.y) < R(o) + s.sz) { hit = o; break; }
-    if (!hit) for (const o of loot) if (!o.dead && !(o.cv && s.o.npc) && Math.hypot(o.x - s.x, o.y - s.y) < LT[o.k].r + s.sz) { hit = o; break; }
+    if (!hit) for (const o of lootNear(s.x, s.y, 80)) if (!o.dead && !(o.cv && s.o.npc) && Math.hypot(o.x - s.x, o.y - s.y) < LT[o.k].r + s.sz) { hit = o; break; }
     if (hit) { s.l = 0; if (s.spl) boom(s); else { hurt(hit, s.d, s.o); burst(s.x, s.y, '#fff8e7', 3, 90); } }
   }
   shots = shots.filter(s => s.l > 0);
