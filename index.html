@@ -88,8 +88,12 @@ else if(m.t==='joined'){myId=m.id;state='play';ov.hidden=true;offerKey=null;full
 else if(m.t==='full'){fullMsg='full';updStatus()}
 else if(m.t==='dead'){state='dead';offerEl.hidden=true;offerKey=null;showDead(m)}
 else if(m.t==='st')applySnap(m)}
+let lastIn=null;const LAT=.09;
 function applySnap(m){snap=m;nSnap++;const ids=new Set();
-const put=(o,isLoot)=>{ids.add(o.i);let d=ents.get(o.i);if(!d||Math.hypot(d.x-o.x,d.y-o.y)>500){d={x:o.x,y:o.y,a:o.a,m:o.m||o.a,born:nSnap>2?T:-9};ents.set(o.i,d)}d.tx=o.x;d.ty=o.y;d.ta=o.a;d.tm=o.m||o.a};
+const put=(o,isLoot)=>{ids.add(o.i);let d=ents.get(o.i);if(!d||Math.hypot(d.x-o.x,d.y-o.y)>500){d={x:o.x,y:o.y,a:o.a,pa:o.a,m:o.m||o.a,ox:0,oy:0,born:nSnap>2?T:-9};ents.set(o.i,d)}
+// lissage : on garde l'écart entre ce qui est affiché et la nouvelle position, puis on le fait fondre en douceur
+if(d.tx!==undefined&&o.i!==myId){const ag=Math.min(T-d.st,.25);d.ox=d.x-o.x;d.oy=d.y-o.y;if(Math.hypot(d.ox,d.oy)>300){d.ox=d.oy=0}}
+d.tx=o.x;d.ty=o.y;d.vx=o.vx||0;d.vy=o.vy||0;d.st=T;d.ta=o.a;d.tm=o.m||o.a};
 for(const b of m.b)put(b);for(const l of m.l)put(l,1);
 for(const id of [...ents.keys()])if(!ids.has(id))ents.delete(id);
 shotsL=m.s.map(s=>({x:s[0],y:s[1],vx:s[2],vy:s[3],sz:s[4],col:s[5],spl:s[6],l:s[7],L:s[8]}));
@@ -117,7 +121,7 @@ if(state!=='play'||!me){sendM(Object.assign({t:'in'},view));return}
 const d=ents.get(myId);if(!d)return;let a=d.a,f=.12;
 if(joy){const dx=joy.x-joy.x0,dy=joy.y-joy.y0,l=Math.hypot(dx,dy);if(l>8){a=Math.atan2(dy,dx);f=cl(l/60,.25,1)}}
 else if(!touchMode){const sx=W/2+(d.x-cam.x)*z,sy=H/2+(d.y-cam.y)*z,dx=mx-sx,dy=my-sy;a=Math.atan2(dy,dx);f=cl(Math.hypot(dx,dy)/(100*z),.2,1)}
-sendM(Object.assign({t:'in',a:Math.round(a*1000)/1000,f:Math.round(f*100)/100},view))},50);
+lastIn={a,f};sendM(Object.assign({t:'in',a:Math.round(a*1000)/1000,f:Math.round(f*100)/100},view))},33);
 
 // ——— Choix de bonus et d'évolution (sans pause : on choisit en naviguant) ———
 function stat(c){const w=c.w;let s=tr('hp')+' ×'+I.num(c.hp)+' · '+tr('speed')+' ×'+I.num(c.spd);if(w.tg>1)s+=' · '+tr('targets',{n:w.tg});if(w.spl)s+=' · '+tr('explosion');if(w.bs)s+=' · '+tr('side');if(c.reg)s+=' · '+tr('regen');if(c.t<3||c.ghost)s+=' · '+tr('hides');return s+' · '+I.sk(c.sk).n}
@@ -315,12 +319,19 @@ if(banner){const a=Math.min(1,banner.l,(4.5-banner.l)*3);g.globalAlpha=Math.max(
 g.fillStyle='rgba(11,61,107,.8)';g.beginPath();g.roundRect(W/2-tw/2-22,y-30,tw+44,44,22);g.fill();g.fillStyle='#ffcf3f';g.textAlign='center';g.fillText(banner.s,W/2,y);g.globalAlpha=1}}
 
 function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;T+=dt;
-const k=1-Math.exp(-dt*14);for(const d of ents.values()){if(d.tx===undefined)continue;d.x+=(d.tx-d.x)*k;d.y+=(d.ty-d.y)*k;d.a+=angD(d.ta,d.a)*k;d.m+=angD(d.tm,d.m)*k}
+const k=1-Math.exp(-dt*14),kd=Math.exp(-dt*9);for(const [id,d] of ents){if(d.tx===undefined)continue;const ag=Math.min(T-d.st,.25);
+if(id===myId&&state==='play'&&me&&lastIn){// mon navire : il tourne tout de suite vers la souris, sans attendre le serveur
+const c=CL[me.c],tr=3.4/Math.pow(c.sz,1.3);d.pa+=cl(angD(lastIn.a,d.pa),-tr*dt,tr*dt);const sp=Math.hypot(d.vx,d.vy);
+d.x+=Math.cos(d.pa)*sp*dt;d.y+=Math.sin(d.pa)*sp*dt;const gx=d.tx+d.vx*(ag+LAT),gy=d.ty+d.vy*(ag+LAT),ex=gx-d.x,ey=gy-d.y;
+if(Math.hypot(ex,ey)>250){d.x=gx;d.y=gy}else{const kc=Math.min(1,dt*3.5);d.x+=ex*kc;d.y+=ey*kc}
+const ea=angD(d.ta,d.pa);if(Math.abs(ea)>1.2)d.pa=d.ta;d.a=d.pa}
+else{d.ox*=kd;d.oy*=kd;d.x=d.tx+d.vx*ag+d.ox;d.y=d.ty+d.vy*ag+d.oy;d.a+=angD(d.ta,d.a)*k;d.pa=d.a}
+d.m+=angD(d.tm,d.m)*k}
 for(const s of shotsL){s.x+=s.vx*dt;s.y+=s.vy*dt;s.l-=dt}shotsL=shotsL.filter(s=>s.l>-.05);
 for(const p of parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.94;p.vy*=.94;p.l-=dt}parts=parts.filter(p=>p.l>0);
 for(const r of rings){r.l-=dt;r.r+=(r.m-r.r)*Math.min(1,dt*10)}rings=rings.filter(r=>r.l>0);
 for(const tx of txts)tx.l-=dt;txts=txts.filter(tx=>tx.l>0);for(const h of hits)h.l-=dt;hits=hits.filter(h=>h.l>0);if(hitBy){hitBy.l-=dt;if(hitBy.l<=0)hitBy=null}if(banner){banner.l-=dt;if(banner.l<=0)banner=null}
-const md=ents.get(myId),tgt=state==='play'&&md?md:snap?{x:snap.cx,y:snap.cy}:null;if(tgt){cam.x+=(tgt.x-cam.x)*Math.min(1,dt*6);cam.y+=(tgt.y-cam.y)*Math.min(1,dt*6)}
+const md=ents.get(myId),tgt=state==='play'&&md?md:snap?{x:snap.cx,y:snap.cy}:null;if(tgt){const kc=Math.min(1,dt*9);cam.x+=(tgt.x-cam.x)*kc;cam.y+=(tgt.y-cam.y)*kc}
 draw();requestAnimationFrame(loop)}
 menu();connect();requestAnimationFrame(loop);
 </script></body></html>
