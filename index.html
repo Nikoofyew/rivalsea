@@ -135,6 +135,7 @@ ov.innerHTML='<div class="card wide"><h1>Flottille</h1>'+(msg?'<p><b>'+msg+'</b>
 '<div class="row"><span>Voiles</span><div class="sw">'+sw(SAILS,'sail')+'</div></div>'+
 '<div class="row"><span>Pavillon</span><div class="sw">'+Object.keys(FLAGS).map(k=>'<button class="fl'+(cfg.flag===k?' on':'')+'" data-k="flag" data-v="'+k+'" aria-label="'+k+'">'+(FLAGS[k]||'—')+'</button>').join('')+'</div></div>'+
 '</div></div><div id="stat">'+statusHTML()+'</div>'+
+'<p class="small">Les navires marqués <b>IA</b> sont des bots qui complètent la partie quand il y a peu de joueurs.</p>'+
 '<p class="small">Souris ou joystick tactile pour diriger · <b>Espace</b> ou bouton rond pour la compétence · touches <b>1 2 3</b> pour les choix</p>'+
 '<button id="go">Rejoindre la partie</button></div>';
 ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{cfg[b.dataset.k]=b.dataset.v;saveCfg();ov.querySelectorAll('[data-k="'+b.dataset.k+'"]').forEach(o=>o.classList.toggle('on',o===b));prev()});
@@ -233,7 +234,8 @@ g.fillStyle='rgba(255,255,255,.35)';for(let k=1;k<4;k++){g.beginPath();g.arc(d.x
 if(b.bo&&Math.random()<.5)parts.push({x:d.x-Math.cos(d.a)*r*c.L,y:d.y-Math.sin(d.a)*r*c.L,vx:0,vy:0,l:.5,col:'rgba(255,255,255,.8)',r:3+Math.random()*3});
 g.save();g.translate(d.x,d.y);g.rotate(d.a);ship(g,c,r,b.fl?'#fff':b.col,c.w.bs?0:d.m-d.a,T,{sail:b.sl,flag:b.fg});g.restore();g.globalAlpha=1;
 g.textAlign='center';g.font='800 '+Math.max(13,Math.min(24,r*.6))+'px "Baloo 2",system-ui,sans-serif';const ty=d.y-r*Math.max(c.L,1.3)-14;
-g.fillStyle=b.np?'#9ec9ff':own?'#ffcf3f':mode==='team'&&me&&b.tm===me.tm?'#ffe9a8':CREAM;g.fillText(b.n+' '+b.l,d.x,ty-8);
+g.fillStyle=b.np?'#9ec9ff':own?'#ffcf3f':mode==='team'&&me&&b.tm===me.tm?'#ffe9a8':b.ia?'#d6e4ee':CREAM;const lbl=b.n+' '+b.l;g.fillText(lbl,d.x,ty-8);
+if(b.ia){const fs2=Math.max(13,Math.min(24,r*.6)),tw2=g.measureText(lbl).width,px=d.x+tw2/2+6,ph=fs2*.8;g.fillStyle='rgba(11,61,107,.75)';g.beginPath();g.roundRect(px,ty-8-ph*.85,ph*1.7,ph,ph/2);g.fill();g.fillStyle='#9ec9ff';g.font='800 '+Math.round(fs2*.6)+'px "Baloo 2",system-ui,sans-serif';g.textAlign='center';g.fillText('IA',px+ph*.85,ty-8-ph*.12);g.textAlign='center'}
 const hw=Math.max(24,r*1.2);g.fillStyle='rgba(11,61,107,.6)';g.fillRect(d.x-hw,ty,hw*2,6);g.fillStyle='#5be3a1';g.fillRect(d.x-hw,ty,hw*2*Math.max(0,b.h/b.H),6)}
 for(const s of shotsL){if(!s.spl)continue;const p=1-s.l/s.L,h=Math.sin(Math.PI*cl(p,0,1))*40;g.fillStyle='rgba(11,61,107,.25)';g.beginPath();g.arc(s.x,s.y,s.sz*.8,0,TAU);g.fill();g.fillStyle='#2b2b2b';g.strokeStyle=s.col;g.lineWidth=3;g.beginPath();g.arc(s.x,s.y-h,s.sz,0,TAU);g.fill();g.stroke()}
 const st=snap.st;if(st&&st.x+st.r>vx0&&st.x-st.r<vx1&&st.y+st.r>vy0&&st.y-st.r<vy1){const gr=g.createRadialGradient(st.x,st.y,st.r*.2,st.x,st.y,st.r);gr.addColorStop(0,'rgba(20,30,60,.5)');gr.addColorStop(1,'rgba(20,30,60,0)');g.fillStyle=gr;g.beginPath();g.arc(st.x,st.y,st.r,0,TAU);g.fill();
@@ -248,10 +250,10 @@ if(snap.cv)edgeArrow(snap.cv[0],snap.cv[1],'#e8b04a','Convoi');if(st)edgeArrow(s
 // classement
 const lx=W-186,ly=14;let rows;
 if(mode==='team')rows=snap.bd.map(r=>({n:TEAMS[r.t].n+(me&&r.t===me.tm?' (vous)':''),v:'niv. '+r.v,c:TEAMS[r.t].col}));
-else rows=snap.bd.map((r,i)=>({n:(i+1)+'. '+r.n,v:'niv. '+r.v,c:r.i===myId?'#ffcf3f':CREAM}));
+else rows=snap.bd.map((r,i)=>({n:(i+1)+'. '+r.n.slice(0,r.p?14:10)+(r.p?'':' · IA'),v:'niv. '+r.v,c:r.i===myId?'#ffcf3f':r.p?CREAM:'#9ec9ff'}));
 g.fillStyle='rgba(11,61,107,.55)';g.beginPath();g.roundRect(lx,ly,174,28+rows.length*22,12);g.fill();
 g.textAlign='left';g.font='800 15px "Baloo 2",system-ui,sans-serif';g.fillStyle='#ffcf3f';g.fillText(mode==='team'?'Équipages':'Classement',lx+12,ly+20);
-g.font='600 14px "Baloo 2",system-ui,sans-serif';rows.forEach((r,i)=>{g.fillStyle=r.c;g.textAlign='left';g.fillText(r.n.slice(0,16),lx+12,ly+42+i*22);g.textAlign='right';g.fillText(r.v,lx+162,ly+42+i*22)});
+g.font='600 14px "Baloo 2",system-ui,sans-serif';rows.forEach((r,i)=>{g.fillStyle=r.c;g.textAlign='left';g.fillText(r.n.slice(0,18),lx+12,ly+42+i*22);g.textAlign='right';g.fillText(r.v,lx+162,ly+42+i*22)});
 // mini-carte
 const mm=Math.min(130,W*.28),m0=12,sc=mm/WSZ;g.fillStyle='rgba(11,61,107,.6)';g.beginPath();g.roundRect(m0,m0,mm,mm,10);g.fill();
 g.fillStyle='rgba(235,245,248,.35)';for(const f of fogs){g.beginPath();g.arc(m0+f.x*sc,m0+f.y*sc,f.r*sc*.9,0,TAU);g.fill()}
