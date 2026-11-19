@@ -24,6 +24,8 @@ const server = http.createServer((req, res) => {
   const SITE = process.env.SITE_URL || 'https://rivalsea.onrender.com';
   if (url === '/robots.txt') { res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('User-agent: *\nAllow: /\nDisallow: /sante\nSitemap: ' + SITE + '/sitemap.xml\n'); }
   if (url === '/sitemap.xml') { res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8' }); return res.end('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + SITE + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url></urlset>\n'); }
+  // validation Google Search Console (ne pas supprimer)
+  if (url === '/googleba4933d594ddb893.html') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end('google-site-verification: googleba4933d594ddb893.html'); }
   if (url === '/favicon.ico') url = '/icon-32.png';
   if (url === '/') url = '/index.html';
   if (!PUBLIC_FILES.has(url)) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('Introuvable'); }
