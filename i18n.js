@@ -1,4 +1,4 @@
-// Traductions de Flottille : français (fr), anglais (en), espagnol (es).
+// Traductions de RivalSea : français (fr), anglais (en), espagnol (es).
 // Pour corriger un texte, modifiez-le ici. Le français des navires, bonus et compétences est dans shared.js.
 (function (root) {
 'use strict';

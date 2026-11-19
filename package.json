@@ -1,7 +1,7 @@
 {
-  "name": "flottille",
+  "name": "rivalsea",
   "version": "1.0.0",
-  "description": "Flottille : jeu de bateaux multijoueur dans le navigateur",
+  "description": "RivalSea : jeu de bateaux multijoueur dans le navigateur",
   "main": "server.js",
   "scripts": { "start": "node server.js" },
   "engines": { "node": ">=18" },

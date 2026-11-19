@@ -1,4 +1,4 @@
-// Serveur Flottille : sert le jeu (index.html, shared.js) et fait le lien en temps réel avec les joueurs.
+// Serveur RivalSea : sert le jeu (index.html, shared.js) et fait le lien en temps réel avec les joueurs.
 // Aucune dépendance à installer : uniquement Node.js (version 18 ou plus récente).
 // Lancement : node server.js   puis ouvrir http://localhost:3000
 // Fichiers du jeu : index.html et shared.js (navigateur), game.js et server.js (serveur).
@@ -8,7 +8,7 @@ const game = require('./game');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUB = __dirname;
-const PUBLIC_FILES = new Set(['/index.html', '/shared.js', '/i18n.js', '/favicon.svg']); // seuls fichiers envoyés aux navigateurs
+const PUBLIC_FILES = new Set(['/index.html', '/shared.js', '/i18n.js', '/icon-180.png', '/icon-48.png', '/icon-32.png']); // seuls fichiers envoyés aux navigateurs
 const TICK = 1 / 30;          // la simulation avance 30 fois par seconde
 const SEND_EVERY = 2;         // on envoie l'état aux joueurs 15 fois par seconde
 const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '40', 10);
@@ -21,9 +21,10 @@ const server = http.createServer((req, res) => {
   try { url = decodeURIComponent((req.url || '/').split('?')[0]); } catch (e) { res.writeHead(400); return res.end(); }
   if (url === '/sante') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify(Object.assign({ ok: true, connexions: clients.size }, game.stats()))); }
   // pour Google : fichiers qui expliquent quoi indexer
-  const SITE = process.env.SITE_URL || 'https://flottille.onrender.com';
+  const SITE = process.env.SITE_URL || 'https://rivalsea.onrender.com';
   if (url === '/robots.txt') { res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('User-agent: *\nAllow: /\nDisallow: /sante\nSitemap: ' + SITE + '/sitemap.xml\n'); }
   if (url === '/sitemap.xml') { res.writeHead(200, { 'content-type': 'application/xml; charset=utf-8' }); return res.end('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + SITE + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url></urlset>\n'); }
+  if (url === '/favicon.ico') url = '/icon-32.png';
   if (url === '/') url = '/index.html';
   if (!PUBLIC_FILES.has(url)) { res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' }); return res.end('Introuvable'); }
   const file = path.join(PUB, url);
@@ -110,4 +111,4 @@ setInterval(() => {
   game.clearFx();
 }, TICK * 1000);
 
-server.listen(PORT, () => console.log('Flottille est en ligne sur http://localhost:' + PORT + '  (mode ' + (game.MODE === 'team' ? 'équipages' : 'chacun pour soi') + ')'));
+server.listen(PORT, () => console.log('RivalSea est en ligne sur http://localhost:' + PORT + '  (mode ' + (game.MODE === 'team' ? 'équipages' : 'chacun pour soi') + ')'));

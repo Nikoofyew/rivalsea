@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flottille – jeu de bateaux multijoueur gratuit en ligne</title>
-<meta name="description" content="Flottille est un jeu de bateaux multijoueur gratuit dans le navigateur : cassez des tonneaux, coulez les autres navires et faites évoluer votre chaloupe jusqu'au galion. Sans inscription, sur ordinateur et mobile.">
-<link rel="canonical" href="https://flottille.onrender.com/">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>RivalSea – jeu de bateaux multijoueur gratuit en ligne</title>
+<meta name="description" content="RivalSea est un jeu de bateaux multijoueur gratuit dans le navigateur : cassez des tonneaux, coulez les autres navires et faites évoluer votre chaloupe jusqu'au galion. Sans inscription, sur ordinateur et mobile.">
+<link rel="canonical" href="https://rivalsea.onrender.com/">
+<link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
+<link rel="apple-touch-icon" href="/icon-180.png">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Flottille">
-<meta property="og:title" content="Flottille – jeu de bateaux multijoueur gratuit">
+<meta property="og:site_name" content="RivalSea">
+<meta property="og:title" content="RivalSea – jeu de bateaux multijoueur gratuit">
 <meta property="og:description" content="Coulez les autres navires et faites évoluer votre bateau, de la chaloupe au galion. Gratuit, sans inscription, dans le navigateur.">
-<meta property="og:url" content="https://flottille.onrender.com/">
+<meta property="og:url" content="https://rivalsea.onrender.com/">
+<meta property="og:image" content="https://rivalsea.onrender.com/icon-180.png">
 <meta name="twitter:card" content="summary">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"Flottille","url":"https://flottille.onrender.com/","description":"Jeu de bateaux multijoueur gratuit dans le navigateur, façon .io : cassez des tonneaux, coulez les autres navires et faites évoluer votre bateau.","genre":["io","multijoueur","bataille navale"],"gamePlatform":["Navigateur web","Mobile"],"applicationCategory":"Game","operatingSystem":"Tous","inLanguage":["fr","en","es"],"playMode":"MultiPlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"VideoGame","name":"RivalSea","url":"https://rivalsea.onrender.com/","description":"Jeu de bateaux multijoueur gratuit dans le navigateur, façon .io : cassez des tonneaux, coulez les autres navires et faites évoluer votre bateau.","genre":["io","multijoueur","bataille navale"],"gamePlatform":["Navigateur web","Mobile"],"applicationCategory":"Game","operatingSystem":"Tous","inLanguage":["fr","en","es"],"playMode":"MultiPlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"}}</script>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
 <style>
 :root{--card:#fff8e7;--ink:#0b3d6b;--accent:#ff6b57;--sun:#ffcf3f;color-scheme:light}
@@ -42,6 +45,7 @@ label.nm input{font:inherit;font-size:17px;border:2px solid rgba(11,61,107,.25);
 .fl{padding:0 10px;height:32px;min-width:40px;font-size:18px;background:#0b3d6b;color:#fff8e7;box-shadow:none;border:3px solid transparent}
 .fl.on{border-color:var(--sun)}
 .small{font-size:14px;opacity:.85}
+.brand{display:flex;align-items:center;justify-content:center;gap:12px}.brand img{border-radius:12px;box-shadow:0 3px 0 rgba(0,0,0,.2)}
 .langs{display:flex;gap:6px;justify-content:flex-end;margin:-6px -6px 4px 0}
 .langs button{display:inline-flex;flex-direction:column;align-items:center;gap:3px;line-height:1}
 .langs svg{width:24px;height:16px;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.25);display:block}
@@ -62,7 +66,7 @@ label.nm input{font:inherit;font-size:17px;border:2px solid rgba(11,61,107,.25);
 #offer .k{font-size:11px;opacity:.7}
 #offer .leg{font-size:11px;font-weight:800;text-transform:uppercase;background:#0b3d6b;color:#ffcf3f;border-radius:8px;padding:0 6px}
 </style></head><body>
-<noscript><h1>Flottille</h1><p>Jeu de bateaux multijoueur gratuit en ligne. Activez JavaScript pour jouer.</p></noscript>
+<noscript><h1>RivalSea</h1><p>Jeu de bateaux multijoueur gratuit en ligne. Activez JavaScript pour jouer.</p></noscript>
 <canvas id="c"></canvas>
 <div id="offer" hidden></div>
 <div class="ov" id="ov"></div>
@@ -161,7 +165,7 @@ function langBtns(){return '<div class="langs" role="group" aria-label="'+tr('la
 function wireLang(re){ov.querySelectorAll('[data-lang]').forEach(b=>b.onclick=()=>{I.setLang(b.dataset.lang);offerKey=null;if(curOffer&&state==='play')renderOffer(curOffer);re()})}
 function menu(msg){lastMenuMsg=msg||'';state='menu';offerEl.hidden=true;offerKey=null;ov.hidden=false;
 const sw=(arr,key,nf)=>arr.map(([c],i)=>{const n=nf(i);return '<button class="dot'+(cfg[key]===c?' on':'')+'" data-k="'+key+'" data-v="'+c+'" style="background:'+c+'" aria-label="'+n+'" title="'+n+'"></button>'}).join('');
-const build=()=>'<div class="card wide">'+langBtns()+'<h1>Flottille</h1>'+(msg?'<p><b>'+msg+'</b></p>':'')+
+const build=()=>'<div class="card wide">'+langBtns()+'<h1 class="brand"><img src="/icon-180.png" alt="" width="52" height="52">RivalSea</h1>'+(msg?'<p><b>'+msg+'</b></p>':'')+
 '<p>'+tr('intro')+'</p>'+
 '<div class="cust"><canvas id="pv" width="340" height="212" aria-label="'+tr('preview')+'"></canvas><div class="fields">'+
 '<label class="nm">'+tr('name')+' <input id="nmi" maxlength="14" placeholder="'+tr('namePh')+'" value="'+(cfg.name||'').replace(/[&"<>]/g,'')+'"></label>'+

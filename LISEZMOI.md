@@ -1,4 +1,4 @@
-# Flottille, version multijoueur
+# RivalSea, version multijoueur
 
 ## Comment ça marche, en deux minutes
 
@@ -34,11 +34,11 @@ Aucune bibliothèque à installer : il faut seulement **Node.js** (version 18 ou
 ## Étape 1 : jouer sur votre ordinateur
 
 1. Installez Node.js depuis https://nodejs.org (version « LTS »), puis redémarrez l'ordinateur si on vous le demande.
-2. Décompressez le dossier `flottille-serveur`.
+2. Décompressez le dossier `rivalsea-serveur`.
 3. Ouvrez un terminal **dans ce dossier** :
    - Windows : ouvrez le dossier, cliquez dans la barre d'adresse, tapez `cmd` puis Entrée.
    - Mac : clic droit sur le dossier → Services → « Nouveau terminal au dossier ».
-4. Tapez `node server.js` puis Entrée. Le message « Flottille est en ligne sur http://localhost:3000 » s'affiche.
+4. Tapez `node server.js` puis Entrée. Le message « RivalSea est en ligne sur http://localhost:3000 » s'affiche.
 5. Ouvrez http://localhost:3000 dans votre navigateur. Ouvrez un deuxième onglet : vous verrez deux joueurs dans la même partie.
 
 Pour arrêter le serveur : `Ctrl + C` dans le terminal.
@@ -49,16 +49,16 @@ Pour arrêter le serveur : `Ctrl + C` dans le terminal.
 
 Il faut un hébergeur qui accepte Node.js et les WebSockets. Exemple avec **Render** (offre gratuite) :
 
-1. Créez un compte gratuit sur https://github.com, puis un nouveau dépôt (« New repository »), par exemple `flottille`.
-2. Dans ce dépôt : « Add file » → « Upload files », glissez tous les fichiers du dossier `flottille-serveur`, puis « Commit changes ».
+1. Créez un compte gratuit sur https://github.com, puis un nouveau dépôt (« New repository »), par exemple `rivalsea`.
+2. Dans ce dépôt : « Add file » → « Upload files », glissez tous les fichiers du dossier `rivalsea-serveur`, puis « Commit changes ».
 3. Créez un compte sur https://render.com en vous connectant avec GitHub.
-4. « New » → « Web Service » → choisissez votre dépôt `flottille`.
+4. « New » → « Web Service » → choisissez votre dépôt `rivalsea`.
 5. Réglages :
    - Language / Runtime : **Node**
    - Build Command : `npm install` (il n'y a rien à installer, mais le champ est obligatoire)
    - Start Command : `node server.js`
    - Instance Type : **Free**
-6. « Deploy ». Après une ou deux minutes, Render vous donne une adresse du type `https://flottille-xxxx.onrender.com`. C'est l'adresse à partager.
+6. « Deploy ». Après une ou deux minutes, Render vous donne une adresse du type `https://rivalsea-xxxx.onrender.com`. C'est l'adresse à partager.
 
 Bon à savoir sur l'offre gratuite : le serveur **s'endort après 15 minutes sans visite**. Le premier joueur qui revient attend alors jusqu'à une minute (le menu affiche « Connexion au serveur… »). L'offre payante la plus simple supprime cette mise en veille.
 
