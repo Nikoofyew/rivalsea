@@ -27,8 +27,9 @@ const inRock = (x, y, m) => rocks.some(k => Math.hypot(x - k.x, y - k.y) < k.r +
 function freeSpot(m, pad) { for (let i = 0; i < 40; i++) { const x = rnd(m, WS - m), y = rnd(m, WS - m); if (!inRock(x, y, pad || 60)) return { x, y }; } return { x: WS / 2, y: WS / 2 }; }
 function pushOut(o, rad) { for (const k of rocks) { const dx = o.x - k.x, dy = o.y - k.y, d = Math.hypot(dx, dy), m = k.r + rad; if (d < m && d > 0) { o.x = k.x + dx / d * m; o.y = k.y + dy / d * m; } } }
 function avoid(o, a, rad) { const px = o.x + Math.cos(a) * (rad + 90), py = o.y + Math.sin(a) * (rad + 90); for (const k of rocks) { if (Math.hypot(px - k.x, py - k.y) < k.r + rad * .7) { const s = Math.sign(Math.sin(Math.atan2(k.y - o.y, k.x - o.x) - a)) || 1; return a - s * 1.3; } } return a; }
-const say = (b, x, y, s, col, l) => { if (b && b.p) fx.push({ k: 'txt', x: Math.round(x), y: Math.round(y), s, col, l: l || 1, to: b.id }); };
-const banner = s => fx.push({ k: 'banner', s });
+// les textes sont envoyés sous forme de code (id) + paramètres (p) : chaque navigateur les affiche dans sa langue
+const say = (b, x, y, id, p, col, l) => { if (b && b.p) fx.push({ k: 'txt', x: Math.round(x), y: Math.round(y), id, p, col, l: l || 1, to: b.id }); };
+const banner = (id, p) => fx.push({ k: 'banner', id, p });
 const burst = (x, y, col, n, sp) => fx.push({ k: 'burst', x: Math.round(x), y: Math.round(y), col, n, sp: sp || 200 });
 const ring = (x, y, r, m, l, col) => fx.push({ k: 'ring', x: Math.round(x), y: Math.round(y), r, m, l, col });
 const avgLvl = () => { const h = humans(); return h.length ? h.reduce((a, b) => a + b.lvl, 0) / h.length : ri(2, 6); };
@@ -81,7 +82,7 @@ function offer(b) {
   else b.offer = { id: ++b.oid, k: 'bonus', o: avail(b.s).map(x => BON.indexOf(x)).sort(() => Math.random() - .5).slice(0, 3), l: b.lvl };
 }
 function gain(b, x) { if (!b || !b.s || b.dead) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
-function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.x, b.y, R(b), R(b) * 4, .7, '#ffcf3f'); say(b, b.x, b.y - R(b) - 30, CL[k].n + ' !', '#ffcf3f', 1.6); } }
+function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.x, b.y, R(b), R(b) * 4, .7, '#ffcf3f'); say(b, b.x, b.y - R(b) - 30, 'evo', { c: k }, '#ffcf3f', 1.6); } }
 
 // ——— Monde : îles, récifs, brouillard ———
 function genWorld() {
@@ -132,13 +133,13 @@ function useSkill(b) {
   else if (k === 'smoke') { smoke(b.x, b.y); burst(b.x, b.y, '#e8eef2', 16, 120); }
   else if (k === 'repair') { b.hp = Math.min(mhp(b), b.hp + mhp(b) * .35); burst(b.x, b.y, '#5be3a1', 14, 140); }
   else if (k === 'salvo') { b.inv = 0; if (!fire(b, true)) return false; }
-  b.skcd = SK[k].cd * b.s.skr * (b.p ? 1 : 1.3); say(b, b.x, b.y - R(b) - 26, SK[k].n, '#fff', 1); return true;
+  b.skcd = SK[k].cd * b.s.skr * (b.p ? 1 : 1.3); say(b, b.x, b.y - R(b) - 26, 'skill', { s: k }, '#fff', 1); return true;
 }
 function hurt(o, d, by) {
   if (o.dead || o.hp <= 0 || o.inv > 0) return;
   if (o.s && by && by.s && by.lvl - o.lvl > 4) d *= Math.max(.35, 1 - .08 * (by.lvl - o.lvl - 4)); // un gros navire écrase moins facilement un petit
   o.hp -= d; o.hit = by; o.fl = .12; if (o.s && by && by.s) gain(by, d * .2);
-  if (o.p && by && (by.s || by.k) && (o.hitT || 0) <= T) { o.hitT = T + .25; fx.push({ k: 'hit', a: Math.round(Math.atan2(by.y - o.y, by.x - o.x) * 100) / 100, n: by.name || 'le kraken', to: o.id }); }
+  if (o.p && by && (by.s || by.k) && (o.hitT || 0) <= T) { o.hitT = T + .25; fx.push({ k: 'hit', a: Math.round(Math.atan2(by.y - o.y, by.x - o.x) * 100) / 100, n: by.s ? by.name : null, to: o.id }); }
 }
 function boom(s) {
   ring(s.x, s.y, 4, s.spl, .4, '#ff9f43'); burst(s.x, s.y, '#ff9f43', 14, 240);
@@ -150,31 +151,31 @@ function sink(v) {
   if (k && k.s && !k.dead) {
     // l'XP d'un naufrage est plafonnée à un niveau et demi du vainqueur, pour éviter l'effet boule de neige
     let kx = Math.round(Math.min(40 + v.tot * .12, need(k.lvl) * 1.5) * (k.lvl - v.lvl > 6 ? .3 : 1));
-    if (v.id === leaderId) { kx += need(k.lvl); banner(k.name + ' a coulé le chef de la flotte, ' + v.name + ' !'); }
-    k.sc++; gain(k, kx); say(k, v.x, v.y, 'Coulé ! +' + kx + ' XP', '#ffcf3f', 1.4);
+    if (v.id === leaderId) { kx += need(k.lvl); banner('leaderSunk', { n: k.name, v: v.name }); }
+    k.sc++; gain(k, kx); say(k, v.x, v.y, 'sunk', { x: kx }, '#ffcf3f', 1.4);
   }
   // le navire coulé laisse des épaves à piller
   const n = cl(2 + Math.floor(v.lvl / 4), 2, 8), each = Math.round(Math.min(15 + v.tot * .08, 500) / n);
   for (let i = 0; i < n; i++) { const a = rnd(0, TAU), q = rnd(10, R(v) * 1.6), l = mkL('epave', v.x + Math.cos(a) * q, v.y + Math.sin(a) * q); l.xpo = each; l.life = 25; l.tint = v.col; loot.push(l); }
-  if (v.p) deaths.push({ id: v.id, lvl: v.lvl, c: v.c, sc: v.sc, x: Math.round(v.x), y: Math.round(v.y), by: k && k.name ? k.name : (k && k.k === 'kraken' ? 'le kraken' : null) });
+  if (v.p) deaths.push({ id: v.id, lvl: v.lvl, c: v.c, sc: v.sc, x: Math.round(v.x), y: Math.round(v.y), by: k && k.s ? k.name : null, byk: k && k.k === 'kraken' ? 1 : 0 });
 }
 function crack(l) {
   const d = LT[l.k], k = l.hit; if (l.gone) return;
   burst(l.x, l.y, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : l.k === 'kraken' ? '#7a4fb3' : '#b5713a', l.k === 'tonneau' || l.k === 'epave' ? 10 : l.k === 'kraken' ? 60 : 18, l.k === 'kraken' ? 400 : 200);
-  if (k && k.s && !k.dead) { const x = Math.round((l.xpo || d.xp) * k.s.loot); gain(k, x); say(k, l.x, l.y, '+' + x + ' XP', l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
-  if (l.k === 'kraken') banner((k && k.s ? k.name : 'Quelqu’un') + ' a vaincu le kraken !');
-  if (l.k === 'tresor') banner((k && k.s ? k.name : 'Quelqu’un') + ' a pillé le trésor !');
+  if (k && k.s && !k.dead) { const x = Math.round((l.xpo || d.xp) * k.s.loot); gain(k, x); say(k, l.x, l.y, 'xp', { x }, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
+  if (l.k === 'kraken') banner('krakenDead', { n: k && k.s ? k.name : null });
+  if (l.k === 'tresor') banner('treasureDead', { n: k && k.s ? k.name : null });
   if (d.n > 0 && !l.cv) loot.push(mkL(l.k));
 }
 
 // ——— Événements : kraken, tempête, convoi, trésor ———
 const fpos = (cv, ox, oy) => [cv.x + Math.cos(cv.a) * ox - Math.sin(cv.a) * oy, cv.y + Math.sin(cv.a) * ox + Math.cos(cv.a) * oy];
 function startEv(k) {
-  if (k === 'kraken') { const p = freeSpot(450, 120), l = mkL('kraken', p.x, p.y); l.life = 80; l.slam = 2.5; loot.push(l); banner('Un kraken a surgi des profondeurs !'); }
+  if (k === 'kraken') { const p = freeSpot(450, 120), l = mkL('kraken', p.x, p.y); l.life = 80; l.slam = 2.5; loot.push(l); banner('kraken'); }
   else if (k === 'storm') {
     const h = Math.random() < .5, s = Math.random() < .5 ? 1 : -1;
     storm = { x: h ? (s > 0 ? -300 : WS + 300) : rnd(600, WS - 600), y: h ? rnd(600, WS - 600) : (s > 0 ? -300 : WS + 300), r: 500, flash: 0 };
-    storm.vx = h ? s * 65 : rnd(-20, 20); storm.vy = h ? rnd(-20, 20) : s * 65; banner('Une tempête approche !');
+    storm.vx = h ? s * 65 : rnd(-20, 20); storm.vy = h ? rnd(-20, 20) : s * 65; banner('storm');
   }
   else if (k === 'convoy') {
     const h = Math.random() < .5, s = Math.random() < .5 ? 1 : -1, y0 = rnd(700, WS - 700);
@@ -183,9 +184,9 @@ function startEv(k) {
     for (const [ox, oy] of [[0, 0], [-110, -80], [-110, 80]]) { const l = mkL('marchand', convoy.x, convoy.y); l.cv = convoy; l.ox = ox; l.oy = oy; l.hp = l.mhp = 240; l.xpo = 420; loot.push(l); }
     const lv = Math.max(10, Math.round(avgLvl()) + 1);
     for (const [ox, oy] of [[90, -150], [90, 150]]) { const e = mk({ lvl: lv, npc: 1 }); e.name = 'Escorte'; e.col = '#2d5f8a'; e.team = -1; e.c = lv >= 20 ? 'galionroyal' : lv >= 15 ? 'galion' : 'fregate'; e.hp = mhp(e); e.cv = convoy; e.ox = ox; e.oy = oy; e.x = convoy.x; e.y = convoy.y + oy; e.inv = 0; boats.push(e); }
-    banner('Un convoi marchand escorté traverse la mer !');
+    banner('convoy');
   }
-  else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('Un trésor géant est apparu !'); }
+  else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('treasure'); }
 }
 function events(dt) {
   ev.t -= dt;
@@ -193,7 +194,7 @@ function events(dt) {
   if (storm) { storm.x += storm.vx * dt; storm.y += storm.vy * dt; storm.flash -= dt; if (Math.random() < dt * .5) storm.flash = .18; if (storm.x < -700 || storm.x > WS + 700 || storm.y < -700 || storm.y > WS + 700) storm = null; }
   if (convoy) {
     const d = Math.hypot(convoy.tx - convoy.x, convoy.ty - convoy.y), alive = loot.some(l => l.cv === convoy && !l.dead);
-    if (d < 40 || !alive) { for (const l of loot) if (l.cv === convoy) { l.gone = true; l.dead = true; } for (const b of boats) if (b.cv === convoy) { b.gone = true; b.dead = true; } if (d < 40 && alive) banner('Le convoi s’est échappé.'); convoy = null; }
+    if (d < 40 || !alive) { for (const l of loot) if (l.cv === convoy) { l.gone = true; l.dead = true; } for (const b of boats) if (b.cv === convoy) { b.gone = true; b.dead = true; } if (d < 40 && alive) banner('convoyGone'); convoy = null; }
     else { convoy.x += Math.cos(convoy.a) * convoy.spd * dt; convoy.y += Math.sin(convoy.a) * convoy.spd * dt; }
   }
 }
@@ -265,12 +266,12 @@ function tick(dt) {
     if (cs > 35 && a.team !== b.team && a.rc <= 0 && b.rc <= 0) {
       const da = Math.min(30, .07 * cs * Math.sqrt(mb / ma) * b.s.ram), db = Math.min(30, .07 * cs * Math.sqrt(ma / mb) * a.s.ram);
       hurt(a, da, b); hurt(b, db, a); a.rc = b.rc = .6; burst((a.x + b.x) / 2, (a.y + b.y) / 2, '#c98a4b', 8, 160);
-      if (db > 8) say(a, b.x, b.y - R(b), 'Éperonnage !', '#ff9f43', 1); if (da > 8) say(b, a.x, a.y - R(a), 'Éperonnage !', '#ff9f43', 1);
+      if (db > 8) say(a, b.x, b.y - R(b), 'ram', null, '#ff9f43', 1); if (da > 8) say(b, a.x, a.y - R(a), 'ram', null, '#ff9f43', 1);
     }
   }
   for (const l of loot) {
     if (l.dead) continue; const d = LT[l.k]; l.fl -= dt;
-    if (l.life !== undefined) { l.life -= dt; if (l.life <= 0) { l.gone = true; l.dead = true; if (l.k === 'kraken') banner('Le kraken replonge dans les abysses…'); continue; } }
+    if (l.life !== undefined) { l.life -= dt; if (l.life <= 0) { l.gone = true; l.dead = true; if (l.k === 'kraken') banner('krakenGone'); continue; } }
     if (l.k === 'kraken') {
       let n = null, nd = 700; for (const b of boats) { const dd = Math.hypot(b.x - l.x, b.y - l.y); if (dd < nd) { nd = dd; n = b; } }
       if (n) { const a = Math.atan2(n.y - l.y, n.x - l.x); l.a += angD(a, l.a) * Math.min(1, dt * 2); l.x += Math.cos(l.a) * 40 * dt; l.y += Math.sin(l.a) * 40 * dt; l.vx = Math.cos(l.a) * 40; l.vy = Math.sin(l.a) * 40; }

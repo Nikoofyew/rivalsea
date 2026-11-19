@@ -8,7 +8,7 @@ const game = require('./game');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUB = __dirname;
-const PUBLIC_FILES = new Set(['/index.html', '/shared.js']); // seuls fichiers envoyés aux navigateurs
+const PUBLIC_FILES = new Set(['/index.html', '/shared.js', '/i18n.js']); // seuls fichiers envoyés aux navigateurs
 const TICK = 1 / 30;          // la simulation avance 30 fois par seconde
 const SEND_EVERY = 2;         // on envoie l'état aux joueurs 15 fois par seconde
 const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '40', 10);

@@ -26,6 +26,7 @@ Pour jouer à plusieurs, il faut un **arbitre commun** que tout le monde consult
 | `game.js` | Les règles du jeu : déplacements, combats, XP, bots, événements. |
 | `index.html` | Ce que voit le joueur : menu, dessin du jeu, commandes. |
 | `shared.js` | Les données communes : navires, armes, butin, bonus. **C'est ici qu'on règle l'équilibrage.** |
+| `i18n.js` | Les traductions (français, anglais, espagnol). Pour corriger ou ajouter un texte, c'est ici. |
 | `package.json` | La carte d'identité du projet pour les hébergeurs. |
 
 Aucune bibliothèque à installer : il faut seulement **Node.js** (version 18 ou plus récente).
