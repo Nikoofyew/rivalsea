@@ -1,0 +1,14 @@
+# Garde le serveur RivalSea éveillé : Render endort le serveur gratuit après 15 minutes sans visite,
+# et le premier joueur doit alors attendre presque une minute. On le réveille toutes les 10 minutes.
+name: Garder RivalSea éveillé
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+jobs:
+  reveil:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Réveiller le serveur
+        run: curl -fsS --max-time 120 https://rivalsea.onrender.com/sante || true
