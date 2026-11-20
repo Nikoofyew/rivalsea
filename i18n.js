@@ -30,7 +30,7 @@ fr: {
   convoy: 'Convoi', storm: 'Tempête', escort: 'Escorte', ai: 'IA',
   crew: 'Équipages', board: 'Classement', you: '(vous)', lvl: 'niv. {l}', lvlLong: 'Niv. {l}', sunkCount: 'Coulés : {n}', flanks: '(flancs)',
   evoAt: 'Évolution au niveau {l}', evoMax: 'Évolution maximale', hidden: 'Caché dans le brouillard', tooBig: 'Trop grand pour se cacher ici',
-  space: 'Espace', hitBy: 'Touché par {n}', protected: 'Protégé (attaquer un navire met fin à la protection)', someone: 'Quelqu’un', theKraken: 'le kraken',
+  space: 'Espace', hitBy: 'Touché par {n}', protected: 'Protégé (attaquer un navire met fin à la protection)', someone: 'Quelqu’un', theKraken: 'le kraken', leader: 'Meneur',
   'fx.sunk': 'Coulé ! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': 'Éperonnage !', 'fx.heal': '+{x} PV', 'fx.evo': '{c} !', 'fx.skill': '{s}',
   'ev.kraken': 'Un kraken a surgi des profondeurs !', 'ev.storm': 'Une tempête approche !', 'ev.convoy': 'Un convoi marchand escorté traverse la mer !', 'ev.treasure': 'Un trésor géant est apparu !',
   'ev.krakenDead': '{n} a vaincu le kraken !', 'ev.treasureDead': '{n} a pillé le trésor !', 'ev.krakenGone': 'Le kraken replonge dans les abysses…', 'ev.convoyGone': 'Le convoi s’est échappé.',
@@ -63,7 +63,7 @@ en: {
   convoy: 'Convoy', storm: 'Storm', escort: 'Escort', ai: 'AI',
   crew: 'Crews', board: 'Leaderboard', you: '(you)', lvl: 'lvl {l}', lvlLong: 'Lvl {l}', sunkCount: 'Sunk: {n}', flanks: '(sides)',
   evoAt: 'Upgrade at level {l}', evoMax: 'Fully upgraded', hidden: 'Hidden in the fog', tooBig: 'Too big to hide here',
-  space: 'Space', hitBy: 'Hit by {n}', protected: 'Protected (attacking a ship ends the protection)', someone: 'Someone', theKraken: 'the kraken',
+  space: 'Space', hitBy: 'Hit by {n}', protected: 'Protected (attacking a ship ends the protection)', someone: 'Someone', theKraken: 'the kraken', leader: 'Leader',
   'fx.sunk': 'Sunk! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': 'Rammed!', 'fx.heal': '+{x} HP', 'fx.evo': '{c}!', 'fx.skill': '{s}',
   'ev.kraken': 'A kraken has risen from the deep!', 'ev.storm': 'A storm is coming!', 'ev.convoy': 'An escorted merchant convoy is crossing the sea!', 'ev.treasure': 'A giant treasure has appeared!',
   'ev.krakenDead': '{n} has slain the kraken!', 'ev.treasureDead': '{n} has looted the treasure!', 'ev.krakenGone': 'The kraken sinks back into the abyss…', 'ev.convoyGone': 'The convoy got away.',
@@ -96,7 +96,7 @@ es: {
   convoy: 'Convoy', storm: 'Tormenta', escort: 'Escolta', ai: 'IA',
   crew: 'Tripulaciones', board: 'Clasificación', you: '(tú)', lvl: 'niv. {l}', lvlLong: 'Niv. {l}', sunkCount: 'Hundidos: {n}', flanks: '(flancos)',
   evoAt: 'Evolución en el nivel {l}', evoMax: 'Evolución máxima', hidden: 'Escondido en la niebla', tooBig: 'Demasiado grande para esconderse aquí',
-  space: 'Espacio', hitBy: 'Alcanzado por {n}', protected: 'Protegido (atacar un barco termina la protección)', someone: 'Alguien', theKraken: 'el kraken',
+  space: 'Espacio', hitBy: 'Alcanzado por {n}', protected: 'Protegido (atacar un barco termina la protección)', someone: 'Alguien', theKraken: 'el kraken', leader: 'Líder',
   'fx.sunk': '¡Hundido! +{x} XP', 'fx.xp': '+{x} XP', 'fx.ram': '¡Embestida!', 'fx.heal': '+{x} PV', 'fx.evo': '¡{c}!', 'fx.skill': '{s}',
   'ev.kraken': '¡Un kraken ha surgido de las profundidades!', 'ev.storm': '¡Se acerca una tormenta!', 'ev.convoy': '¡Un convoy mercante escoltado cruza el mar!', 'ev.treasure': '¡Ha aparecido un tesoro gigante!',
   'ev.krakenDead': '¡{n} ha vencido al kraken!', 'ev.treasureDead': '¡{n} ha saqueado el tesoro!', 'ev.krakenGone': 'El kraken vuelve a hundirse en el abismo…', 'ev.convoyGone': 'El convoy ha escapado.',
@@ -132,7 +132,7 @@ const SKX = {
 en: { boost: ['Speed boost', 'Fast'], smoke: ['Smoke screen', 'Smoke'], repair: ['Repair', 'Repair'], salvo: ['Concentrated broadside', 'Salvo'], dive: ['Dive', 'Dive'] },
 es: { boost: ['Acelerón', 'Rápido'], smoke: ['Cortina de humo', 'Humo'], repair: ['Reparación', 'Reparar'], salvo: ['Andanada concentrada', 'Salva'], dive: ['Inmersión', 'Sumerge'] }
 };
-const LTX = { en: { peche: 'Fisherman', marchand: 'Merchant', tresor: 'Treasure', kraken: 'Kraken' }, es: { peche: 'Pescador', marchand: 'Mercante', tresor: 'Tesoro', kraken: 'Kraken' } };
+const LTX = { en: { peche: 'Fisherman', marchand: 'Merchant', tresor: 'Treasure', kraken: 'Kraken', coffre: 'Chest' }, es: { peche: 'Pescador', marchand: 'Mercante', tresor: 'Tesoro', kraken: 'Kraken', coffre: 'Cofre' } };
 const TEAMX = { en: ['Reds', 'Yellows', 'Purples', 'Greens'], es: ['Rojos', 'Amarillos', 'Morados', 'Verdes'] };
 const HULLX = { en: ['Coral', 'Sun', 'Lavender', 'Mint', 'Pink', 'Orange', 'Azure', 'Slate', 'Charcoal', 'Burgundy', 'Ivory', 'Emerald'], es: ['Coral', 'Sol', 'Lavanda', 'Menta', 'Rosa', 'Naranja', 'Azul', 'Pizarra', 'Carbón', 'Burdeos', 'Marfil', 'Esmeralda'] };
 const TRIMX = { en: ['Cream', 'Gold', 'Black', 'Coral', 'Azure', 'Silver'], es: ['Crema', 'Oro', 'Negro', 'Coral', 'Azul', 'Plata'] };

@@ -140,7 +140,7 @@ function fire(b, salvo, sec) {
   // visée manuelle : le joueur tire là où est sa souris (dans la limite de la portée), avec +20 % de dégâts
   const ts = man ? [{ x: b.x + Math.cos(b.inp.ma) * Math.min(b.inp.md, rng * .97), y: b.y + Math.sin(b.inp.ma) * Math.min(b.inp.md, rng * .97), vx: 0, vy: 0 }] : targets(b, rng, w.tg); if (!ts.length) return false;
   if (sec) b.cd2 = w.rate * b.s.rate; else if (!salvo) b.cd = w.rate * b.s.rate; if (!sec) b.tgt = man ? null : ts[0];
-  const n = w.n + b.s.multi + (salvo ? 2 : 0), sp = w.sp || 0, par = w.par || (sp ? 0 : 12), dm = w.dmg * b.s.dmg * (salvo ? 1.6 : 1) * (b.p ? 1 : BOT_DMG) * (man ? 1.2 : 1), r = R(b);
+  const n = w.n + b.s.multi + (salvo ? 2 : 0), sp = w.sp || 0, par = w.par || (sp ? 0 : 12), dm = w.dmg * b.s.dmg * (salvo ? 1.6 : 1) * (b.p ? 1 : BOT_DMG) * (man ? 1.2 : 1) * (b.dmx || 1), r = R(b);
   for (const e of ts) {
     let ex = e.x, ey = e.y;
     if (w.spl) { const vx = e.vx || 0, vy = e.vy || 0; for (let it = 0; it < 3; it++) { const tt = Math.hypot(ex - b.x, ey - b.y) / w.v; ex = e.x + vx * tt * .5; ey = e.y + vy * tt * .5; } } // l'obus vise à mi-chemin de là où sera la cible : on peut l'esquiver
@@ -181,7 +181,7 @@ function hurt(o, d, by) {
   if (o.s && by && by.s && by.lvl - o.lvl > 3) d *= Math.max(.4, 1 - .08 * (by.lvl - o.lvl - 3)); // un gros navire écrase moins facilement un petit
   if (o.s) d *= DMG * (1 - (CL[o.c].arm || 0));
   o.hp -= d; o.lh = T; o.hit = by; o.fl = .12; if (o.s && by && by.s) gain(by, d * .2);
-  if (o.p && by && (by.s || by.k) && (o.hitT || 0) <= T) { o.hitT = T + .25; fx.push({ k: 'hit', a: Math.round(Math.atan2(by.y - o.y, by.x - o.x) * 100) / 100, n: by.s ? by.name : null, to: o.id }); }
+  if (o.p && by && (by.s || by.k) && (o.hitT || 0) <= T) { o.hitT = T + .25; fx.push({ k: 'hit', a: Math.round(Math.atan2(by.y - o.y, by.x - o.x) * 100) / 100, n: by.s ? by.name : null, lk: by.k, to: o.id }); }
 }
 function boom(s) {
   ring(s.x, s.y, 4, s.spl, .4, '#ff9f43'); burst(s.x, s.y, '#ff9f43', 14, 240);
@@ -228,8 +228,16 @@ function crack(l) {
 
 // ——— Événements : kraken, tempête, convoi, trésor ———
 const fpos = (cv, ox, oy) => [cv.x + Math.cos(cv.a) * ox - Math.sin(cv.a) * oy, cv.y + Math.sin(cv.a) * ox + Math.cos(cv.a) * oy];
+// les objectifs se défendent : canons du trésor et des navires marchands
+function lootGuns(l, dt, n, dmg, rng, rate, col) {
+  l.gun -= dt; if (l.gun > 0) return; l.gun = rate;
+  let e = null, ed = rng; for (const b of boats) { if (b.dead || b.inv > 0 || b.npc) continue; const d = Math.hypot(b.x - l.x, b.y - l.y); if (d < ed && seen(b, l)) { ed = d; e = b; } }
+  if (!e) { l.gun = .5; return; }
+  const v = 470, tt = ed / v, ex = e.x + (e.vx || 0) * tt * .6, ey = e.y + (e.vy || 0) * tt * .6, an = Math.atan2(ey - l.y, ex - l.x), life = rng / v + .06, r0 = LT[l.k].r;
+  for (let k = 0; k < n; k++) { const a = an + (k - (n - 1) / 2) * .06; shots.push({ x: l.x + Math.cos(a) * r0, y: l.y + Math.sin(a) * r0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, l: life, L: life, d: dmg, o: l, tm: -2, sz: 5, k: 'ball', col }); }
+}
 function startEv(k) {
-  if (k === 'kraken') { const p = freeSpot(450, 120), l = mkL('kraken', p.x, p.y); l.life = 150; l.slam = 2.5; loot.push(l); banner('kraken'); }
+  if (k === 'kraken') { const p = freeSpot(450, 120), l = mkL('kraken', p.x, p.y); l.life = 200; l.slam = 2.5; loot.push(l); banner('kraken'); }
   else if (k === 'storm') {
     const h = Math.random() < .5, s = Math.random() < .5 ? 1 : -1;
     storm = { x: h ? (s > 0 ? -300 : WS + 300) : rnd(600, WS - 600), y: h ? rnd(600, WS - 600) : (s > 0 ? -300 : WS + 300), r: 500, flash: 0 };
@@ -239,12 +247,12 @@ function startEv(k) {
     const h = Math.random() < .5, s = Math.random() < .5 ? 1 : -1, y0 = rnd(700, WS - 700);
     convoy = { x: h ? (s > 0 ? 150 : WS - 150) : y0, y: h ? y0 : (s > 0 ? 150 : WS - 150), spd: 48 };
     convoy.tx = h ? (s > 0 ? WS - 150 : 150) : convoy.x; convoy.ty = h ? convoy.y : (s > 0 ? WS - 150 : 150); convoy.a = Math.atan2(convoy.ty - convoy.y, convoy.tx - convoy.x);
-    for (const [ox, oy] of [[0, 0], [-110, -80], [-110, 80]]) { const l = mkL('marchand', convoy.x, convoy.y); l.cv = convoy; l.ox = ox; l.oy = oy; l.hp = l.mhp = 700; l.xpo = 600; loot.push(l); }
+    for (const [ox, oy] of [[0, 0], [-110, -80], [-110, 80]]) { const l = mkL('marchand', convoy.x, convoy.y); l.cv = convoy; l.ox = ox; l.oy = oy; l.hp = l.mhp = 1600; l.xpo = 1000; l.gun = rnd(1, 2); loot.push(l); }
     const lv = Math.max(10, Math.round(avgLvl()) + 1);
-    for (const [ox, oy] of [[90, -150], [90, 150]]) { const e = mk({ lvl: lv, npc: 1 }); e.name = 'Escorte'; e.col = '#2d5f8a'; e.team = -1; e.c = lv >= 20 ? 'dreadnought' : lv >= 15 ? 'vaisseau' : 'fregate'; e.hpx = 2.5; e.hp = mhp(e); e.cv = convoy; e.ox = ox; e.oy = oy; e.x = convoy.x; e.y = convoy.y + oy; e.inv = 0; boats.push(e); }
+    for (const [ox, oy] of [[90, -150], [90, 150]]) { const e = mk({ lvl: lv, npc: 1 }); e.name = 'Escorte'; e.col = '#2d5f8a'; e.team = -1; e.c = lv >= 20 ? 'dreadnought' : lv >= 15 ? 'vaisseau' : 'fregate'; e.hpx = 4; e.dmx = 1.7; e.hp = mhp(e); e.cv = convoy; e.ox = ox; e.oy = oy; e.x = convoy.x; e.y = convoy.y + oy; e.inv = 0; boats.push(e); }
     banner('convoy');
   }
-  else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('treasure'); }
+  else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } const tl = mkL('tresor', p.x, p.y); tl.gun = 2; loot.push(tl); banner('treasure'); }
 }
 function events(dt) {
   plankT -= dt;
@@ -347,10 +355,11 @@ function tick(dt) {
     if (l.k === 'kraken') {
       let n = null, nd = 700; for (const b of boats) { const dd = Math.hypot(b.x - l.x, b.y - l.y); if (dd < nd) { nd = dd; n = b; } }
       if (n) { const a = Math.atan2(n.y - l.y, n.x - l.x); l.a += angD(a, l.a) * Math.min(1, dt * 2); l.x += Math.cos(l.a) * 40 * dt; l.y += Math.sin(l.a) * 40 * dt; l.vx = Math.cos(l.a) * 40; l.vy = Math.sin(l.a) * 40; }
-      l.slam -= dt; if (l.slam <= 0) { l.slam = 1.8; ring(l.x, l.y, d.r, d.r + 130, .5, '#c9a6ff'); for (const b of boats) if (Math.hypot(b.x - l.x, b.y - l.y) < d.r + 130 + R(b) * .5) hurt(b, 16, l); }
+      l.slam -= dt; if (l.slam <= 0) { l.slam = 1.8; ring(l.x, l.y, d.r, d.r + 130, .5, '#c9a6ff'); for (const b of boats) if (Math.hypot(b.x - l.x, b.y - l.y) < d.r + 130 + R(b) * .5) hurt(b, 34, l); }
       pushOut(l, d.r * .6); continue;
     }
-    if (l.cv) { const [fx2, fy2] = fpos(l.cv, l.ox, l.oy), dd = Math.hypot(fx2 - l.x, fy2 - l.y); l.a += angD(dd > 8 ? Math.atan2(fy2 - l.y, fx2 - l.x) : l.cv.a, l.a) * Math.min(1, dt * 3); const v = Math.min(110, dd * 2); l.x += Math.cos(l.a) * v * dt; l.y += Math.sin(l.a) * v * dt; l.vx = Math.cos(l.a) * v; l.vy = Math.sin(l.a) * v; continue; }
+    if (l.k === 'tresor') lootGuns(l, dt, 4, 26, 380, 1.6, '#ffcf3f');
+    if (l.cv) { lootGuns(l, dt, 2, 16, 300, 2.2, '#e8b04a'); const [fx2, fy2] = fpos(l.cv, l.ox, l.oy), dd = Math.hypot(fx2 - l.x, fy2 - l.y); l.a += angD(dd > 8 ? Math.atan2(fy2 - l.y, fx2 - l.x) : l.cv.a, l.a) * Math.min(1, dt * 3); const v = Math.min(110, dd * 2); l.x += Math.cos(l.a) * v * dt; l.y += Math.sin(l.a) * v * dt; l.vx = Math.cos(l.a) * v; l.vy = Math.sin(l.a) * v; continue; }
     if (d.mv) {
       l.t -= dt; if (l.t <= 0) { l.t = rnd(3, 7); const s = freeSpot(100, 60); l.wx = s.x; l.wy = s.y; }
       let tx = l.wx, ty = l.wy, f = .45, n = null, nd = 280 * 280; for (const b of boats) { const dx = b.x - l.x, dy = b.y - l.y; if (dx > 280 || dx < -280 || dy > 280 || dy < -280) continue; const dd = dx * dx + dy * dy; if (dd < nd) { nd = dd; n = b; } }
@@ -373,7 +382,7 @@ function tick(dt) {
     if (s.spl && s.l > s.L * .25) continue; // l'obus de mortier vole au-dessus de tout jusqu'à la fin de sa course
     if (inRock(s.x, s.y, 0)) { s.l = 0; burst(s.x, s.y, '#f4d58d', 4, 90); break; }
     let hit = null; for (const o of boats) { const dx = o.x - s.x, dy = o.y - s.y; if (dx > 200 || dx < -200 || dy > 200 || dy < -200) continue; if (o !== s.o && o.team !== s.tm && !o.dead && Math.hypot(dx, dy) < R(o) + s.sz) { hit = o; break; } }
-    if (!hit) for (const o of lootNear(s.x, s.y, 80)) if (!o.dead && !(o.cv && s.o.npc) && Math.hypot(o.x - s.x, o.y - s.y) < LT[o.k].r + s.sz) { hit = o; break; }
+    if (!hit) for (const o of lootNear(s.x, s.y, 80)) if (!o.dead && !s.o.k && !(o.cv && s.o.npc) && Math.hypot(o.x - s.x, o.y - s.y) < LT[o.k].r + s.sz) { hit = o; break; }
     if (hit) { s.l = 0; if (s.spl) boom(s); else { hurt(hit, s.d, s.o); if (s.burn && hit.s && !hit.dead) { hit.burnT = T + s.burn; hit.burnD = s.d * .3; hit.burnBy = s.o; } burst(s.x, s.y, s.burn ? '#ff9f43' : '#fff8e7', s.burn ? 6 : 3, 90); } }
   }
   shots = shots.filter(s => s.l > 0);
