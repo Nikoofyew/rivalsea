@@ -84,16 +84,16 @@ function mkL(k, x, y) {
 function lvup(b) {
   b.lvl++;
   const evo = b.lvl % 5 === 0 && b.lvl / 5 <= EVO.length && CL[b.c].next.length > 0;
-  if (b.p) { b.pend.push(evo ? 'evo' : 'bonus'); offer(b); }
+  if (b.p) { b.pend.push({ k: evo ? 'evo' : 'bonus', l: b.lvl }); offer(b); }
   else if (evo) evolve(b, pick(CL[b.c].next)); else rb(b);
   b.hp = Math.min(mhp(b), b.hp + mhp(b) * .3);
 }
 // Les choix (bonus ou évolution) ne mettent pas la partie en pause : le joueur choisit en naviguant.
 function offer(b) {
   if (b.offer || !b.pend.length) return;
-  const k = b.pend.shift();
-  if (k === 'evo' && CL[b.c].next.length) b.offer = { id: ++b.oid, k: 'evo', o: CL[b.c].next.slice(), l: b.lvl };
-  else b.offer = { id: ++b.oid, k: 'bonus', o: avail(b.s).map(x => BON.indexOf(x)).sort(() => Math.random() - .5).slice(0, 3), l: b.lvl };
+  const q = b.pend.shift(), k = q.k, l = q.l || b.lvl;
+  if (k === 'evo' && CL[b.c].next.length) b.offer = { id: ++b.oid, k: 'evo', o: CL[b.c].next.slice(), l };
+  else b.offer = { id: ++b.oid, k: 'bonus', o: avail(b.s).map(x => BON.indexOf(x)).sort(() => Math.random() - .5).slice(0, 3), l };
 }
 function gain(b, x) { if (!b || !b.s || b.dead) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
 function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.x, b.y, R(b), R(b) * 4, .7, '#ffcf3f'); say(b, b.x, b.y - R(b) - 30, 'evo', { c: k }, '#ffcf3f', 1.6); } }
