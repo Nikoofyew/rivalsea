@@ -7,6 +7,7 @@ const portal={name:window.RS_PORTAL||'',start(){},stop(){},link:null};
 if(portal.name==='crazygames'&&window.CrazyGames){const SDK=window.CrazyGames.SDK;let on=false,ready=SDK.init().catch(()=>{});
 portal.start=()=>{if(!on){on=true;ready.then(()=>{try{SDK.game.gameplayStart()}catch(e){}})}};
 portal.stop=()=>{if(on){on=false;ready.then(()=>{try{SDK.game.gameplayStop()}catch(e){}})}};
+ready.then(()=>{try{SDK.game.loadingStop()}catch(e){}});// le jeu est prêt (CrazyGames mesure le temps de chargement)
 portal.link=c=>{try{return SDK.game.inviteLink({salle:c})}catch(e){return ''}};
 ready.then(()=>{try{const v=SDK.game.getInviteParam('salle');if(v&&!invite){invite=String(v).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);if(typeof menu==='function'&&state==='menu')menu(lastMenuMsg)}}catch(e){}})}
 const cv=document.getElementById('c'),g=cv.getContext('2d'),ov=document.getElementById('ov'),offerEl=document.getElementById('offer');

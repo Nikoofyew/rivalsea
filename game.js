@@ -15,7 +15,7 @@ let evs = [];        // statistiques anonymes (vidées par le serveur)    // pou
 let plankT = 20;      // prochaine apparition de planches de réparation
 
 let rocks = [], fogs = [], boats = [], loot = [], shots = [], fx = [], deaths = [];
-let zones = [], whirl = null, ghostT = 0, ev = { t: 30 }, storm = null, convoy = null, UID = 0, FZ = 0, T = 0, boardCache = null, boardT = -1, leaderId = 0;
+let whirl = null, ghostT = 0, ev = { t: 30 }, storm = null, convoy = null, UID = 0, FZ = 0, T = 0, boardCache = null, boardT = -1, leaderId = 0;
 
 // ——— Outils ———
 const R = b => S.R(b.lvl, b.c);
@@ -125,14 +125,7 @@ function genWorld() {
     const n = ri(3, 4), id = FZ++; for (let i = 0; i < n; i++) fogs.push({ x: cx + rnd(-150, 150), y: cy + rnd(-150, 150), r: rnd(160, 230), z: id, ph: rnd(0, TAU) });
   }
   buildRockGrid();
-  // zones spéciales : banquise (ralentit), coraux (abîment la coque), eaux profondes (on y file plus vite)
-  zones = [];
-  for (const [k, n, r0, r1] of [['glace', 2, 240, 320], ['corail', 2, 170, 230], ['profond', 2, 280, 360]]) for (let i = 0; i < n * AREA; i++) {
-    let x, y, t = 0; do { x = rnd(r1 + 100, WS - r1 - 100); y = rnd(r1 + 100, WS - r1 - 100); t++; } while (t < 60 && (inRock(x, y, r1 * .6) || zones.some(z => Math.hypot(z.x - x, z.y - y) < z.r + r1 + 80) || fogs.some(f => Math.hypot(f.x - x, f.y - y) < f.r + r1 * .5)));
-    zones.push({ x, y, r: rnd(r0, r1), k });
-  }
 }
-const zoneK = (x, y) => { for (const z of zones) if ((x - z.x) ** 2 + (y - z.y) ** 2 < z.r * z.r) return z.k; return null; };
 function smoke(x, y) { const id = FZ++; for (let i = 0; i < 3; i++) fogs.push({ x: x + rnd(-60, 60), y: y + rnd(-60, 60), r: rnd(120, 160), z: id, ph: rnd(0, TAU), life: 8, L: 8 }); }
 
 // ——— Combat ———
@@ -360,11 +353,10 @@ function tick(dt) {
     if (b.p) { b.f = b.inp.f; b.tx = b.x + Math.cos(b.inp.a) * 100; b.ty = b.y + Math.sin(b.inp.a) * 100; } else if ((b.id + TN) % 2 === 0) ai(b, dt * 2); // l'IA réfléchit une fois sur deux (moins de calcul pour le serveur)
     let want = Math.atan2(b.ty - b.y, b.tx - b.x); if (!b.p) want = avoid(b, want, R(b));
     const tr = 3.4 / Math.pow(c.sz, 1.3); b.a += cl(angD(want, b.a), -tr * dt, tr * dt);
-    const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1) * (b.dive > 0 ? 1.15 : 1) * (b.zk === 'glace' ? .65 : b.zk === 'profond' ? 1.12 : 1);
+    const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1) * (b.dive > 0 ? 1.15 : 1);
     b.vx = Math.cos(b.a) * sp; b.vy = Math.sin(b.a) * sp; let wx = 0, wy = 0; if (inStorm(b.x, b.y)) [wx, wy] = wind(b);
     if (whirl) { const dx = whirl.x - b.x, dy = whirl.y - b.y, d = Math.hypot(dx, dy); if (d < whirl.r) { const p = 1 - d / whirl.r, pull = 40 + 110 * p, a = Math.atan2(dy, dx); wx += Math.cos(a) * pull + Math.cos(a + Math.PI / 2) * 120 * p; wy += Math.sin(a) * pull + Math.sin(a + Math.PI / 2) * 120 * p; if (d < 70 && b.inv <= 0) { b.hp = Math.max(mhp(b) * .1, b.hp - mhp(b) * .05 * dt); b.lh = T; } } }
     b.svx = b.vx + wx; b.svy = b.vy + wy; b.x = cl(b.x + (b.vx + wx) * dt, 20, WS - 20); b.y = cl(b.y + (b.vy + wy) * dt, 20, WS - 20); { const p = hullPush(b.x, b.y, b.a, R(b), CL[b.c].L, rocksNear(b.x, b.y)); b.x = p[0]; b.y = p[1]; }
-    b.zk = zoneK(b.x, b.y); if (b.zk === 'corail' && b.inv <= 0) { b.hp = Math.max(mhp(b) * .15, b.hp - mhp(b) * .012 * dt); b.lh = T; } // les coraux râpent la coque
     // hors combat depuis 5 s : +3 % de vie par seconde
     b.hp = Math.min(mhp(b), b.hp + (b.s.reg * mhp(b) / 100 + (c.reg || 0) + (T - (b.lh || 0) > 5 ? mhp(b) * .03 : 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt; if (b.dive > 0) b.dive -= dt;
     // en feu : le navire perd des points de vie pendant quelques secondes
@@ -481,7 +473,7 @@ function board() {
   boardT = T; return boardCache;
 }
 function welcome() {
-  return { t: 'w', mode: MODE, ws: WS, rocks: rocks.map(k => [r0(k.x), r0(k.y), r0(k.r), k.k === 'ile' ? 1 : 0, r2(k.ph)]), fogs: fogs.filter(f => f.life === undefined).map(f => [r0(f.x), r0(f.y), r0(f.r), f.z, r2(f.ph)]), zn: zones.map(z => [r0(z.x), r0(z.y), r0(z.r), z.k]) };
+  return { t: 'w', mode: MODE, ws: WS, rocks: rocks.map(k => [r0(k.x), r0(k.y), r0(k.r), k.k === 'ile' ? 1 : 0, r2(k.ph)]), fogs: fogs.filter(f => f.life === undefined).map(f => [r0(f.x), r0(f.y), r0(f.r), f.z, r2(f.ph)]) };
 }
 // cache = mémoire par connexion : on n'envoie le butin immobile que s'il change, et la mini-carte 2 fois par seconde
 function snapshotFor(id, vw, vh, px, py, cache) {
