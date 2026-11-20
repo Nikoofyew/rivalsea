@@ -9,7 +9,7 @@ function updStatus(){const s=document.getElementById('stat');if(s){s.innerHTML=s
 let avisDone=false;
 function avisHTML(){if(avisDone)return '<p class="small">💬 '+tr('avisThanks')+'</p>';return '<div class="avis"><span>'+tr('avisQ')+'</span><button class="ghost sm" data-av="1">👍</button><button class="ghost sm" data-av="-1">👎</button><input id="avt" maxlength="300" placeholder="'+tr('avisPh')+'"><button class="ghost sm" id="avs">'+tr('avisSend')+'</button></div>'}
 function wireAvis(){let v=0;ov.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{v=+b.dataset.av;ov.querySelectorAll('[data-av]').forEach(o=>o.classList.toggle('on',o===b))});const s=document.getElementById('avs');if(s)s.onclick=()=>{const t=(document.getElementById('avt').value||'').trim();if(!v&&!t)return;sendM({t:'avis',v,txt:t});avisDone=true;const a=ov.querySelector('.avis');if(a)a.outerHTML='<p class="small">💬 '+tr('avisThanks')+'</p>'}}
-function roomLink(c){return location.origin+location.pathname+'?salle='+c}
+function roomLink(c){return portal.link?portal.link(c):location.origin+location.pathname+'?salle='+c}
 function roomHTML(){const c=curRoom||invite;let s='<div class="rooms">';
 if(roomErr)s+='<p class="status err">'+roomErr+'</p>';
 if(c)s+='<p class="small">🔒 '+tr(curRoom?'inRoom':'invited',{c})+'</p><div class="rrow"><button class="ghost sm" id="cpy">🔗 '+tr('copyLink')+'</button><button class="ghost sm" id="pub">🌊 '+tr('publicSea')+'</button></div>';
@@ -35,7 +35,7 @@ function menu(msg){lastMenuMsg=msg||'';state='menu';offerEl.hidden=true;offerKey
 const sw=(arr,key,nf)=>arr.map(([c],i)=>{const n=nf(i);return '<button class="dot'+(cfg[key]===c?' on':'')+'" data-k="'+key+'" data-v="'+c+'" style="background:'+c+'" aria-label="'+n+'" title="'+n+'"></button>'}).join('')+(PREM[key]?PREM[key].map(([c],i)=>owns(key,c)?'<button class="dot prem'+(cfg[key]===c?' on':'')+'" data-k="'+key+'" data-v="'+c+'" style="background:'+c+'" title="'+premName(key,i)+'"></button>':'').join(''):'');
 const ownW=PREM.wake.filter(([v])=>owns('wake',v));
 const profBtn='<button id="prf" class="ghost prfb">🏆 '+tr('profile')+' · ⭐ '+prof.stars+(prof.streak>1?' · 🔥 '+prof.streak:'')+(todayChal().some(([id])=>!prof.daily.done.includes(id))?' <span class="new">'+tr('daily')+'</span>':'')+'</button>';
-const build=()=>'<div class="card wide">'+bookBtn()+langBtns()+'<h1 class="brand"><img src="/icon-180.png?v=2" alt="" width="52" height="52">RivalSea</h1>'+(msg?'<p><b>'+msg+'</b></p>':'')+
+const build=()=>'<div class="card wide">'+bookBtn()+langBtns()+'<h1 class="brand"><img src="icon-180.png?v=2" alt="" width="52" height="52">RivalSea</h1>'+(msg?'<p><b>'+msg+'</b></p>':'')+
 '<p>'+tr('intro')+'</p>'+
 '<div class="cust"><div class="pvb"><canvas id="pv" width="340" height="212" aria-label="'+tr('preview')+'"></canvas><div class="pvn"><button id="pvl" aria-label="◀">◀</button><span id="pvt"></span><button id="pvr" aria-label="▶">▶</button></div><button id="rnd" class="rnd">'+tr('random')+'</button></div><div class="fields">'+
 '<label class="nm">'+tr('name')+' <input id="nmi" maxlength="14" placeholder="'+tr('namePh')+'" value="'+(cfg.name||'').replace(/[&"<>]/g,'')+'"></label>'+
@@ -84,10 +84,10 @@ card.addEventListener('click',hide);gt.addEventListener('scroll',hide);window.ad
 wireLang(guide);document.getElementById('gbk').onclick=()=>menu(lastMenuMsg)}
 function showDead(d){ov.hidden=false;
 const by=d.by?String(npcN(d.by)).replace(/[&<>]/g,''):d.byk?tr('theKraken'):'';
-const build=()=>'<div class="card">'+langBtns()+'<h2>'+tr('sunkTitle')+'</h2><p>'+(by?tr('sunkBy',{n:by})+'<br>':'')+tr('sunkStats',{c:I.cls(d.c).n,l:d.lvl,s:d.sc})+'</p>'+(d.rec?'<p><b>🏆 '+tr('newBest')+'</b></p>':'')+'<div id="top">'+topHTML()+'</div>'+avisHTML()+(curRoom?'<p class="small">🔒 '+tr('inRoom',{c:curRoom})+'</p>':'')+'<div id="stat">'+statusHTML()+'</div><div class="btns"><button id="go">'+tr('again')+'</button><button class="ghost" id="mn">'+tr('edit')+'</button></div><button class="ghost sm shr" id="shr">📣 '+tr('share')+'</button></div>';
+const build=()=>'<div class="card">'+langBtns()+'<h2>'+tr('sunkTitle')+'</h2><p>'+(by?tr('sunkBy',{n:by})+'<br>':'')+tr('sunkStats',{c:I.cls(d.c).n,l:d.lvl,s:d.sc})+'</p>'+(d.rec?'<p><b>🏆 '+tr('newBest')+'</b></p>':'')+'<div id="top">'+topHTML()+'</div>'+avisHTML()+(curRoom?'<p class="small">🔒 '+tr('inRoom',{c:curRoom})+'</p>':'')+'<div id="stat">'+statusHTML()+'</div><div class="btns"><button id="go">'+tr('again')+'</button><button class="ghost" id="mn">'+tr('edit')+'</button></div>'+(portal.name?'':'<button class="ghost sm shr" id="shr">📣 '+tr('share')+'</button>')+'</div>';
 ov.innerHTML=build();sameH(build);
 wireLang(()=>showDead(d));
 // partager son score : partage du téléphone, sinon copie du texte
-document.getElementById('shr').onclick=async()=>{const t=tr('shareTxt',{l:d.lvl,c:I.cls(d.c).n,s:d.sc}),u='https://rivalsea.onrender.com';try{if(navigator.share){await navigator.share({title:'RivalSea',text:t,url:u});return}}catch(e){return}try{await navigator.clipboard.writeText(t+' '+u);document.getElementById('shr').textContent='✅ '+tr('copied')}catch(e){}};
+if(document.getElementById('shr'))document.getElementById('shr').onclick=async()=>{const t=tr('shareTxt',{l:d.lvl,c:I.cls(d.c).n,s:d.sc}),u='https://rivalsea.onrender.com';try{if(navigator.share){await navigator.share({title:'RivalSea',text:t,url:u});return}}catch(e){return}try{await navigator.clipboard.writeText(t+' '+u);document.getElementById('shr').textContent='✅ '+tr('copied')}catch(e){}};
 document.getElementById('go').onclick=()=>join();document.getElementById('mn').onclick=()=>menu();wireAvis();updStatus()}
 

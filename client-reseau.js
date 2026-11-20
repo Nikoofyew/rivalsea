@@ -7,7 +7,7 @@ let invite=(new URLSearchParams(location.search).get('salle')||'').toUpperCase()
 try{tuI=+(localStorage.getItem('rs-tuto')||0);best=JSON.parse(localStorage.getItem('rs-best')||'null')}catch(e){}
 
 function connect(){
-const url=(location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws';
+const url=window.RS_SERVER||(location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws'; // sur un site de jeux, le serveur reste celui de RivalSea
 try{ws=new WebSocket(url)}catch(e){conn='err';updStatus();setTimeout(connect,3000);return}
 conn='wait';updStatus();
 ws.onopen=()=>{conn='ok';updStatus()};
@@ -16,11 +16,11 @@ ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}onMsg(m)}}
 const sendM=o=>{if(ws&&ws.readyState===1)ws.send(JSON.stringify(o))};
 function onMsg(m){
 if(m.t==='w'){curRoom=m.room||'';lootM.clear();world={rocks:m.rocks.map(([x,y,r,i,ph])=>({x,y,r,k:i?'ile':'recif',ph})),fogs:m.fogs.map(([x,y,r,z,ph])=>({x,y,r,z,ph})),zones:(m.zn||[]).map(([x,y,r,k])=>({x,y,r,k}))};WSZ=m.ws;mode=m.mode;updStatus()}
-else if(m.t==='joined'){myId=m.id;curRoom=m.room||'';if(curRoom){invite='';history.replaceState(null,'',location.pathname+'?salle='+curRoom)}state='play';kbMode=false;keys.clear();aimHeld=false;ov.hidden=true;offerKey=null;fullMsg='';run={l:1,sc:0,t:0,lead:0,krak:0,c:'',t0:T}}
+else if(m.t==='joined'){portal.start();myId=m.id;curRoom=m.room||'';if(curRoom){invite='';history.replaceState(null,'',location.pathname+'?salle='+curRoom)}state='play';kbMode=false;keys.clear();aimHeld=false;ov.hidden=true;offerKey=null;fullMsg='';run={l:1,sc:0,t:0,lead:0,krak:0,c:'',t0:T}}
 else if(m.t==='top'){dayTop=m.l||[];weekTop=m.w||[];const t=document.getElementById('top');if(t)t.innerHTML=topHTML()}
 else if(m.t==='full'){fullMsg='full';updStatus()}
 else if(m.t==='noroom'){roomErr=tr('noRoom');invite='';if(state==='menu')menu(lastMenuMsg)}
-else if(m.t==='dead'){SND.play('sink');m.rec=!best||m.lvl>best.l||(m.lvl===best.l&&m.sc>best.s);if(m.rec){best={l:m.lvl,c:m.c,s:m.sc};try{localStorage.setItem('rs-best',JSON.stringify(best))}catch(e){}}state='dead';offerEl.hidden=true;offerKey=null;showDead(m)}
+else if(m.t==='dead'){portal.stop();SND.play('sink');m.rec=!best||m.lvl>best.l||(m.lvl===best.l&&m.sc>best.s);if(m.rec){best={l:m.lvl,c:m.c,s:m.sc};try{localStorage.setItem('rs-best',JSON.stringify(best))}catch(e){}}state='dead';offerEl.hidden=true;offerKey=null;showDead(m)}
 else if(m.t==='st')applySnap(m)}
 let lastIn=null;const LAT=.09;
 const lootM=new Map(); // butin connu : le serveur n'envoie que ce qui change

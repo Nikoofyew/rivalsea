@@ -2,6 +2,13 @@
 'use strict';
 const {TAU,EVO,CREAM,NAVY,WOOD,HULLS,SAILS,TRIMS,PATS,PREM,FLAGS_ALL,FLAGS,TEAMS,SK,CL,LT,BON,cl,angD}=S;
 const I=I18N,tr=(k,p)=>I.t(k,p);
+// sites de jeux (CrazyGames…) : la page indique son site dans window.RS_PORTAL ; ailleurs, rien ne change
+const portal={name:window.RS_PORTAL||'',start(){},stop(){},link:null};
+if(portal.name==='crazygames'&&window.CrazyGames){const SDK=window.CrazyGames.SDK;let on=false,ready=SDK.init().catch(()=>{});
+portal.start=()=>{if(!on){on=true;ready.then(()=>{try{SDK.game.gameplayStart()}catch(e){}})}};
+portal.stop=()=>{if(on){on=false;ready.then(()=>{try{SDK.game.gameplayStop()}catch(e){}})}};
+portal.link=c=>{try{return SDK.game.inviteLink({salle:c})}catch(e){return ''}};
+ready.then(()=>{try{const v=SDK.game.getInviteParam('salle');if(v&&!invite){invite=String(v).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);if(typeof menu==='function'&&state==='menu')menu(lastMenuMsg)}}catch(e){}})}
 const cv=document.getElementById('c'),g=cv.getContext('2d'),ov=document.getElementById('ov'),offerEl=document.getElementById('offer');
 let W,H,dpr,lowQ=false,ftE=16;
 function rs(){dpr=lowQ?1:Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr}

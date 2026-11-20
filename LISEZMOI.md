@@ -102,3 +102,14 @@ Tout est dans `shared.js` : vitesse (`spd`), points de vie (`hp`), dégâts (`dm
 - Pas de comptes ni de sauvegarde : un redémarrage du serveur remet le monde à zéro.
 - Une seule partie (un seul monde) par serveur.
 - Les mouvements sont lissés mais pas « prédits » : avec une mauvaise connexion, votre navire réagit avec un léger retard.
+
+## Version pour CrazyGames
+
+Le jeu envoyé à CrazyGames est le même, avec deux lignes en plus dans `index.html`, juste avant `shared.js` :
+
+```html
+<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+<script>window.RS_PORTAL='crazygames';window.RS_SERVER='wss://rivalsea.onrender.com/ws'</script>
+```
+
+Elles chargent l'outil de CrazyGames et font se connecter le jeu au serveur RivalSea. Dans ce mode, le bouton « Partager » est caché (CrazyGames interdit les liens vers d'autres sites) et le lien des parties privées passe par CrazyGames. Pour une nouvelle version : mettre tous les fichiers du jeu (sauf `server.js`, `game.js`, `tests.js`) avec cet `index.html` modifié dans un fichier .zip, et l'envoyer sur le portail CrazyGames.

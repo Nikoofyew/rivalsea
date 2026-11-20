@@ -1,4 +1,5 @@
 /* RivalSea – apparence du menu et de l’interface */
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}input,textarea{-webkit-user-select:text;user-select:text}
 :root{--card:#fff8e7;--ink:#0b3d6b;--accent:#ff6b57;--sun:#ffcf3f;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--card:#12335a;--ink:#fff3d6;color-scheme:dark}}
 html,body{height:100%;margin:0;background:#1fb5c9;overflow:hidden;font-family:'Baloo 2',system-ui,sans-serif;touch-action:none;-webkit-user-select:none;user-select:none}
