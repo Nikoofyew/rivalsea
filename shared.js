@@ -5,9 +5,11 @@
 const DMG = .42, WS = 6800, TAU = Math.PI * 2, EVO = [5, 10, 15, 20], SEE = 130;
 const CREAM = '#fff8e7', NAVY = '#0b3d6b', WOOD = '#7a4a24';
 const COLS = ['#ff6b57', '#ffcf3f', '#8b5cf6', '#5be3a1', '#ff8fc7', '#ff9f43', '#4dabf7'];
-const HULLS = [['#ff6b57', 'Corail'], ['#ffcf3f', 'Soleil'], ['#8b5cf6', 'Lavande'], ['#5be3a1', 'Menthe'], ['#ff8fc7', 'Rose'], ['#ff9f43', 'Orange'], ['#4dabf7', 'Azur'], ['#5c6b80', 'Ardoise']];
-const SAILS = [['#fff8e7', 'Crème'], ['#2b2b2b', 'Noir'], ['#ff6b57', 'Rouge'], ['#4dabf7', 'Bleu'], ['#ffcf3f', 'Or']];
-const FLAGS = { skull: '☠', star: '★', anchor: '⚓', heart: '♥', none: '' };
+const HULLS = [['#ff6b57', 'Corail'], ['#ffcf3f', 'Soleil'], ['#8b5cf6', 'Lavande'], ['#5be3a1', 'Menthe'], ['#ff8fc7', 'Rose'], ['#ff9f43', 'Orange'], ['#4dabf7', 'Azur'], ['#5c6b80', 'Ardoise'], ['#2f3640', 'Charbon'], ['#a8323e', 'Bordeaux'], ['#f4f1e8', 'Ivoire'], ['#16a085', 'Émeraude']];
+const SAILS = [['#fff8e7', 'Crème'], ['#2b2b2b', 'Noir'], ['#ff6b57', 'Rouge'], ['#4dabf7', 'Bleu'], ['#ffcf3f', 'Or'], ['#8b5cf6', 'Violet'], ['#5be3a1', 'Vert'], ['#ff8fc7', 'Rose']];
+const TRIMS = [['#fff8e7', 'Crème'], ['#ffcf3f', 'Or'], ['#2b2b2b', 'Noir'], ['#ff6b57', 'Corail'], ['#4dabf7', 'Azur'], ['#c0c7d0', 'Argent']];
+const PATS = [['plain', 'Unie'], ['stripes', 'Rayée'], ['center', 'Bande'], ['half', 'Moitié'], ['tips', 'Bouts']];
+const FLAGS = { skull: '☠', star: '★', anchor: '⚓', heart: '♥', crown: '♛', swords: '⚔', moon: '☾', flower: '✿', none: '' };
 const TEAMS = [{ n: 'Rouges', col: '#ff6b57' }, { n: 'Jaunes', col: '#ffcf3f' }, { n: 'Violets', col: '#8b5cf6' }, { n: 'Verts', col: '#5be3a1' }];
 const NAMES = ['Mouette', 'Corsaire', 'Cabotin', 'Marée', 'Tempête', 'Sardine', 'Albatros', 'Boussole', 'Écume', 'Pinson', 'Tribord', 'Hublot', 'Goéland', 'Typhon', 'Crabe', 'Bigorneau'];
 
@@ -63,8 +65,8 @@ const LT = {
   marchand: { hp: 120, xp: 180, r: 22, n: 3, mv: 85, nm: 'Marchand', col: '#c98a4b', sh: { L: 1.5, Wd: .85, masts: [{ x: .3, k: 'sq' }, { x: -.25, k: 'sq' }], ports: 2 } },
   epave: { hp: 8, xp: 0, r: 11, n: 0 },
   planche: { hp: 10, xp: 0, r: 15, n: 0, heal: .2 },   // planches de réparation : rares, soignent 20 % de la vie
-  tresor: { hp: 450, xp: 1000, r: 28, n: 0, nm: 'Trésor' },
-  kraken: { hp: 1400, xp: 1500, r: 52, n: 0, nm: 'Kraken' }
+  tresor: { hp: 1300, xp: 1400, r: 28, n: 0, nm: 'Trésor' },
+  kraken: { hp: 5000, xp: 2600, r: 52, n: 0, nm: 'Kraken' }
 };
 
 const BON = [
@@ -72,7 +74,7 @@ const BON = [
   { n: 'Gros calibre', d: 'Dégâts +25 %', f: s => s.dmg *= 1.25 },
   { n: 'Voiles neuves', d: 'Vitesse +10 %', f: s => s.spd *= 1.1, ok: s => s.spd < 1.3 },
   { n: 'Longue-vue', d: 'Portée +15 %', f: s => s.rng *= 1.15, ok: s => s.rng < 1.6 },
-  { n: 'Coque renforcée', d: '+30 points de vie max', f: s => s.hp += 30 },
+  { n: 'Coque renforcée', d: '+30 points de vie de base (plus sur les navires robustes)', f: s => s.hp += 30 },
   { n: 'Salve multiple', d: 'Un projectile de plus par tir', f: s => s.multi++, ok: s => s.multi < 2 },
   { n: 'Charpentier', d: 'Répare 2 % de la vie max par seconde', f: s => s.reg += 2, ok: s => s.reg < 4 },
   { n: 'Filets de récupération', d: 'XP des épaves et tonneaux +30 %', f: s => s.loot *= 1.3 },
@@ -87,7 +89,17 @@ const angD = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 const R = (lvl, c) => (13 + Math.min(lvl, 30) * .7) * CL[c].sz;       // rayon d'un navire
 const need = lvl => Math.round(100 + 26 * (lvl - 1) + 1.6 * (lvl - 1) ** 2); // XP pour passer au niveau suivant
 const canHide = c => CL[c].t < 3;                      // peut se cacher dans le brouillard
+// Collision coque / îles et rochers : on teste le centre, la proue et la poupe du navire (la coque est allongée)
+function hullPush(x, y, a, r, Lf, rocks) {
+  const ca = Math.cos(a), sa = Math.sin(a), pts = [[0, r * .8], [r * Lf * .82, r * .22], [-r * Lf * .7, r * .3]];
+  for (let it = 0; it < 2; it++) for (const k of rocks) {
+    const pad = k.k === 'ile' ? 10 : 3; if (Math.abs(k.x - x) > k.r + r * Lf + 40 || Math.abs(k.y - y) > k.r + r * Lf + 40) continue;
+    for (const [off, rad] of pts) { const px = x + ca * off, py = y + sa * off, dx = px - k.x, dy = py - k.y, d = Math.hypot(dx, dy), m = k.r + pad + rad;
+      if (d < m && d > 0) { x += dx / d * (m - d); y += dy / d * (m - d); } }
+  }
+  return [x, y];
+}
 
-const S = { DMG, WS, TAU, EVO, SEE, CREAM, NAVY, WOOD, COLS, HULLS, SAILS, FLAGS, TEAMS, NAMES, SK, CL, LT, BON, rnd, ri, cl, pick, angD, R, need, canHide };
+const S = { DMG, WS, TAU, EVO, SEE, CREAM, NAVY, WOOD, COLS, HULLS, SAILS, TRIMS, PATS, FLAGS, TEAMS, NAMES, SK, CL, LT, BON, rnd, ri, cl, pick, angD, R, need, canHide, hullPush };
 if (typeof module !== 'undefined' && module.exports) module.exports = S; else root.S = S;
 })(typeof window !== 'undefined' ? window : globalThis);

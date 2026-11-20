@@ -2,11 +2,11 @@
 // les tirs, les dégâts et l'XP, puis envoie à chaque joueur ce qu'il a le droit de voir.
 'use strict';
 const S = require('./shared.js');
-const { DMG, CL, LT, SK, BON, EVO, WS, TAU, SEE, TEAMS, NAMES, COLS, SAILS, HULLS, FLAGS, rnd, ri, cl, pick, angD, need } = S;
+const { DMG, CL, LT, SK, BON, EVO, WS, TAU, SEE, TEAMS, NAMES, COLS, SAILS, HULLS, TRIMS, PATS, FLAGS, rnd, ri, cl, pick, angD, need, hullPush } = S;
 
 const MODE = process.env.MODE === 'team' ? 'team' : 'ffa';          // ffa = chacun pour soi, team = équipages
 const BOTS = Math.max(0, parseInt(process.env.BOTS || '20', 10));   // nombre de navires visé (joueurs + bots)
-const BOT_DMG = .6;   // les bots font 40 % de dégâts en moins que les joueurs
+const BOT_DMG = .72;  // les bots font 28 % de dégâts en moins que les joueurs
 const BOT_HOLD = 4;   // un bot qui apparaît ne peut pas tirer pendant 4 s
 const AREA = Math.round((WS / 3400) ** 2); // carte agrandie : on multiplie îles, brouillard et butin d'autant
 const KILL_HEAL = .3; // couler un navire rend 30 % de la vie max
@@ -18,7 +18,7 @@ let ev = { t: 30 }, storm = null, convoy = null, UID = 0, FZ = 0, T = 0, boardCa
 // ——— Outils ———
 const R = b => S.R(b.lvl, b.c);
 const mass = b => CL[b.c].sz ** 2 * (1 + b.lvl * .02);
-const mhp = b => (100 + b.s.hp) * CL[b.c].hp * (1 + .015 * (b.lvl - 1)); // un peu plus solide à chaque niveau
+const mhp = b => (100 + b.s.hp) * CL[b.c].hp * (1 + .015 * (b.lvl - 1)) * (b.hpx || 1); // un peu plus solide à chaque niveau
 const lmhp = l => l.mhp || LT[l.k].hp;
 const avail = s => BON.filter(x => !x.ok || x.ok(s));
 const rb = b => pick(avail(b.s)).f(b.s);
@@ -47,6 +47,13 @@ const banner = (id, p) => fx.push({ k: 'banner', id, p });
 const burst = (x, y, col, n, sp) => fx.push({ k: 'burst', x: Math.round(x), y: Math.round(y), col, n, sp: sp || 200 });
 const ring = (x, y, r, m, l, col) => fx.push({ k: 'ring', x: Math.round(x), y: Math.round(y), r, m, l, col });
 const avgLvl = () => { const h = humans(); return h.length ? h.reduce((a, b) => a + b.lvl, 0) / h.length : ri(2, 6); };
+// bots de tous niveaux : on remplit la tranche de niveaux la moins représentée
+const BANDS = [[1, 4, .3], [5, 9, .25], [10, 14, .2], [15, 19, .15], [20, 26, .1]];
+function botLevel(want) {
+  const cnt = BANDS.map(() => 0); for (const b of boats) if (!b.p && !b.npc) { const i = BANDS.findIndex(([a, z]) => b.lvl >= a && b.lvl <= z); cnt[i < 0 ? 4 : i]++; }
+  let bi = 0, bd = -1e9; BANDS.forEach(([, , p], i) => { const d = p * want - cnt[i] + Math.random() * .5; if (d > bd) { bd = d; bi = i; } });
+  return ri(BANDS[bi][0], BANDS[bi][1]);
+}
 function weakTeam() { const c = [0, 0, 0, 0]; for (const b of boats) if (!b.npc && b.team >= 0 && b.team < 4) c[b.team]++; return c.indexOf(Math.min(...c)); }
 
 // ——— Création ———
@@ -55,14 +62,14 @@ function spawnSpot(lvl) {
   let best = null, bs = -1;
   for (let i = 0; i < 50; i++) {
     const s = freeSpot(400, 90); let m = 1e9;
-    for (const o of boats) { if (o.dead || (o.lvl <= lvl + 2 && !o.npc)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < m) m = d; }
+    for (const o of boats) { if (o.dead || (o.lvl <= lvl + 2 && !o.npc && !o.p)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < m) m = d; }
     if (m >= 1000) return s; if (m > bs) { bs = m; best = s; }
   }
   return best || freeSpot(400, 90);
 }
 function mk(opt) {
   const sp = spawnSpot(opt.lvl || 1);
-  const b = { p: !!opt.p, id: ++UID, name: opt.name || pick(NAMES), col: opt.hull || pick(COLS), sail: opt.sail || pick(SAILS)[0], flag: opt.flag || pick(Object.keys(FLAGS)),
+  const b = { p: !!opt.p, id: ++UID, name: opt.name || pick(NAMES), col: opt.hull || pick(COLS), sail: opt.sail || pick(SAILS)[0], flag: opt.flag || pick(Object.keys(FLAGS)), trim: opt.trim || (Math.random() < .5 ? '#fff8e7' : pick(TRIMS)[0]), pat: opt.pat || (Math.random() < .4 ? 'plain' : pick(PATS)[0]),
     x: sp.x, y: sp.y, a: rnd(0, TAU), aim: 0, vx: 0, vy: 0, lvl: 1, xp: 0, tot: 0, sc: 0, c: 'barque', cd: rnd(0, 1), cd2: 0, skcd: 3, boost: 0, rc: 0, inv: opt.p ? 6 : 3, hold: opt.p ? 0 : BOT_HOLD,
     tx: 0, ty: 0, f: 1, t: 0, wx: WS / 2, wy: WS / 2, pend: [], offer: null, oid: 0, fl: 0, fz: -1, inp: { a: 0, f: 0 }, npc: !!opt.npc,
     s: { rate: 1, dmg: 1, spd: 1, rng: 1, hp: 0, multi: 0, reg: 0, loot: 1, ram: 1, skr: 1, brd: 0, mres: 1 }, hp: 1 };
@@ -95,7 +102,7 @@ function offer(b) {
   if (k === 'evo' && CL[b.c].next.length) b.offer = { id: ++b.oid, k: 'evo', o: CL[b.c].next.slice(), l };
   else b.offer = { id: ++b.oid, k: 'bonus', o: avail(b.s).map(x => BON.indexOf(x)).sort(() => Math.random() - .5).slice(0, 3), l };
 }
-function gain(b, x) { if (!b || !b.s || b.dead) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
+function gain(b, x) { if (!b || !b.s || b.dead || (!b.p && b.lvl >= 30)) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
 function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.x, b.y, R(b), R(b) * 4, .7, '#ffcf3f'); say(b, b.x, b.y - R(b) - 30, 'evo', { c: k }, '#ffcf3f', 1.6); } }
 
 // ——— Monde : îles, récifs, brouillard ———
@@ -202,7 +209,7 @@ function crack(l) {
 // ——— Événements : kraken, tempête, convoi, trésor ———
 const fpos = (cv, ox, oy) => [cv.x + Math.cos(cv.a) * ox - Math.sin(cv.a) * oy, cv.y + Math.sin(cv.a) * ox + Math.cos(cv.a) * oy];
 function startEv(k) {
-  if (k === 'kraken') { const p = freeSpot(450, 120), l = mkL('kraken', p.x, p.y); l.life = 80; l.slam = 2.5; loot.push(l); banner('kraken'); }
+  if (k === 'kraken') { const p = freeSpot(450, 120), l = mkL('kraken', p.x, p.y); l.life = 150; l.slam = 2.5; loot.push(l); banner('kraken'); }
   else if (k === 'storm') {
     const h = Math.random() < .5, s = Math.random() < .5 ? 1 : -1;
     storm = { x: h ? (s > 0 ? -300 : WS + 300) : rnd(600, WS - 600), y: h ? rnd(600, WS - 600) : (s > 0 ? -300 : WS + 300), r: 500, flash: 0 };
@@ -212,9 +219,9 @@ function startEv(k) {
     const h = Math.random() < .5, s = Math.random() < .5 ? 1 : -1, y0 = rnd(700, WS - 700);
     convoy = { x: h ? (s > 0 ? 150 : WS - 150) : y0, y: h ? y0 : (s > 0 ? 150 : WS - 150), spd: 48 };
     convoy.tx = h ? (s > 0 ? WS - 150 : 150) : convoy.x; convoy.ty = h ? convoy.y : (s > 0 ? WS - 150 : 150); convoy.a = Math.atan2(convoy.ty - convoy.y, convoy.tx - convoy.x);
-    for (const [ox, oy] of [[0, 0], [-110, -80], [-110, 80]]) { const l = mkL('marchand', convoy.x, convoy.y); l.cv = convoy; l.ox = ox; l.oy = oy; l.hp = l.mhp = 240; l.xpo = 420; loot.push(l); }
+    for (const [ox, oy] of [[0, 0], [-110, -80], [-110, 80]]) { const l = mkL('marchand', convoy.x, convoy.y); l.cv = convoy; l.ox = ox; l.oy = oy; l.hp = l.mhp = 700; l.xpo = 600; loot.push(l); }
     const lv = Math.max(10, Math.round(avgLvl()) + 1);
-    for (const [ox, oy] of [[90, -150], [90, 150]]) { const e = mk({ lvl: lv, npc: 1 }); e.name = 'Escorte'; e.col = '#2d5f8a'; e.team = -1; e.c = lv >= 20 ? 'dreadnought' : lv >= 15 ? 'vaisseau' : 'fregate'; e.hp = mhp(e); e.cv = convoy; e.ox = ox; e.oy = oy; e.x = convoy.x; e.y = convoy.y + oy; e.inv = 0; boats.push(e); }
+    for (const [ox, oy] of [[90, -150], [90, 150]]) { const e = mk({ lvl: lv, npc: 1 }); e.name = 'Escorte'; e.col = '#2d5f8a'; e.team = -1; e.c = lv >= 20 ? 'dreadnought' : lv >= 15 ? 'vaisseau' : 'fregate'; e.hpx = 2.5; e.hp = mhp(e); e.cv = convoy; e.ox = ox; e.oy = oy; e.x = convoy.x; e.y = convoy.y + oy; e.inv = 0; boats.push(e); }
     banner('convoy');
   }
   else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('treasure'); }
@@ -249,11 +256,13 @@ function ai(b, dt) {
     if (e) engage(b, e, Math.hypot(e.x - b.x, e.y - b.y), rng); else { b.tx = fx2; b.ty = fy2; b.f = cl(Math.hypot(fx2 - b.x, fy2 - b.y) / 80, .3, 1); }
     if (b.skcd <= 0 && e) useSkill(b); return;
   }
-  let e = null, ed = rng * 1.3, th = null, td = 520;
-  for (const o of boats) if (o !== b && !o.dead && o.team !== b.team && seen(o, b)) { const d = Math.hypot(o.x - b.x, o.y - b.y); if (d < ed && o.inv <= 0 && o.lvl >= b.lvl - 6) { ed = d; e = o; } if (d < td && o.lvl > b.lvl + 3) { td = d; th = o; } }
+  let e = null, ed = rng * 1.3, th = null, td = 720;
+  for (const o of boats) if (o !== b && !o.dead && o.team !== b.team && seen(o, b)) { const d = Math.hypot(o.x - b.x, o.y - b.y); if (d < ed && o.inv <= 0 && o.lvl >= b.lvl - 6) { ed = d; e = o; } if (d < td && (o.lvl > b.lvl + 3 || CL[o.c].t >= c.t + 2)) { td = d; th = o; } }
   b.tx = b.wx; b.ty = b.wy; b.f = .7;
-  if (th && (hpR < .6 || th.lvl > b.lvl + 5 || !e || e === th)) {
-    b.tx = cl(b.x * 2 - th.x, 100, WS - 100); b.ty = cl(b.y * 2 - th.y, 100, WS - 100); b.f = 1;
+  if (th && (hpR < .6 || th.lvl > b.lvl + 5 || CL[th.c].t >= c.t + 2 || !e || e === th)) {
+    // fuite en zigzag pour esquiver les tirs du gros navire
+    const fa = Math.atan2(b.y - th.y, b.x - th.x) + Math.sin(T * 2.5 + b.id) * .7;
+    b.tx = cl(b.x + Math.cos(fa) * 300, 100, WS - 100); b.ty = cl(b.y + Math.sin(fa) * 300, 100, WS - 100); b.f = 1;
     if (canHide(b)) { let f0 = null, fd = 900; for (const f of fogs) { const d = Math.hypot(f.x - b.x, f.y - b.y); if (d < fd) { fd = d; f0 = f; } } if (f0) { b.tx = f0.x; b.ty = f0.y; } }
     if (b.skcd <= 0 && (c.sk === 'boost' || c.sk === 'smoke')) useSkill(b);
   }
@@ -273,7 +282,7 @@ function tick(dt) {
   T += dt;
   // garder assez de navires sur la carte : les bots comblent les places libres
   const nb = boats.filter(b => !b.p && !b.npc).length, want = Math.max(4, BOTS - humans().length);
-  if (nb < want) { const hs = humans(), base = hs.length ? Math.min(...hs.map(h => h.lvl)) : ri(2, 5); boats.push(mk({ lvl: Math.max(1, Math.random() < .25 ? Math.round(avgLvl()) - 2 : base + ri(-1, 2)) })); }
+  if (nb < want) boats.push(mk({ lvl: botLevel(want) }));
   else if (nb > want + 1) { const v = boats.find(b => !b.p && !b.npc && b.lvl < 6); if (v) { v.gone = true; v.dead = true; } }
   // chef de la flotte : le navire le plus avancé (niveau 8 minimum)
   { let top = null; for (const b of boats) if (!b.npc && !b.dead && (!top || b.lvl > top.lvl || (b.lvl === top.lvl && b.sc > top.sc))) top = b; leaderId = top && top.lvl >= 8 ? top.id : 0; }
@@ -287,7 +296,7 @@ function tick(dt) {
     const tr = 3.4 / Math.pow(c.sz, 1.3); b.a += cl(angD(want, b.a), -tr * dt, tr * dt);
     const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1);
     b.vx = Math.cos(b.a) * sp; b.vy = Math.sin(b.a) * sp; let wx = 0, wy = 0; if (inStorm(b.x, b.y)) [wx, wy] = wind(b);
-    b.svx = b.vx + wx; b.svy = b.vy + wy; b.x = cl(b.x + (b.vx + wx) * dt, 20, WS - 20); b.y = cl(b.y + (b.vy + wy) * dt, 20, WS - 20); pushOut(b, R(b) * .7);
+    b.svx = b.vx + wx; b.svy = b.vy + wy; b.x = cl(b.x + (b.vx + wx) * dt, 20, WS - 20); b.y = cl(b.y + (b.vy + wy) * dt, 20, WS - 20); { const p = hullPush(b.x, b.y, b.a, R(b), CL[b.c].L, rocksNear(b.x, b.y)); b.x = p[0]; b.y = p[1]; }
     // hors combat depuis 5 s : +3 % de vie par seconde
     b.hp = Math.min(mhp(b), b.hp + (b.s.reg * mhp(b) / 100 + (c.reg || 0) + (T - (b.lh || 0) > 5 ? mhp(b) * .03 : 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt;
     if (b.cd <= 0 && b.hold <= 0) fire(b);
@@ -354,7 +363,7 @@ function tick(dt) {
 const clean = (v, list, def) => list.includes(v) ? v : def;
 function addPlayer(m) {
   const name = String(m.name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 14) || 'Moussaillon';
-  const b = mk({ p: 1, name, hull: clean(m.hull, HULLS.map(h => h[0]), '#ff6b57'), sail: clean(m.sail, SAILS.map(h => h[0]), '#fff8e7'), flag: clean(m.flag, Object.keys(FLAGS), 'skull') });
+  const b = mk({ p: 1, name, hull: clean(m.hull, HULLS.map(h => h[0]), '#ff6b57'), sail: clean(m.sail, SAILS.map(h => h[0]), '#fff8e7'), flag: clean(m.flag, Object.keys(FLAGS), 'skull'), trim: clean(m.trim, TRIMS.map(h => h[0]), '#fff8e7'), pat: clean(m.pat, PATS.map(h => h[0]), 'plain') });
   boats.push(b); b.fz = zoneAt(b.x, b.y);
   return b.id;
 }
@@ -386,8 +395,8 @@ function snapshotFor(id, vw, vh, px, py) {
   const big = loot.filter(l => l.k === 'tresor' || l.k === 'kraken' || l.k === 'coffre' || l.k === 'marchand' || l.k === 'planche');
   return {
     t: 'st', cx: r0(viewer.x), cy: r0(viewer.y), ld: leaderId,
-    me: me ? { i: me.id, x: r0(me.x), y: r0(me.y), l: me.lvl, xp: r0(me.xp), nd: need(me.lvl), sc: me.sc, c: me.c, h: r0(me.hp), H: r0(mhp(me)), sk: r2(Math.max(0, me.skcd)), skm: r2(SK[CL[me.c].sk].cd * me.s.skr), fz: me.fz, tm: me.team, rng: r0(CL[me.c].w.rng * me.s.rng), of: me.offer } : null,
-    b: boats.filter(b => inV(b) && (b === me || seen(b, viewer))).map(b => ({ i: b.id, x: r0(b.x), y: r0(b.y), vx: r0(b.svx || 0), vy: r0(b.svy || 0), a: r2(b.a), m: r2(b.aim), c: b.c, l: b.lvl, h: r0(b.hp), H: r0(mhp(b)), col: b.col, sl: b.sail, fg: b.flag, n: b.name, np: b.npc ? 1 : 0, ia: !b.p && !b.npc ? 1 : 0, tm: b.team, iv: b.inv > 0 ? 1 : 0, fl: b.fl > 0 ? 1 : 0, bo: b.boost > 0 ? 1 : 0 })),
+    me: me ? { i: me.id, x: r0(me.x), y: r0(me.y), l: me.lvl, xp: r0(me.xp), nd: need(me.lvl), sc: me.sc, c: me.c, h: r0(me.hp), H: r0(mhp(me)), sk: r2(Math.max(0, me.skcd)), skm: r2(SK[CL[me.c].sk].cd * me.s.skr), fz: me.fz, tm: me.team, rng: r0(CL[me.c].w.rng * me.s.rng), of: me.offer, st: [me.s.dmg, me.s.rate, me.s.rng, me.s.multi, me.s.spd, me.s.reg, me.s.ram, me.s.brd, me.s.mres, me.s.hp].map(r2) } : null,
+    b: boats.filter(b => inV(b) && (b === me || seen(b, viewer))).map(b => ({ i: b.id, x: r0(b.x), y: r0(b.y), vx: r0(b.svx || 0), vy: r0(b.svy || 0), a: r2(b.a), m: r2(b.aim), c: b.c, l: b.lvl, h: r0(b.hp), H: r0(mhp(b)), col: b.col, sl: b.sail, fg: b.flag, tc: b.trim, pt: b.pat, n: b.name, np: b.npc ? 1 : 0, ia: !b.p && !b.npc ? 1 : 0, tm: b.team, iv: b.inv > 0 ? 1 : 0, fl: b.fl > 0 ? 1 : 0, bo: b.boost > 0 ? 1 : 0 })),
     l: loot.filter(l => inV(l) && seenL(l, viewer)).map(l => ({ i: l.id, k: l.k, x: r0(l.x), y: r0(l.y), vx: l.vx ? r0(l.vx) : undefined, vy: l.vy ? r0(l.vy) : undefined, a: r2(l.a), h: r0(l.hp), H: lmhp(l), cv: l.cv ? 1 : 0, tn: l.tint, lf: l.life !== undefined ? r2(l.life) : undefined, fl: l.fl > 0 ? 1 : 0 })),
     s: shots.filter(inV).map(s => [r0(s.x), r0(s.y), r0(s.vx), r0(s.vy), s.sz, s.col, s.spl ? 1 : 0, r2(s.l), r2(s.L), s.k || 'ball']),
     fg: fogs.filter(f => f.life !== undefined).map(f => [r0(f.x), r0(f.y), r0(f.r), f.z, r2(f.life), f.L, r2(f.ph)]),
@@ -406,7 +415,7 @@ function stats() { return { humains: humans().length, navires: boats.length, but
 
 // Démarrage du monde
 genWorld();
-for (let i = 0; i < BOTS; i++) boats.push(mk({ lvl: ri(1, 5) }));
+for (let i = 0; i < BOTS; i++) boats.push(mk({ lvl: botLevel(BOTS) }));
 for (const k in LT) for (let i = 0; i < LT[k].n * AREA; i++) loot.push(mkL(k));
 
 module.exports = { tick, addPlayer, removePlayer, input, skill, pickOffer, welcome, snapshotFor, drainDeaths, clearFx, alive, stats, MODE, _debug: { startEv, get boats() { return boats; }, get loot() { return loot; } } };

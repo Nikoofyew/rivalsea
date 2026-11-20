@@ -5,7 +5,7 @@
 const UI = {
 fr: {
   intro: 'Cassez tonneaux et coffres, coulez les autres navires et faites évoluer votre bateau, des rames jusqu’au moteur. Au niveau 5, choisissez votre famille : rapide, abordage ou artillerie. Les petits navires disparaissent dans le brouillard.',
-  name: 'Nom', namePh: 'Moussaillon', hull: 'Coque', sails: 'Voiles', flag: 'Pavillon', preview: 'Aperçu du navire',
+  trim: 'Liseré', pattern: 'Motif', random: '🎲 Au hasard', name: 'Nom', namePh: 'Moussaillon', hull: 'Coque', sails: 'Voiles', flag: 'Pavillon', preview: 'Aperçu du navire',
   aiNote: 'Les navires marqués <b>IA</b> sont des bots qui complètent la partie quand il y a peu de joueurs.',
   controls: 'Souris ou joystick tactile pour diriger · <b>Espace</b> ou bouton rond pour la compétence · touches <b>1 2 3</b> pour les choix',
   join: 'Rejoindre la partie', language: 'Langue',
@@ -16,6 +16,7 @@ fr: {
   unreachable: 'Serveur injoignable, nouvelle tentative…', connecting: 'Connexion au serveur… (jusqu’à une minute s’il était en veille)', connectingShort: 'Connexion au serveur…',
   lost: 'La connexion au serveur a été perdue. Nouvelle tentative…',
   sunkTitle: 'Coulé !', sunkBy: 'Envoyé par le fond par <b>{n}</b>.', sunkStats: '{c} de niveau {l}, {s} navires coulés.', again: 'Reprendre la mer', edit: 'Modifier mon navire',
+  hpBon: '+{n} points de vie max sur ce navire', stDmg: 'Dégâts par tir', stRate: 'Cadence', stRng: 'Portée', stTg: 'Cibles', stSpl: 'Explosion', stDps: 'Dégâts / s', stShip: 'Mon navire', stHp: 'Vie max', stReg: 'Réparation', stRam: 'Éperon', stBrd: 'Abordage', stArm: 'Blindage', stMres: 'Chocs subis',
   hp: 'PV', speed: 'Vitesse', targets: '{n} cibles', explosion: 'explosion', side: 'tir latéral', regen: 'auto-réparation', hides: 'se cache', ramS: 'éperon ×{n}', brdS: 'abordage', armor: 'blindage {n} %', second: 'Arme secondaire', 'fam.r': 'Famille rapide', 'fam.a': 'Famille abordage', 'fam.c': 'Famille artillerie',
   evoTitle: 'Niveau {l} : évolution ! Choisissez votre navire', bonusTitle: 'Niveau {l} : choisissez un bonus', key: 'touche {n}', legendary: 'Légendaire',
   convoy: 'Convoi', storm: 'Tempête', escort: 'Escorte', ai: 'IA',
@@ -29,7 +30,7 @@ fr: {
 },
 en: {
   intro: 'Smash barrels and chests, sink other ships and upgrade your boat from oars to engines. At level 5, pick your family: speed, boarding or artillery. Small ships vanish in the fog.',
-  name: 'Name', namePh: 'Deckhand', hull: 'Hull', sails: 'Sails', flag: 'Flag', preview: 'Ship preview',
+  trim: 'Trim', pattern: 'Pattern', random: '🎲 Random', name: 'Name', namePh: 'Deckhand', hull: 'Hull', sails: 'Sails', flag: 'Flag', preview: 'Ship preview',
   aiNote: 'Ships marked <b>AI</b> are bots that fill the game when there are few players.',
   controls: 'Mouse or touch joystick to steer · <b>Space</b> or round button for your skill · keys <b>1 2 3</b> for choices',
   join: 'Join the game', language: 'Language',
@@ -40,6 +41,7 @@ en: {
   unreachable: 'Server unreachable, retrying…', connecting: 'Connecting to the server… (up to a minute if it was asleep)', connectingShort: 'Connecting to the server…',
   lost: 'The connection to the server was lost. Retrying…',
   sunkTitle: 'Sunk!', sunkBy: 'Sent to the bottom by <b>{n}</b>.', sunkStats: 'Level {l} {c}, {s} ships sunk.', again: 'Set sail again', edit: 'Customise my ship',
+  hpBon: '+{n} max hit points on this ship', stDmg: 'Damage per shot', stRate: 'Fire rate', stRng: 'Range', stTg: 'Targets', stSpl: 'Blast', stDps: 'Damage / s', stShip: 'My ship', stHp: 'Max HP', stReg: 'Repair', stRam: 'Ram', stBrd: 'Boarding', stArm: 'Armour', stMres: 'Impact damage taken',
   hp: 'HP', speed: 'Speed', targets: '{n} targets', explosion: 'explosion', side: 'side fire', regen: 'self-repair', hides: 'can hide', ramS: 'ram ×{n}', brdS: 'boarding', armor: 'armour {n}%', second: 'Secondary weapon', 'fam.r': 'Speed family', 'fam.a': 'Boarding family', 'fam.c': 'Artillery family',
   evoTitle: 'Level {l}: upgrade! Choose your ship', bonusTitle: 'Level {l}: choose a bonus', key: 'key {n}', legendary: 'Legendary',
   convoy: 'Convoy', storm: 'Storm', escort: 'Escort', ai: 'AI',
@@ -53,7 +55,7 @@ en: {
 },
 es: {
   intro: 'Rompe barriles y cofres, hunde los demás barcos y mejora tu nave, de los remos al motor. En el nivel 5, elige tu familia: rápida, abordaje o artillería. Los barcos pequeños desaparecen en la niebla.',
-  name: 'Nombre', namePh: 'Grumete', hull: 'Casco', sails: 'Velas', flag: 'Bandera', preview: 'Vista previa del barco',
+  trim: 'Ribete', pattern: 'Dibujo', random: '🎲 Al azar', name: 'Nombre', namePh: 'Grumete', hull: 'Casco', sails: 'Velas', flag: 'Bandera', preview: 'Vista previa del barco',
   aiNote: 'Los barcos marcados <b>IA</b> son bots que completan la partida cuando hay pocos jugadores.',
   controls: 'Ratón o joystick táctil para dirigir · <b>Espacio</b> o botón redondo para la habilidad · teclas <b>1 2 3</b> para elegir',
   join: 'Unirse a la partida', language: 'Idioma',
@@ -64,6 +66,7 @@ es: {
   unreachable: 'Servidor inaccesible, reintentando…', connecting: 'Conectando al servidor… (hasta un minuto si estaba en reposo)', connectingShort: 'Conectando al servidor…',
   lost: 'Se perdió la conexión con el servidor. Reintentando…',
   sunkTitle: '¡Hundido!', sunkBy: 'Enviado al fondo por <b>{n}</b>.', sunkStats: '{c} de nivel {l}, {s} barcos hundidos.', again: 'Volver al mar', edit: 'Personalizar mi barco',
+  hpBon: '+{n} puntos de vida máx. en este barco', stDmg: 'Daño por disparo', stRate: 'Cadencia', stRng: 'Alcance', stTg: 'Objetivos', stSpl: 'Explosión', stDps: 'Daño / s', stShip: 'Mi barco', stHp: 'Vida máx.', stReg: 'Reparación', stRam: 'Espolón', stBrd: 'Abordaje', stArm: 'Blindaje', stMres: 'Choques recibidos',
   hp: 'PV', speed: 'Velocidad', targets: '{n} objetivos', explosion: 'explosión', side: 'disparo lateral', regen: 'autorreparación', hides: 'se esconde', ramS: 'espolón ×{n}', brdS: 'abordaje', armor: 'blindaje {n} %', second: 'Arma secundaria', 'fam.r': 'Familia rápida', 'fam.a': 'Familia abordaje', 'fam.c': 'Familia artillería',
   evoTitle: 'Nivel {l}: ¡evolución! Elige tu barco', bonusTitle: 'Nivel {l}: elige una mejora', key: 'tecla {n}', legendary: 'Legendario',
   convoy: 'Convoy', storm: 'Tormenta', escort: 'Escolta', ai: 'IA',
@@ -91,8 +94,8 @@ es: { barque: ['Bote de remos', 'Pequeño bote de remos. Tus arqueros disparan f
 };
 // Bonus (même ordre que BON dans shared.js) : [nom, description]
 const BONX = {
-en: [['Light cannons', 'Fire rate +20%'], ['Heavy calibre', 'Damage +25%'], ['New sails', 'Speed +10%'], ['Spyglass', 'Range +15%'], ['Reinforced hull', '+30 max hit points'], ['Multi-shot', 'One more projectile per shot'], ['Carpenter', 'Repairs 2% of max HP per second'], ['Salvage nets', 'XP from wrecks and barrels +30%'], ['Ram bow', 'Ramming damage +50%'], ['Boatswain', 'Special skill ready 25% faster'], ['Grappling hooks', 'In contact with an enemy: +8 damage per second and steal XP'], ['Studded hull', 'Ramming and boarding damage taken −40%']],
-es: [['Cañones ligeros', 'Cadencia de tiro +20 %'], ['Gran calibre', 'Daño +25 %'], ['Velas nuevas', 'Velocidad +10 %'], ['Catalejo', 'Alcance +15 %'], ['Casco reforzado', '+30 puntos de vida máx.'], ['Salva múltiple', 'Un proyectil más por disparo'], ['Carpintero', 'Repara un 2 % de la vida máx. por segundo'], ['Redes de rescate', 'XP de restos y barriles +30 %'], ['Espolón de proa', 'Daño de embestida +50 %'], ['Contramaestre', 'Habilidad especial lista un 25 % antes'], ['Garfios de abordaje', 'En contacto con un enemigo: +8 de daño por segundo y robo de XP'], ['Casco claveteado', 'Daño de embestida y abordaje recibido −40 %']]
+en: [['Light cannons', 'Fire rate +20%'], ['Heavy calibre', 'Damage +25%'], ['New sails', 'Speed +10%'], ['Spyglass', 'Range +15%'], ['Reinforced hull', '+30 base hit points (more on sturdy ships)'], ['Multi-shot', 'One more projectile per shot'], ['Carpenter', 'Repairs 2% of max HP per second'], ['Salvage nets', 'XP from wrecks and barrels +30%'], ['Ram bow', 'Ramming damage +50%'], ['Boatswain', 'Special skill ready 25% faster'], ['Grappling hooks', 'In contact with an enemy: +8 damage per second and steal XP'], ['Studded hull', 'Ramming and boarding damage taken −40%']],
+es: [['Cañones ligeros', 'Cadencia de tiro +20 %'], ['Gran calibre', 'Daño +25 %'], ['Velas nuevas', 'Velocidad +10 %'], ['Catalejo', 'Alcance +15 %'], ['Casco reforzado', '+30 puntos de vida base (más en barcos robustos)'], ['Salva múltiple', 'Un proyectil más por disparo'], ['Carpintero', 'Repara un 2 % de la vida máx. por segundo'], ['Redes de rescate', 'XP de restos y barriles +30 %'], ['Espolón de proa', 'Daño de embestida +50 %'], ['Contramaestre', 'Habilidad especial lista un 25 % antes'], ['Garfios de abordaje', 'En contacto con un enemigo: +8 de daño por segundo y robo de XP'], ['Casco claveteado', 'Daño de embestida y abordaje recibido −40 %']]
 };
 // Compétences : [nom, abréviation du bouton]
 const SKX = {
@@ -101,8 +104,10 @@ es: { boost: ['Acelerón', 'Rápido'], smoke: ['Cortina de humo', 'Humo'], repai
 };
 const LTX = { en: { peche: 'Fisherman', marchand: 'Merchant', tresor: 'Treasure', kraken: 'Kraken' }, es: { peche: 'Pescador', marchand: 'Mercante', tresor: 'Tesoro', kraken: 'Kraken' } };
 const TEAMX = { en: ['Reds', 'Yellows', 'Purples', 'Greens'], es: ['Rojos', 'Amarillos', 'Morados', 'Verdes'] };
-const HULLX = { en: ['Coral', 'Sun', 'Lavender', 'Mint', 'Pink', 'Orange', 'Azure', 'Slate'], es: ['Coral', 'Sol', 'Lavanda', 'Menta', 'Rosa', 'Naranja', 'Azul', 'Pizarra'] };
-const SAILX = { en: ['Cream', 'Black', 'Red', 'Blue', 'Gold'], es: ['Crema', 'Negro', 'Rojo', 'Azul', 'Oro'] };
+const HULLX = { en: ['Coral', 'Sun', 'Lavender', 'Mint', 'Pink', 'Orange', 'Azure', 'Slate', 'Charcoal', 'Burgundy', 'Ivory', 'Emerald'], es: ['Coral', 'Sol', 'Lavanda', 'Menta', 'Rosa', 'Naranja', 'Azul', 'Pizarra', 'Carbón', 'Burdeos', 'Marfil', 'Esmeralda'] };
+const TRIMX = { en: ['Cream', 'Gold', 'Black', 'Coral', 'Azure', 'Silver'], es: ['Crema', 'Oro', 'Negro', 'Coral', 'Azul', 'Plata'] };
+const PATX = { en: ['Plain', 'Striped', 'Band', 'Half', 'Ends'], es: ['Lisa', 'Rayada', 'Banda', 'Mitad', 'Puntas'] };
+const SAILX = { en: ['Cream', 'Black', 'Red', 'Blue', 'Gold', 'Purple', 'Green', 'Pink'], es: ['Crema', 'Negro', 'Rojo', 'Azul', 'Oro', 'Morado', 'Verde', 'Rosa'] };
 
 const LANGS = [['fr', 'FR', 'Français'], ['en', 'EN', 'English'], ['es', 'ES', 'Español']];
 let lang = 'fr';
@@ -122,6 +127,8 @@ const I = {
   team(i) { const x = TEAMX[lang]; return x ? x[i] : root.S.TEAMS[i].n; },
   hull(i) { const x = HULLX[lang]; return x ? x[i] : root.S.HULLS[i][1]; },
   sail(i) { const x = SAILX[lang]; return x ? x[i] : root.S.SAILS[i][1]; },
+  trim(i) { const x = TRIMX[lang]; return x ? x[i] : root.S.TRIMS[i][1]; },
+  pat(i) { const x = PATX[lang]; return x ? x[i] : root.S.PATS[i][1]; },
   num(v) { return Number(v).toLocaleString(lang === 'en' ? 'en-GB' : lang === 'es' ? 'es-ES' : 'fr-FR', { maximumFractionDigits: 2 }); }
 };
 document.documentElement.lang = lang;
