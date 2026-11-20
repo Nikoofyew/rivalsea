@@ -556,7 +556,7 @@ g.restore();
 if(state==='menu'){prev();return}
 g.setTransform(dpr,0,0,dpr,0,0);
 if(st&&st.fl&&md&&Math.hypot(md.x-st.x,md.y-st.y)<st.r){g.fillStyle='rgba(255,255,255,.3)';g.fillRect(0,0,W,H)}
-for(const [x,y,k] of snap.mb){if(k==='kraken')edgeArrow(x,y,'#c9a6ff',I.loot('kraken'));else if(k==='tresor')edgeArrow(x,y,'#ffcf3f',I.loot('tresor'));else if(k==='coffre'&&Math.hypot(x-cam.x,y-cam.y)<1800)edgeArrow(x,y,'#ffe08a',I.loot('coffre'))}
+for(const [x,y,k] of snap.mb){if(k==='kraken')edgeArrow(x,y,'#c9a6ff',I.loot('kraken'));else if(k==='tresor')edgeArrow(x,y,'#ffcf3f',I.loot('tresor'));}
 for(const [x,y,,own,lead] of snap.mi)if(lead&&!own&&state==='play')edgeArrow(x,y,'#ffcf3f','♛ '+tr('leader'));
 if(snap.cv)edgeArrow(snap.cv[0],snap.cv[1],'#e8b04a',tr('convoy'));if(st)edgeArrow(st.x,st.y,'#c8d6ff',tr('storm'));
 // classement

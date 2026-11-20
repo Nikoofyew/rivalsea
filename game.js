@@ -104,6 +104,7 @@ function offer(b) {
   if (k === 'evo' && CL[b.c].next.length) b.offer = { id: ++b.oid, k: 'evo', o: CL[b.c].next.slice(), l };
   else b.offer = { id: ++b.oid, k: 'bonus', o: avail(b.s).map(x => BON.indexOf(x)).sort(() => Math.random() - .5).slice(0, 3), l };
 }
+const XPR = .7; // l'XP gagnée est réduite de 30 % pour monter de niveau moins vite
 function gain(b, x) { if (!b || !b.s || b.dead || (!b.p && b.lvl >= 30)) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
 function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.x, b.y, R(b), R(b) * 4, .7, '#ffcf3f'); say(b, b.x, b.y - R(b) - 30, 'evo', { c: k }, '#ffcf3f', 1.6); } }
 
@@ -180,7 +181,7 @@ function hurt(o, d, by) {
   if (o.dead || o.hp <= 0 || o.inv > 0) return;
   if (o.s && by && by.s && by.lvl - o.lvl > 3) d *= Math.max(.4, 1 - .08 * (by.lvl - o.lvl - 3)); // un gros navire écrase moins facilement un petit
   if (o.s) d *= DMG * (1 - (CL[o.c].arm || 0));
-  o.hp -= d; o.lh = T; o.hit = by; o.fl = .12; if (o.s && by && by.s) gain(by, d * .2);
+  o.hp -= d; o.lh = T; o.hit = by; o.fl = .12; if (o.s && by && by.s) gain(by, d * .2 * XPR);
   if (o.p && by && (by.s || by.k) && (o.hitT || 0) <= T) { o.hitT = T + .25; fx.push({ k: 'hit', a: Math.round(Math.atan2(by.y - o.y, by.x - o.x) * 100) / 100, n: by.s ? by.name : null, lk: by.k, to: o.id }); }
 }
 function boom(s) {
@@ -207,8 +208,8 @@ function sink(v) {
   if (v.gone) return; const k = v.hit; burst(v.x, v.y, v.col, 26, 260); burst(v.x, v.y, '#c98a4b', 14, 180);
   if (k && k.s && !k.dead) {
     // l'XP d'un naufrage est plafonnée à un niveau et demi du vainqueur, pour éviter l'effet boule de neige
-    let kx = Math.round(Math.min(40 + v.tot * .12, need(k.lvl) * 1.5) * (k.lvl - v.lvl > 6 ? .3 : 1));
-    if (v.id === leaderId) { kx += need(k.lvl); banner('leaderSunk', { n: k.name, v: v.name }); if (k.p) fx.push({ k: 'ev', id: 'leader', to: k.id }); }
+    let kx = Math.round(Math.min(40 + v.tot * .12, need(k.lvl) * 1.5) * (k.lvl - v.lvl > 6 ? .3 : 1) * XPR);
+    if (v.id === leaderId) { kx += Math.round(need(k.lvl) * XPR); banner('leaderSunk', { n: k.name, v: v.name }); if (k.p) fx.push({ k: 'ev', id: 'leader', to: k.id }); }
     if (k.p && v.lvl >= k.lvl + 5) fx.push({ k: 'ev', id: 'giant', to: k.id });
     k.sc++; gain(k, kx); say(k, v.x, v.y, 'sunk', { x: kx }, '#ffcf3f', 1.4);
     heal(k, mhp(k) * (k.id === leaderId ? KILL_HEAL / 2 : KILL_HEAL)); // chaque navire coulé rend 30 % de vie (15 % pour le meneur)
@@ -222,7 +223,7 @@ function sink(v) {
 function crack(l) {
   const d = LT[l.k], k = l.hit; if (l.gone) return;
   burst(l.x, l.y, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : l.k === 'kraken' ? '#7a4fb3' : '#b5713a', l.k === 'tonneau' || l.k === 'epave' ? 10 : l.k === 'kraken' ? 60 : 18, l.k === 'kraken' ? 400 : 200);
-  if (k && k.s && !k.dead && (l.xpo || d.xp)) { const x = Math.round((l.xpo || d.xp) * k.s.loot); gain(k, x); say(k, l.x, l.y, 'xp', { x }, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
+  if (k && k.s && !k.dead && (l.xpo || d.xp)) { const x = Math.round((l.xpo || d.xp) * k.s.loot * XPR); gain(k, x); say(k, l.x, l.y, 'xp', { x }, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
   if (d.heal && k && k.s && !k.dead) heal(k, mhp(k) * d.heal);
   if (l.k === 'kraken') { banner('krakenDead', { n: k && k.s ? k.name : null }); if (k && k.p) fx.push({ k: 'ev', id: 'kraken', to: k.id }); }
   if (k && k.p && l.k === 'planche') fx.push({ k: 'ev', id: 'plank', to: k.id });
