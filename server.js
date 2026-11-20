@@ -9,8 +9,8 @@ const game = require('./game');
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUB = __dirname;
 const PUBLIC_FILES = new Set(['/index.html', '/shared.js', '/i18n.js', '/icon-180.png', '/icon-48.png', '/icon-32.png']); // seuls fichiers envoyés aux navigateurs
-const TICK = 1 / 30;          // la simulation avance 30 fois par seconde
-const SEND_EVERY = 2;         // on envoie l'état aux joueurs 15 fois par seconde
+const TICK = 1 / 20;          // la simulation avance 20 fois par seconde (moins de calcul pour le petit serveur)
+const SEND_EVERY = 1;         // on envoie l'état aux joueurs 20 fois par seconde
 const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '40', 10);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.json': 'application/json' };
 const clients = new Set();

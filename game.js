@@ -320,21 +320,26 @@ function tick(dt) {
     if (l.cv) { const [fx2, fy2] = fpos(l.cv, l.ox, l.oy), dd = Math.hypot(fx2 - l.x, fy2 - l.y); l.a += angD(dd > 8 ? Math.atan2(fy2 - l.y, fx2 - l.x) : l.cv.a, l.a) * Math.min(1, dt * 3); const v = Math.min(110, dd * 2); l.x += Math.cos(l.a) * v * dt; l.y += Math.sin(l.a) * v * dt; l.vx = Math.cos(l.a) * v; l.vy = Math.sin(l.a) * v; continue; }
     if (d.mv) {
       l.t -= dt; if (l.t <= 0) { l.t = rnd(3, 7); const s = freeSpot(100, 60); l.wx = s.x; l.wy = s.y; }
-      let tx = l.wx, ty = l.wy, f = .45, n = null, nd = 280; for (const b of boats) { const dd = Math.hypot(b.x - l.x, b.y - l.y); if (dd < nd) { nd = dd; n = b; } }
+      let tx = l.wx, ty = l.wy, f = .45, n = null, nd = 280 * 280; for (const b of boats) { const dx = b.x - l.x, dy = b.y - l.y; if (dx > 280 || dx < -280 || dy > 280 || dy < -280) continue; const dd = dx * dx + dy * dy; if (dd < nd) { nd = dd; n = b; } }
       if (n) { tx = l.x * 2 - n.x; ty = l.y * 2 - n.y; f = 1; }
       const want = avoid(l, Math.atan2(ty - l.y, tx - l.x), d.r); l.a += cl(angD(want, l.a), -2.5 * dt, 2.5 * dt);
       l.x = cl(l.x + Math.cos(l.a) * d.mv * f * dt, 30, WS - 30); l.y = cl(l.y + Math.sin(l.a) * d.mv * f * dt, 30, WS - 30); l.vx = Math.cos(l.a) * d.mv * f; l.vy = Math.sin(l.a) * d.mv * f;
-    } else { l.x = cl(l.x + Math.cos(l.ph) * 6 * dt, 30, WS - 30); l.y = cl(l.y + Math.sin(l.ph) * 6 * dt, 30, WS - 30); l.a += dt * .15; }
+    } else { if ((l.id + TN) % 4) continue; const d4 = dt * 4; // le petit butin immobile n'est recalculé qu'une fois sur quatre
+      l.x = cl(l.x + Math.cos(l.ph) * 6 * d4, 30, WS - 30); l.y = cl(l.y + Math.sin(l.ph) * 6 * d4, 30, WS - 30); l.a += d4 * .15;
+      if (inStorm(l.x, l.y)) { const [wx, wy] = wind(l); l.x = cl(l.x + wx * .6 * d4, 30, WS - 30); l.y = cl(l.y + wy * .6 * d4, 30, WS - 30); }
+      pushOut(l, d.r); continue; }
     if (inStorm(l.x, l.y)) { const [wx, wy] = wind(l); l.x = cl(l.x + wx * .6 * dt, 30, WS - 30); l.y = cl(l.y + wy * .6 * dt, 30, WS - 30); }
-    if (d.mv || (l.id + TN) % 10 === 0) pushOut(l, d.r); // le petit butin dérive à peine : on le repousse des rochers moins souvent
+    pushOut(l, d.r);
   }
   buildLootGrid();
-  for (const s of shots) {
-    if (inStorm(s.x, s.y)) { const r = rnd(-2.2, 2.2) * dt, c = Math.cos(r), sn = Math.sin(r), vx = s.vx; s.vx = vx * c - s.vy * sn; s.vy = vx * sn + s.vy * c; }
-    s.x += s.vx * dt; s.y += s.vy * dt; s.l -= dt; if (s.l <= 0) { if (s.spl) boom(s); continue; }
+  // les projectiles avancent en deux demi-pas : rien ne passe à travers une cible même à 20 calculs par seconde
+  const hd = dt / 2;
+  for (const s of shots) for (let sub = 0; sub < 2 && s.l > 0; sub++) {
+    if (inStorm(s.x, s.y)) { const r = rnd(-2.2, 2.2) * hd, c = Math.cos(r), sn = Math.sin(r), vx = s.vx; s.vx = vx * c - s.vy * sn; s.vy = vx * sn + s.vy * c; }
+    s.x += s.vx * hd; s.y += s.vy * hd; s.l -= hd; if (s.l <= 0) { if (s.spl) boom(s); break; }
     if (s.spl && s.l > s.L * .25) continue; // l'obus de mortier vole au-dessus de tout jusqu'à la fin de sa course
-    if (inRock(s.x, s.y, 0)) { s.l = 0; burst(s.x, s.y, '#f4d58d', 4, 90); continue; }
-    let hit = null; for (const o of boats) if (o !== s.o && o.team !== s.tm && !o.dead && Math.hypot(o.x - s.x, o.y - s.y) < R(o) + s.sz) { hit = o; break; }
+    if (inRock(s.x, s.y, 0)) { s.l = 0; burst(s.x, s.y, '#f4d58d', 4, 90); break; }
+    let hit = null; for (const o of boats) { const dx = o.x - s.x, dy = o.y - s.y; if (dx > 200 || dx < -200 || dy > 200 || dy < -200) continue; if (o !== s.o && o.team !== s.tm && !o.dead && Math.hypot(dx, dy) < R(o) + s.sz) { hit = o; break; } }
     if (!hit) for (const o of lootNear(s.x, s.y, 80)) if (!o.dead && !(o.cv && s.o.npc) && Math.hypot(o.x - s.x, o.y - s.y) < LT[o.k].r + s.sz) { hit = o; break; }
     if (hit) { s.l = 0; if (s.spl) boom(s); else { hurt(hit, s.d, s.o); burst(s.x, s.y, '#fff8e7', 3, 90); } }
   }
