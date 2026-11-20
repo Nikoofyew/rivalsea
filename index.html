@@ -138,15 +138,20 @@ else if(m.t==='dead'){SND.play('sink');m.rec=!best||m.lvl>best.l||(m.lvl===best.
 else if(m.t==='st')applySnap(m)}
 let lastIn=null;const LAT=.09;
 const lootM=new Map(); // butin connu : le serveur n'envoie que ce qui change
-function applySnap(m){m.mb=m.mb||(snap&&snap.mb)||[];m.mi=m.mi||(snap&&snap.mi)||[];m.bd=m.bd||(snap&&snap.bd)||[];snap=m;nSnap++;const ids=new Set();
+// horloge du serveur : on repère les paquets arrivés en retard pour les avancer d'autant (moins de saccades)
+let ofs=null,lastSync=0;function clockSync(tm){if(tm===undefined)return 0;const raw=T-tm/1000;if(ofs===null||raw<ofs||raw-ofs>2)ofs=raw;else ofs=Math.min(raw,ofs+(T-lastSync)*.02);lastSync=T;return Math.min(.25,raw-ofs)}
+function applySnap(m){const late=clockSync(m.tm);m.mb=m.mb||(snap&&snap.mb)||[];m.mi=m.mi||(snap&&snap.mi)||[];m.bd=m.bd||(snap&&snap.bd)||[];snap=m;nSnap++;const ids=new Set();
 const put=(o,isLoot)=>{ids.add(o.i);let d=ents.get(o.i);if(!d||Math.hypot(d.x-o.x,d.y-o.y)>500){d={x:o.x,y:o.y,a:o.a,pa:o.a,m:o.m||o.a,ox:0,oy:0,born:nSnap>2?T:-9};ents.set(o.i,d)}
 // lissage : on garde l'écart entre ce qui est affiché et la nouvelle position, puis on le fait fondre en douceur
 if(d.tx!==undefined&&o.i!==myId){const ag=Math.min(T-d.st,.45);d.ox=d.x-o.x;d.oy=d.y-o.y;if(Math.hypot(d.ox,d.oy)>300){d.ox=d.oy=0}}
-d.tx=o.x;d.ty=o.y;d.vx=o.vx||0;d.vy=o.vy||0;d.st=T;d.ta=o.a;d.tm=o.m||o.a};
+d.tx=o.x;d.ty=o.y;d.vx=o.vx||0;d.vy=o.vy||0;d.st=T-late;d.ta=o.a;d.tm=o.m||o.a};
 for(const b of m.b)put(b);for(const l of m.l){put(l,1);lootM.set(l.i,l)}for(const id of m.lr||[])lootM.delete(id);for(const id of lootM.keys())ids.add(id);m.l=[...lootM.values()];
 for(const id of [...ents.keys()])if(!ids.has(id))ents.delete(id);
-shotsL=m.s.map(s=>({x:s[0],y:s[1],vx:s[2],vy:s[3],sz:s[4],col:s[5],spl:s[6],l:s[7],L:s[8],k:s[9]||'ball'}));
-for(const s of shotsL)if(s.L-s.l<.06)SND.play(s.k,vol(s.x,s.y)*(s.k==='bullet'?.6:1),s.k==='bullet'?70:45);
+{const old=new Map();for(const s of shotsL)old.set(s.vx+'|'+s.vy+'|'+s.col,s);
+shotsL=m.s.map(s=>{const o={x:s[0]+s[2]*late,y:s[1]+s[3]*late,vx:s[2],vy:s[3],sz:s[4],col:s[5],spl:s[6],l:s[7]-late,L:s[8],k:s[9]||'ball'};
+// même projectile qu'avant : on corrige sa position en douceur au lieu de le faire sauter
+const p=old.get(o.vx+'|'+o.vy+'|'+o.col);if(p&&Math.hypot(p.x-o.x,p.y-o.y)<60){o.x=p.x+(o.x-p.x)*.35;o.y=p.y+(o.y-p.y)*.35}return o})}
+for(const s of shotsL)if(s.L-s.l<.06+late)SND.play(s.k,vol(s.x,s.y)*(s.k==='bullet'?.6:1),s.k==='bullet'?70:45);
 if(me&&m.me&&state==='play'){if(m.me.c!==me.c)SND.play('evo');else if(m.me.l>me.l)SND.play('lvl')}
 for(const f of m.fx){if(f.k==='ring'&&f.col==='#ff9f43')SND.play('boom',vol(f.x,f.y),60);else if(f.k==='txt'){const sk={xp:'coin',sunk:'sink',ram:'ram',skill:'skill'}[f.id];if(sk)SND.play(sk,1,sk==='coin'?90:45)}else if(f.k==='hit')SND.play('hit',1,120);
 if(f.k==='burst')burst(f.x,f.y,f.col,f.n,f.sp);else if(f.k==='ring')rings.push({x:f.x,y:f.y,r:f.r,m:f.m,l:f.l,L:f.l,col:f.col});else if(f.k==='txt')txts.push({x:f.x,y:f.y,s:fxText(f),col:f.col,l:f.l,L:f.l});else if(f.k==='banner')banner={s:evText(f),l:4.5};else if(f.k==='hit'){hits.push({a:f.a,l:.9});hitBy={n:f.n||(f.lk&&f.lk!=='kraken'?I.loot(f.lk):tr('theKraken')),l:2.5}}else if(f.k==='ev'&&state==='play')runEv(f.id);if(f.k==='txt'&&state==='play'){if(f.id==='xp')prog('loot',1,1);else if(f.id==='skill')prog('skill',1,1)}}
@@ -179,14 +184,15 @@ const vol=(x,y)=>Math.max(0,1-Math.hypot(x-cam.x,y-cam.y)/1100);
 let prof={stars:0,earned:0,own:[],badges:[],days:[],fams:[],ships:[],daily:{d:'',done:[],p:{}}};
 try{Object.assign(prof,JSON.parse(localStorage.getItem('rs-prof')||'{}'))}catch(e){}
 const saveProf=()=>{try{localStorage.setItem('rs-prof',JSON.stringify(prof))}catch(e){}};
-const dayKey=()=>new Date().toLocaleDateString('fr-CA',{timeZone:'Europe/Paris'});
+// la date n'est recalculée qu'une fois toutes les 30 s (ce calcul est lent)
+let dkV='',dkT=-99;const dayKey=()=>{const n=performance.now();if(!dkV||n-dkT>30000){dkV=new Date().toLocaleDateString('fr-CA',{timeZone:'Europe/Paris'});dkT=n}return dkV};
 // [identifiant, type de progression, objectif, étoiles]
 const CHAL=[['lvl10','lvl',10,1],['lvl15','lvl',15,2],['lvl20','lvl',20,3],['sink2','sink',2,1],['sink4','sink',4,2],['loot40','loot',40,1],['loot100','loot',100,2],['time5','time',300,1],['time12','time',720,2],['skill10','skill',10,1],['famr','famr',1,1],['fama','fama',1,1],['famc','famc',1,1],['plank3','plank',3,1],['giant1','giant',1,2]];
-function todayChal(){let h=0;const k=dayKey();for(const ch of k)h=(h*31+ch.charCodeAt(0))>>>0;const pool=CHAL.slice(),out=[];while(out.length<3){h=(h*1103515245+12345)>>>0;out.push(pool.splice(h%pool.length,1)[0])}return out}
+let tcK='',tcV=null;function todayChal(){const k=dayKey();if(k===tcK)return tcV;let h=0;for(const ch of k)h=(h*31+ch.charCodeAt(0))>>>0;const pool=CHAL.slice(),out=[];while(out.length<3){h=(h*1103515245+12345)>>>0;out.push(pool.splice(h%pool.length,1)[0])}tcK=k;tcV=out;return out}
 function checkDay(){const k=dayKey();if(prof.daily.d!==k){prof.daily={d:k,done:[],p:{}};if(!prof.days.includes(k))prof.days.push(k);prof.days=prof.days.slice(-30);saveProf()}}
 let toasts=[];const toast=s=>{toasts.push({s,l:4});SND.play('lvl')};
 function award(n){prof.stars+=n;prof.earned+=n}
-function prog(kind,v,add){checkDay();const p=prof.daily.p;p[kind]=add?(p[kind]||0)+v:Math.max(p[kind]||0,v);
+function prog(kind,v,add){checkDay();const p=prof.daily.p,old=p[kind]||0;p[kind]=add?old+v:Math.max(old,v);if(p[kind]===old)return;
 for(const [id,k,goal,st] of todayChal())if(k===kind&&!prof.daily.done.includes(id)&&p[kind]>=goal){prof.daily.done.push(id);award(st);toast(tr('chalDone',{n:chalName(id),s:st}))}
 badges();saveProf()}
 const chalName=id=>{const c=CHAL.find(x=>x[0]===id);return tr('ch.'+c[1],{n:c[1]==='time'?c[2]/60:c[2]})};
@@ -194,7 +200,7 @@ const chalName=id=>{const c=CHAL.find(x=>x[0]===id);return tr('ch.'+c[1],{n:c[1]
 const BADGES=[['first',()=>run.sc>=1],['cap',()=>run.l>=10],['adm',()=>run.l>=20],['leg',()=>run.l>=25],['terror',()=>run.sc>=5],['surv',()=>run.t>=900],['fam3',()=>prof.fams.length>=3],['coll',()=>prof.ships.length>=Object.keys(CL).length],['lead',()=>run.lead],['krak',()=>run.krak],['loyal',()=>prof.days.length>=7],['star50',()=>prof.earned>=50]];
 let run={l:1,sc:0,t:0,lead:0,krak:0,c:'barque',t0:0};
 function badges(){for(const [id,f] of BADGES)if(!prof.badges.includes(id)&&f()){prof.badges.push(id);award(1);toast(tr('badgeNew',{n:tr('bd.'+id)}))}}
-function runSnap(m){if(!m||state!=='play')return;run.l=m.l;run.sc=m.sc;run.t=T-run.t0;
+let rsT=-9;function runSnap(m){if(!m||state!=='play')return;if(T-rsT<1&&m.l===run.l&&m.sc===run.sc&&m.c===run.c)return;rsT=T;run.l=m.l;run.sc=m.sc;run.t=T-run.t0;
 if(m.c!==run.c){run.c=m.c;if(!prof.ships.includes(m.c))prof.ships.push(m.c);const f=CL[m.c].f;if(f){if(!prof.fams.includes(f))prof.fams.push(f);prog('fam'+f,1)}}
 prog('lvl',m.l);prog('sink',m.sc);prog('time',Math.floor(run.t))}
 function runEv(id){if(id==='leader')run.lead=1;else if(id==='kraken')run.krak=1;else if(id==='plank')prog('plank',1,1);else if(id==='giant')prog('giant',1,1);badges();saveProf()}
@@ -528,10 +534,10 @@ gr.addColorStop(0,'rgba(236,244,247,'+(.97*k)+')');gr.addColorStop(.7,'rgba(232,
 // navires (le serveur n'envoie que ceux que vous avez le droit de voir)
 for(const b of snap.b){const d=ents.get(b.i);if(!d||!vis(d))continue;const c=CL[b.c],r=S.R(b.l,b.c),own=b.i===myId;
 if(b.iv&&Math.floor(T*8)%2)g.globalAlpha=.5;if(b.dv)g.globalAlpha=own?.35:.25;
-if(b.bu&&Math.random()<(lowQ?.3:.7))parts.push({x:d.x+(Math.random()-.5)*r*c.L,y:d.y+(Math.random()-.5)*r*c.Wd*1.5,vx:(Math.random()-.5)*20,vy:-30-Math.random()*30,l:.6,col:Math.random()<.5?'rgba(255,107,40,.85)':'rgba(255,207,63,.85)',r:2+Math.random()*r*.15});
-if(b.dv&&Math.random()<.3)parts.push({x:d.x+(Math.random()-.5)*r*c.L,y:d.y+(Math.random()-.5)*r*.6,vx:0,vy:0,l:.7,col:'rgba(255,255,255,.7)',r:1.5+Math.random()*2.5});if(own&&me&&me.fz>=0&&S.canHide(b.c))g.globalAlpha=.6;
+if(b.bu&&parts.length<(lowQ?200:500)&&Math.random()<(lowQ?.3:.7))parts.push({x:d.x+(Math.random()-.5)*r*c.L,y:d.y+(Math.random()-.5)*r*c.Wd*1.5,vx:(Math.random()-.5)*20,vy:-30-Math.random()*30,l:.6,col:Math.random()<.5?'rgba(255,107,40,.85)':'rgba(255,207,63,.85)',r:2+Math.random()*r*.15});
+if(b.dv&&parts.length<(lowQ?200:500)&&Math.random()<.3)parts.push({x:d.x+(Math.random()-.5)*r*c.L,y:d.y+(Math.random()-.5)*r*.6,vx:0,vy:0,l:.7,col:'rgba(255,255,255,.7)',r:1.5+Math.random()*2.5});if(own&&me&&me.fz>=0&&S.canHide(b.c))g.globalAlpha=.6;
 const wkc=k=>b.wk==='gold'?'rgba(255,207,63,.75)':b.wk==='fire'?(k&1?'rgba(255,107,40,.8)':'rgba(255,207,63,.75)'):b.wk==='rainbow'?'hsla('+((T*140+k*60)%360)+',95%,62%,.8)':'rgba(255,255,255,.35)';
-if(b.wk&&Math.hypot(b.vx,b.vy)>25&&Math.random()<(lowQ?.25:.6)){const sx=d.x-Math.cos(d.a)*r*c.L,sy=d.y-Math.sin(d.a)*r*c.L;parts.push({x:sx+(Math.random()-.5)*r*.5,y:sy+(Math.random()-.5)*r*.5,vx:-Math.cos(d.a)*20,vy:-Math.sin(d.a)*20,l:.9,col:wkc(Math.floor(Math.random()*6)),r:2+Math.random()*r*.18})}
+if(b.wk&&parts.length<(lowQ?200:500)&&Math.hypot(b.vx,b.vy)>25&&Math.random()<(lowQ?.25:.6)){const sx=d.x-Math.cos(d.a)*r*c.L,sy=d.y-Math.sin(d.a)*r*c.L;parts.push({x:sx+(Math.random()-.5)*r*.5,y:sy+(Math.random()-.5)*r*.5,vx:-Math.cos(d.a)*20,vy:-Math.sin(d.a)*20,l:.9,col:wkc(Math.floor(Math.random()*6)),r:2+Math.random()*r*.18})}
 for(let k=1;k<4;k++){g.fillStyle=wkc(k);g.beginPath();g.arc(d.x-Math.cos(d.a)*r*c.L*(.8+k*.6),d.y-Math.sin(d.a)*r*c.L*(.8+k*.6),r*.35/k,0,TAU);g.fill()}
 if(b.bo&&Math.random()<.5)parts.push({x:d.x-Math.cos(d.a)*r*c.L,y:d.y-Math.sin(d.a)*r*c.L,vx:0,vy:0,l:.5,col:'rgba(255,255,255,.8)',r:3+Math.random()*3});
 g.save();g.translate(d.x,d.y);g.rotate(d.a);ship(g,c,r,b.fl?'#fff':b.col,c.w.bs?0:d.m-d.a,T,{sail:b.sl,flag:b.fg,trim:b.tc,pat:b.pt});g.restore();g.globalAlpha=1;

@@ -190,8 +190,12 @@ function boom(s) {
 }
 // ——— Meilleurs vrais joueurs du jour (remis à zéro à minuit, heure de Paris) ———
 let dayTop = [], dayKey = '', weekTop = [], weekKey = '';
-const week = () => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' })); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.toDateString(); };
-const today = () => new Date().toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' });
+let wkV = '', wkT = 0;
+const week = () => { const n = Date.now(); if (!wkV || n - wkT > 30000) { wkV = week0(); wkT = n; } return wkV; };
+const week0 = () => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' })); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.toDateString(); };
+// la date n'est recalculée qu'une fois toutes les 30 s (ce calcul est lent)
+let tdV = '', tdT = 0;
+const today = () => { const n = Date.now(); if (!tdV || n - tdT > 30000) { tdV = new Date().toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }); tdT = n; } return tdV; };
 function recordRun(b) {
   if (!b || !b.p) return; const k = today(); if (k !== dayKey) { dayKey = k; dayTop = []; }
   dayTop.push({ n: b.name, l: b.lvl, c: b.c, s: b.sc }); dayTop.sort((a, c) => c.l - a.l || c.s - a.s); dayTop = dayTop.slice(0, 5);
@@ -319,7 +323,7 @@ function tick(dt) {
   if (!QUIET) events(dt);
   for (const b of boats) {
     if (b.dead) continue; const c = CL[b.c];
-    if (b.p) { b.f = b.inp.f; b.tx = b.x + Math.cos(b.inp.a) * 100; b.ty = b.y + Math.sin(b.inp.a) * 100; } else ai(b, dt);
+    if (b.p) { b.f = b.inp.f; b.tx = b.x + Math.cos(b.inp.a) * 100; b.ty = b.y + Math.sin(b.inp.a) * 100; } else if ((b.id + TN) % 2 === 0) ai(b, dt * 2); // l'IA réfléchit une fois sur deux (moins de calcul pour le serveur)
     let want = Math.atan2(b.ty - b.y, b.tx - b.x); if (!b.p) want = avoid(b, want, R(b));
     const tr = 3.4 / Math.pow(c.sz, 1.3); b.a += cl(angD(want, b.a), -tr * dt, tr * dt);
     const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1) * (b.dive > 0 ? 1.15 : 1);
@@ -438,7 +442,7 @@ function snapshotFor(id, vw, vh, px, py, cache) {
   }
   const lr = []; for (const k of LS.keys()) if (!vis.has(k)) { lr.push(k); LS.delete(k); }
   return {
-    t: 'st', cx: r0(viewer.x), cy: r0(viewer.y), ld: leaderId,
+    t: 'st', tm: Math.round(T * 1000), cx: r0(viewer.x), cy: r0(viewer.y), ld: leaderId,
     me: me ? { i: me.id, x: r0(me.x), y: r0(me.y), l: me.lvl, xp: r0(me.xp), nd: need(me.lvl), sc: me.sc, c: me.c, h: r0(me.hp), H: r0(mhp(me)), sk: r2(Math.max(0, me.skcd)), skm: r2(SK[CL[me.c].sk].cd * me.s.skr), fz: me.fz, tm: me.team, rng: r0(CL[me.c].w.rng * me.s.rng), of: me.offer, st: [me.s.dmg, me.s.rate, me.s.rng, me.s.multi, me.s.spd, me.s.reg, me.s.ram, me.s.brd, me.s.mres, me.s.hp].map(r2) } : null,
     b: boats.filter(b => inV(b) && (b === me || seen(b, viewer))).map(b => ({ i: b.id, x: r0(b.x), y: r0(b.y), vx: r0(b.svx || 0), vy: r0(b.svy || 0), a: r2(b.a), m: r2(b.aim), c: b.c, l: b.lvl, h: r0(b.hp), H: r0(mhp(b)), col: b.col, sl: b.sail, fg: b.flag, tc: b.trim, pt: b.pat, wk: b.wake !== 'none' ? b.wake : undefined, n: b.name, np: b.npc ? 1 : 0, ia: !b.p && !b.npc ? 1 : 0, tm: b.team, iv: b.inv > 0 ? 1 : 0, fl: b.fl > 0 ? 1 : 0, bo: b.boost > 0 ? 1 : 0, bu: b.burnT > T ? 1 : undefined, dv: b.dive > 0 ? 1 : undefined })),
     l: outL, lr,

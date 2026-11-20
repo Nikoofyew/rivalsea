@@ -163,17 +163,21 @@ function onMessage(c, txt) {
 }
 
 // ——— 4. La boucle de jeu ———
-let n = 0;
+let n = 0, acc = 0, last = Date.now();
 setInterval(() => {
+  // si le serveur a pris du retard, on rattrape (3 pas au plus) pour que le jeu garde la même vitesse
+  const now = Date.now(); acc = Math.min(acc + (now - last) / 1000, TICK * 3); last = now;
+  if (acc < TICK * .5) return;
+  const steps = Math.max(1, Math.floor(acc / TICK + .01)); acc = Math.max(0, acc - steps * TICK);
   for (const c of clients) c.msgs = 0;
   const send1 = ++n % SEND_EVERY === 0;
   for (const r of rooms.values()) {
-    r.g.tick(TICK);
+    for (let k = 0; k < steps; k++) r.g.tick(TICK);
     for (const e of r.g.drainEvents()) note(e, r);
     for (const d of r.g.drainDeaths()) for (const c of clients) if (c.room === r && c.bid === d.id) { send(c, { t: 'top', l: dayTop(), w: dayTop(1) }); send(c, Object.assign({ t: 'dead' }, d)); c.px = d.x; c.py = d.y; }
     if (send1) { for (const c of clients) if (c.room === r) { const st = r.g.snapshotFor(c.bid, c.vw, c.vh, c.px, c.py, c.cache || (c.cache = {})); if (st.me) { c.px = st.me.x; c.py = st.me.y; } send(c, st); } r.g.clearFx(); }
     // une mer vide depuis 3 minutes est fermée (sauf la mer principale)
-    if (r !== MAIN) { if (usersIn(r) === 0) { r.empty += TICK; if (r.empty > 180) rooms.delete(r.id); } else r.empty = 0; }
+    if (r !== MAIN) { if (usersIn(r) === 0) { r.empty += TICK * steps; if (r.empty > 180) rooms.delete(r.id); } else r.empty = 0; }
   }
 }, TICK * 1000);
 
