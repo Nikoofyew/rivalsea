@@ -10,7 +10,8 @@ const BOT_DMG = .72;  // les bots font 28 % de dégâts en moins que les joueurs
 const BOT_HOLD = 4;   // un bot qui apparaît ne peut pas tirer pendant 4 s
 const AREA = Math.round((WS / 3400) ** 2); // carte agrandie : on multiplie îles, brouillard et butin d'autant
 const KILL_HEAL = .3; // couler un navire rend 30 % de la vie max
-let QUIET = false;    // pour les tests : pas de nouveaux bots ni d'événements
+let QUIET = false;
+let evs = [];        // statistiques anonymes (vidées par le serveur)    // pour les tests : pas de nouveaux bots ni d'événements
 let plankT = 20;      // prochaine apparition de planches de réparation
 
 let rocks = [], fogs = [], boats = [], loot = [], shots = [], fx = [], deaths = [];
@@ -206,7 +207,7 @@ function sink(v) {
   // le navire coulé laisse des épaves à piller
   const n = cl(2 + Math.floor(v.lvl / 4), 2, 8), each = Math.round(Math.min(15 + v.tot * .08, 500) / n);
   for (let i = 0; i < n; i++) { const a = rnd(0, TAU), q = rnd(10, R(v) * 1.6), l = mkL('epave', v.x + Math.cos(a) * q, v.y + Math.sin(a) * q); l.xpo = each; l.life = 25; l.tint = v.col; loot.push(l); }
-  if (v.p) recordRun(v);
+  if (v.p) { recordRun(v); evs.push({ k: 'death', l: v.lvl, c: v.c, t: Math.round(T - (v.born || T)), by: k && k.s ? (k.p ? 'joueur' : k.npc ? 'escorte' : 'bot') : k && k.k === 'kraken' ? 'kraken' : 'autre', bc: k && k.s ? k.c : null }); }
   if (v.p) deaths.push({ id: v.id, lvl: v.lvl, c: v.c, sc: v.sc, x: Math.round(v.x), y: Math.round(v.y), by: k && k.s ? k.name : null, byk: k && k.k === 'kraken' ? 1 : 0 });
 }
 function crack(l) {
@@ -377,18 +378,18 @@ const clean = (v, list, def) => list.includes(v) ? v : def;
 function addPlayer(m) {
   const name = String(m.name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 14) || 'Moussaillon';
   const b = mk({ p: 1, name, hull: clean(m.hull, HULLS.map(h => h[0]), '#ff6b57'), sail: clean(m.sail, SAILS.map(h => h[0]), '#fff8e7'), flag: clean(m.flag, Object.keys(FLAGS), 'skull'), trim: clean(m.trim, TRIMS.map(h => h[0]), '#fff8e7'), pat: clean(m.pat, PATS.map(h => h[0]), 'plain') });
-  boats.push(b); b.fz = zoneAt(b.x, b.y);
+  boats.push(b); b.fz = zoneAt(b.x, b.y); b.born = T; evs.push({ k: 'join' });
   return b.id;
 }
 const byId = id => boats.find(b => b.id === id && !b.dead);
-function removePlayer(id) { const b = byId(id); if (b) { recordRun(b); b.gone = true; b.dead = true; boats = boats.filter(x => x !== b); } }
+function removePlayer(id) { const b = byId(id); if (b) { recordRun(b); evs.push({ k: 'quit', l: b.lvl, c: b.c, t: Math.round(T - (b.born || T)) }); b.gone = true; b.dead = true; boats = boats.filter(x => x !== b); } }
 function input(id, m) { const b = byId(id); if (!b) return; const a = +m.a, f = +m.f, ma = +m.ma, md = +m.md; if (Number.isFinite(a)) b.inp.a = a; if (Number.isFinite(f)) b.inp.f = cl(f, 0, 1);
   b.inp.fi = m.fi ? 1 : 0; if (Number.isFinite(ma)) b.inp.ma = ma; if (Number.isFinite(md)) b.inp.md = cl(md, 0, 2000); }
 function skill(id) { useSkill(byId(id)); }
 function pickOffer(id, oid, i) {
   const b = byId(id); if (!b || !b.offer || b.offer.id !== oid) return;
   const o = b.offer, v = o.o[i | 0]; if (v === undefined) return; b.offer = null;
-  if (o.k === 'evo') evolve(b, v); else { BON[v].f(b.s); b.hp = Math.min(b.hp, mhp(b)); }
+  if (o.k === 'evo') { evolve(b, v); evs.push({ k: 'evo', c: v }); } else { BON[v].f(b.s); b.hp = Math.min(b.hp, mhp(b)); }
   offer(b);
 }
 
@@ -442,4 +443,4 @@ genWorld();
 for (let i = 0; i < BOTS; i++) boats.push(mk({ lvl: botLevel(BOTS) }));
 for (const k in LT) for (let i = 0; i < LT[k].n * AREA; i++) loot.push(mkL(k));
 
-module.exports = { top, tick, addPlayer, removePlayer, input, skill, pickOffer, welcome, snapshotFor, drainDeaths, clearFx, alive, stats, MODE, _debug: { startEv, gain, need, mk, mhp, quiet(v) { QUIET = !!v; }, get boats() { return boats; }, get loot() { return loot; } } };
+module.exports = { drainEvents() { const e = evs; evs = []; return e; }, top, tick, addPlayer, removePlayer, input, skill, pickOffer, welcome, snapshotFor, drainDeaths, clearFx, alive, stats, MODE, _debug: { startEv, gain, need, mk, mhp, quiet(v) { QUIET = !!v; }, get boats() { return boats; }, get loot() { return loot; } } };
