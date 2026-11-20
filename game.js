@@ -6,7 +6,7 @@ const { DMG, CL, LT, SK, BON, EVO, WS, TAU, SEE, TEAMS, NAMES, COLS, SAILS, HULL
 
 const MODE = process.env.MODE === 'team' ? 'team' : 'ffa';          // ffa = chacun pour soi, team = équipages
 const BOTS = Math.max(0, parseInt(process.env.BOTS || '20', 10));   // nombre de navires visé (joueurs + bots)
-const BOT_DMG = .7;   // les bots font 30 % de dégâts en moins que les joueurs
+const BOT_DMG = .6;   // les bots font 40 % de dégâts en moins que les joueurs
 const BOT_HOLD = 4;   // un bot qui apparaît ne peut pas tirer pendant 4 s
 const AREA = Math.round((WS / 3400) ** 2); // carte agrandie : on multiplie îles, brouillard et butin d'autant
 const KILL_HEAL = .3; // couler un navire rend 30 % de la vie max
@@ -18,7 +18,7 @@ let ev = { t: 30 }, storm = null, convoy = null, UID = 0, FZ = 0, T = 0, boardCa
 // ——— Outils ———
 const R = b => S.R(b.lvl, b.c);
 const mass = b => CL[b.c].sz ** 2 * (1 + b.lvl * .02);
-const mhp = b => (100 + b.s.hp) * CL[b.c].hp;
+const mhp = b => (100 + b.s.hp) * CL[b.c].hp * (1 + .015 * (b.lvl - 1)); // un peu plus solide à chaque niveau
 const lmhp = l => l.mhp || LT[l.k].hp;
 const avail = s => BON.filter(x => !x.ok || x.ok(s));
 const rb = b => pick(avail(b.s)).f(b.s);
@@ -165,9 +165,9 @@ function aboard(a, v, dt) {
 }
 function hurt(o, d, by) {
   if (o.dead || o.hp <= 0 || o.inv > 0) return;
-  if (o.s && by && by.s && by.lvl - o.lvl > 4) d *= Math.max(.35, 1 - .08 * (by.lvl - o.lvl - 4)); // un gros navire écrase moins facilement un petit
+  if (o.s && by && by.s && by.lvl - o.lvl > 2) d *= Math.max(.3, 1 - .1 * (by.lvl - o.lvl - 2)); // un gros navire écrase moins facilement un petit
   if (o.s) d *= DMG * (1 - (CL[o.c].arm || 0));
-  o.hp -= d; o.hit = by; o.fl = .12; if (o.s && by && by.s) gain(by, d * .2);
+  o.hp -= d; o.lh = T; o.hit = by; o.fl = .12; if (o.s && by && by.s) gain(by, d * .2);
   if (o.p && by && (by.s || by.k) && (o.hitT || 0) <= T) { o.hitT = T + .25; fx.push({ k: 'hit', a: Math.round(Math.atan2(by.y - o.y, by.x - o.x) * 100) / 100, n: by.s ? by.name : null, to: o.id }); }
 }
 function boom(s) {
@@ -288,7 +288,8 @@ function tick(dt) {
     const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1);
     b.vx = Math.cos(b.a) * sp; b.vy = Math.sin(b.a) * sp; let wx = 0, wy = 0; if (inStorm(b.x, b.y)) [wx, wy] = wind(b);
     b.svx = b.vx + wx; b.svy = b.vy + wy; b.x = cl(b.x + (b.vx + wx) * dt, 20, WS - 20); b.y = cl(b.y + (b.vy + wy) * dt, 20, WS - 20); pushOut(b, R(b) * .7);
-    b.hp = Math.min(mhp(b), b.hp + (b.s.reg * mhp(b) / 100 + (c.reg || 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt;
+    // hors combat depuis 5 s : +3 % de vie par seconde
+    b.hp = Math.min(mhp(b), b.hp + (b.s.reg * mhp(b) / 100 + (c.reg || 0) + (T - (b.lh || 0) > 5 ? mhp(b) * .03 : 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt;
     if (b.cd <= 0 && b.hold <= 0) fire(b);
     if (c.w2) { b.cd2 -= dt; if (b.cd2 <= 0 && b.hold <= 0) fire(b, false, true); }
     const ta = b.tgt && !b.tgt.dead ? Math.atan2(b.tgt.y - b.y, b.tgt.x - b.x) : b.a; b.aim += angD(ta, b.aim) * Math.min(1, dt * 8);
