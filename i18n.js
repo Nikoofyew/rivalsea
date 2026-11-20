@@ -4,7 +4,7 @@
 'use strict';
 const UI = {
 fr: {
-  intro: 'Cassez tonneaux et coffres, coulez les autres navires et faites évoluer votre bateau aux niveaux 5, 10, 15 et 20. Les petits navires disparaissent dans le brouillard ; les gros sont puissants mais lents.',
+  intro: 'Cassez tonneaux et coffres, coulez les autres navires et faites évoluer votre bateau, des rames jusqu’au moteur. Au niveau 5, choisissez votre famille : rapide, abordage ou artillerie. Les petits navires disparaissent dans le brouillard.',
   name: 'Nom', namePh: 'Moussaillon', hull: 'Coque', sails: 'Voiles', flag: 'Pavillon', preview: 'Aperçu du navire',
   aiNote: 'Les navires marqués <b>IA</b> sont des bots qui complètent la partie quand il y a peu de joueurs.',
   controls: 'Souris ou joystick tactile pour diriger · <b>Espace</b> ou bouton rond pour la compétence · touches <b>1 2 3</b> pour les choix',
@@ -16,7 +16,7 @@ fr: {
   unreachable: 'Serveur injoignable, nouvelle tentative…', connecting: 'Connexion au serveur… (jusqu’à une minute s’il était en veille)', connectingShort: 'Connexion au serveur…',
   lost: 'La connexion au serveur a été perdue. Nouvelle tentative…',
   sunkTitle: 'Coulé !', sunkBy: 'Envoyé par le fond par <b>{n}</b>.', sunkStats: '{c} de niveau {l}, {s} navires coulés.', again: 'Reprendre la mer', edit: 'Modifier mon navire',
-  hp: 'PV', speed: 'Vitesse', targets: '{n} cibles', explosion: 'explosion', side: 'tir latéral', regen: 'auto-réparation', hides: 'se cache',
+  hp: 'PV', speed: 'Vitesse', targets: '{n} cibles', explosion: 'explosion', side: 'tir latéral', regen: 'auto-réparation', hides: 'se cache', ramS: 'éperon ×{n}', board: 'abordage', armor: 'blindage {n} %', second: 'Arme secondaire', 'fam.r': 'Famille rapide', 'fam.a': 'Famille abordage', 'fam.c': 'Famille artillerie',
   evoTitle: 'Niveau {l} : évolution ! Choisissez votre navire', bonusTitle: 'Niveau {l} : choisissez un bonus', key: 'touche {n}', legendary: 'Légendaire',
   convoy: 'Convoi', storm: 'Tempête', escort: 'Escorte', ai: 'IA',
   crew: 'Équipages', board: 'Classement', you: '(vous)', lvl: 'niv. {l}', lvlLong: 'Niv. {l}', sunkCount: 'Coulés : {n}', flanks: '(flancs)',
@@ -28,7 +28,7 @@ fr: {
   'ev.leaderSunk': '{n} a coulé le chef de la flotte, {v} !'
 },
 en: {
-  intro: 'Smash barrels and chests, sink other ships and upgrade your boat at levels 5, 10, 15 and 20. Small ships vanish in the fog; big ones are powerful but slow.',
+  intro: 'Smash barrels and chests, sink other ships and upgrade your boat from oars to engines. At level 5, pick your family: speed, boarding or artillery. Small ships vanish in the fog.',
   name: 'Name', namePh: 'Deckhand', hull: 'Hull', sails: 'Sails', flag: 'Flag', preview: 'Ship preview',
   aiNote: 'Ships marked <b>AI</b> are bots that fill the game when there are few players.',
   controls: 'Mouse or touch joystick to steer · <b>Space</b> or round button for your skill · keys <b>1 2 3</b> for choices',
@@ -40,7 +40,7 @@ en: {
   unreachable: 'Server unreachable, retrying…', connecting: 'Connecting to the server… (up to a minute if it was asleep)', connectingShort: 'Connecting to the server…',
   lost: 'The connection to the server was lost. Retrying…',
   sunkTitle: 'Sunk!', sunkBy: 'Sent to the bottom by <b>{n}</b>.', sunkStats: 'Level {l} {c}, {s} ships sunk.', again: 'Set sail again', edit: 'Customise my ship',
-  hp: 'HP', speed: 'Speed', targets: '{n} targets', explosion: 'explosion', side: 'side fire', regen: 'self-repair', hides: 'can hide',
+  hp: 'HP', speed: 'Speed', targets: '{n} targets', explosion: 'explosion', side: 'side fire', regen: 'self-repair', hides: 'can hide', ramS: 'ram ×{n}', board: 'boarding', armor: 'armour {n}%', second: 'Secondary weapon', 'fam.r': 'Speed family', 'fam.a': 'Boarding family', 'fam.c': 'Artillery family',
   evoTitle: 'Level {l}: upgrade! Choose your ship', bonusTitle: 'Level {l}: choose a bonus', key: 'key {n}', legendary: 'Legendary',
   convoy: 'Convoy', storm: 'Storm', escort: 'Escort', ai: 'AI',
   crew: 'Crews', board: 'Leaderboard', you: '(you)', lvl: 'lvl {l}', lvlLong: 'Lvl {l}', sunkCount: 'Sunk: {n}', flanks: '(sides)',
@@ -52,7 +52,7 @@ en: {
   'ev.leaderSunk': '{n} sank the fleet leader, {v}!'
 },
 es: {
-  intro: 'Rompe barriles y cofres, hunde los demás barcos y mejora tu nave en los niveles 5, 10, 15 y 20. Los barcos pequeños desaparecen en la niebla; los grandes son potentes pero lentos.',
+  intro: 'Rompe barriles y cofres, hunde los demás barcos y mejora tu nave, de los remos al motor. En el nivel 5, elige tu familia: rápida, abordaje o artillería. Los barcos pequeños desaparecen en la niebla.',
   name: 'Nombre', namePh: 'Grumete', hull: 'Casco', sails: 'Velas', flag: 'Bandera', preview: 'Vista previa del barco',
   aiNote: 'Los barcos marcados <b>IA</b> son bots que completan la partida cuando hay pocos jugadores.',
   controls: 'Ratón o joystick táctil para dirigir · <b>Espacio</b> o botón redondo para la habilidad · teclas <b>1 2 3</b> para elegir',
@@ -64,7 +64,7 @@ es: {
   unreachable: 'Servidor inaccesible, reintentando…', connecting: 'Conectando al servidor… (hasta un minuto si estaba en reposo)', connectingShort: 'Conectando al servidor…',
   lost: 'Se perdió la conexión con el servidor. Reintentando…',
   sunkTitle: '¡Hundido!', sunkBy: 'Enviado al fondo por <b>{n}</b>.', sunkStats: '{c} de nivel {l}, {s} barcos hundidos.', again: 'Volver al mar', edit: 'Personalizar mi barco',
-  hp: 'PV', speed: 'Velocidad', targets: '{n} objetivos', explosion: 'explosión', side: 'disparo lateral', regen: 'autorreparación', hides: 'se esconde',
+  hp: 'PV', speed: 'Velocidad', targets: '{n} objetivos', explosion: 'explosión', side: 'disparo lateral', regen: 'autorreparación', hides: 'se esconde', ramS: 'espolón ×{n}', board: 'abordaje', armor: 'blindaje {n} %', second: 'Arma secundaria', 'fam.r': 'Familia rápida', 'fam.a': 'Familia abordaje', 'fam.c': 'Familia artillería',
   evoTitle: 'Nivel {l}: ¡evolución! Elige tu barco', bonusTitle: 'Nivel {l}: elige una mejora', key: 'tecla {n}', legendary: 'Legendario',
   convoy: 'Convoy', storm: 'Tormenta', escort: 'Escolta', ai: 'IA',
   crew: 'Tripulaciones', board: 'Clasificación', you: '(tú)', lvl: 'niv. {l}', lvlLong: 'Niv. {l}', sunkCount: 'Hundidos: {n}', flanks: '(flancos)',
@@ -78,19 +78,21 @@ es: {
 
 // Navires : [nom, description, arme]
 const CLX = {
-en: { chaloupe: ['Rowboat', 'Small rowing boat.', 'Musket'], cotre: ['Cutter', 'Spray of shot at short range.', 'Blunderbuss'], sloop: ['Sloop', 'A heavy, accurate bow cannon.', 'Bow cannon'], pirogue: ['Racing canoe', 'Very fast, high rate of fire.', 'Twin muskets'],
-  brick: ['Brig', 'Fan of grapeshot, deadly up close.', 'Grapeshot'], caravelle: ['Caravel', 'Two blunderbusses, two targets at once.', 'Double blunderbuss'], fregate: ['Frigate', 'Fires from the sides: turn your flank to the target.', 'Broadsides'], bombarde: ['Bomb ketch', 'Slow shell that explodes over an area.', 'Mortar'], goelette: ['Schooner', 'Three muskets, frantic fire rate.', 'Musket battery'], jonque: ['Junk', 'Rockets that target three enemies.', 'Rockets'],
-  galion: ['Great galleon', 'Two side batteries of four cannons.', 'Batteries'], caraque: ['Carrack', 'Thick hull, grapeshot on two targets.', 'Double grapeshot'], vaisseau: ['Ship of the line', 'Broadsides of heavy cannons at long range.', 'Heavy cannons'], clipper: ['Clipper', 'The fastest of the tall ships, but fragile.', 'Repeating muskets'], cuirasse: ['Steam ironclad', 'Two turrets of heavy mortars.', 'Heavy mortars'],
-  galionroyal: ['Royal galleon', 'Broadsides of four cannons on three targets.', 'Royal batteries'], fantome: ['Ghost ship', 'Repairs itself and can still hide in the fog.', 'Spectral cannons'], forteresse: ['Floating fortress', 'Mortar turrets, huge hull, very slow.', 'Triple mortar'], tempete: ['Storm clipper', 'Insane speed, three muskets on two targets.', 'Thunder muskets'], dreadnought: ['Dreadnought', 'Double explosive shells on three targets.', 'Heavy turrets'] },
-es: { chaloupe: ['Bote de remos', 'Pequeño bote de remos.', 'Mosquete'], cotre: ['Cúter', 'Ráfaga de perdigones a corta distancia.', 'Trabuco'], sloop: ['Balandra', 'Un cañón de proa pesado y preciso.', 'Cañón de proa'], pirogue: ['Piragua de carreras', 'Muy rápida, alta cadencia de tiro.', 'Mosquetes gemelos'],
-  brick: ['Bergantín', 'Abanico de metralla, letal de cerca.', 'Metralla'], caravelle: ['Carabela', 'Dos trabucos, dos objetivos a la vez.', 'Trabuco doble'], fregate: ['Fragata', 'Dispara por los costados: presenta el flanco al objetivo.', 'Andanadas'], bombarde: ['Bombarda', 'Proyectil lento que explota en área.', 'Mortero'], goelette: ['Goleta', 'Tres mosquetes, cadencia frenética.', 'Batería de mosquetes'], jonque: ['Junco', 'Cohetes que apuntan a tres objetivos.', 'Cohetes'],
-  galion: ['Gran galeón', 'Dos baterías laterales de cuatro cañones.', 'Baterías'], caraque: ['Carraca', 'Casco grueso, metralla sobre dos objetivos.', 'Metralla doble'], vaisseau: ['Navío de línea', 'Andanadas de cañones pesados a larga distancia.', 'Cañones pesados'], clipper: ['Clíper', 'El más rápido de los grandes veleros, pero frágil.', 'Mosquetes de repetición'], cuirasse: ['Acorazado a vapor', 'Dos torretas de morteros pesados.', 'Morteros pesados'],
-  galionroyal: ['Galeón real', 'Andanadas de cuatro cañones sobre tres objetivos.', 'Baterías reales'], fantome: ['Barco fantasma', 'Se repara solo y aún puede esconderse en la niebla.', 'Cañones espectrales'], forteresse: ['Fortaleza flotante', 'Torretas de morteros, casco enorme, muy lenta.', 'Triple mortero'], tempete: ['Clíper de tormenta', 'Velocidad loca, tres mosquetes sobre dos objetivos.', 'Mosquetes trueno'], dreadnought: ['Dreadnought', 'Dobles proyectiles explosivos sobre tres objetivos.', 'Torretas pesadas'] }
+en: { barque: ['Rowboat', 'Small rowing boat. Your archers shoot arrows.', 'Bows'],
+  drakkar: ['Longship', 'Long and swift, oars and a square sail. A rain of arrows.', 'Arrow volleys'], galere: ['Ram galley', 'Charge the enemy: bronze ram and crossbows.', 'Crossbows'], nef: ['Ballista nef', 'A ballista hurls a heavy bolt very far.', 'Ballista'],
+  goelette: ['Schooner', 'A crew of musketeers, frantic fire rate.', 'Musketeers'], chebec: ['Corsair xebec', 'Fast, muskets and a light ram to finish the job.', 'Muskets'], brickab: ['Boarding brig', 'Grappling hooks and blunderbusses: stick to the enemy.', 'Blunderbusses'], caravelle: ['Armed caravel', 'Sturdy ram and muskets to harass.', 'Muskets'], fregate: ['Frigate', 'First cannons: turn your flank to the target.', 'Broadsides'], bombarde: ['Bomb ketch', 'Mortar that explodes over an area, swivel guns for close defence.', 'Mortar', 'Swivel guns'],
+  clipper: ['Clipper', 'The fastest of the tall ships. Repeating rifles.', 'Repeating rifles'], aviso: ['Steam aviso', 'Small fast steamer: machine gun and ram.', 'Machine gun'], vapeurb: ['Armoured steamer', 'Paddle wheels, armoured hull and a Gatling gun.', 'Gatling'], galionab: ['Boarding galleon', 'Huge ram and small cannons to close in.', 'Small cannons'], vaisseau: ['Ship of the line', 'Broadsides of heavy cannons at long range.', 'Heavy cannons'], cuirasse: ['Steam ironclad', 'Heavy mortars, grapeshot for anyone who gets too close.', 'Heavy mortars', 'Grapeshot'],
+  torpilleur: ['Torpedo boat', 'Engine and propeller: insane speed, devastating torpedoes.', 'Torpedoes'], destroyer: ['Destroyer', 'Fast and agile: twin machine guns and a steel bow.', 'Machine guns'], cuirasseep: ['Ram battleship', 'Thick armour, steel ram and close-range turrets.', 'Short turrets'], croiseur: ['Armoured cruiser', 'Ram and medium guns: charge, then finish at range.', 'Medium guns'], dreadnought: ['Dreadnought', 'Explosive shells at very long range on three targets.', 'Heavy turrets'], forteresse: ['Floating fortress', 'Three mortar turrets and machine guns against boarders.', 'Triple mortar', 'Machine guns'] },
+es: { barque: ['Bote de remos', 'Pequeño bote de remos. Tus arqueros disparan flechas.', 'Arcos'],
+  drakkar: ['Drakkar', 'Largo y ágil, remos y vela cuadrada. Lluvia de flechas.', 'Ráfagas de flechas'], galere: ['Galera de espolón', 'Embiste al enemigo: espolón de bronce y ballestas.', 'Ballestas'], nef: ['Nave balista', 'Una balista lanza un gran virote muy lejos.', 'Balista'],
+  goelette: ['Goleta', 'Una tripulación de mosqueteros, cadencia frenética.', 'Mosqueteros'], chebec: ['Jabeque corsario', 'Rápido, mosquetes y un espolón ligero para rematar.', 'Mosquetes'], brickab: ['Bergantín de abordaje', 'Garfios y trabucos: pégate al enemigo.', 'Trabucos'], caravelle: ['Carabela armada', 'Espolón sólido y mosquetes para hostigar.', 'Mosquetes'], fregate: ['Fragata', 'Primeros cañones: presenta el flanco al objetivo.', 'Andanadas'], bombarde: ['Bombarda', 'Mortero que explota en área, pedreros para defenderse de cerca.', 'Mortero', 'Pedreros'],
+  clipper: ['Clíper', 'El más rápido de los grandes veleros. Fusiles de repetición.', 'Fusiles de repetición'], aviso: ['Aviso de vapor', 'Pequeño vapor rápido: ametralladora y espolón.', 'Ametralladora'], vapeurb: ['Vapor blindado', 'Ruedas de paletas, casco blindado y ametralladora Gatling.', 'Gatling'], galionab: ['Galeón de abordaje', 'Enorme espolón y pequeños cañones para acercarse.', 'Cañones pequeños'], vaisseau: ['Navío de línea', 'Andanadas de cañones pesados a larga distancia.', 'Cañones pesados'], cuirasse: ['Acorazado a vapor', 'Morteros pesados, metralla para quien se acerque demasiado.', 'Morteros pesados', 'Metralla'],
+  torpilleur: ['Lancha torpedera', 'Motor y hélice: velocidad loca, torpedos devastadores.', 'Torpedos'], destroyer: ['Destructor', 'Rápido y nervioso: ametralladoras gemelas y proa de acero.', 'Ametralladoras'], cuirasseep: ['Acorazado de espolón', 'Blindaje grueso, espolón de acero y torretas de corto alcance.', 'Torretas cortas'], croiseur: ['Crucero acorazado', 'Espolón y cañones medios: embiste y remata a distancia.', 'Cañones medios'], dreadnought: ['Dreadnought', 'Proyectiles explosivos a muy larga distancia sobre tres objetivos.', 'Torretas pesadas'], forteresse: ['Fortaleza flotante', 'Tres torretas de morteros y ametralladoras contra el abordaje.', 'Triple mortero', 'Ametralladoras'] }
 };
 // Bonus (même ordre que BON dans shared.js) : [nom, description]
 const BONX = {
-en: [['Light cannons', 'Fire rate +20%'], ['Heavy calibre', 'Damage +25%'], ['New sails', 'Speed +10%'], ['Spyglass', 'Range +15%'], ['Reinforced hull', '+30 max hit points'], ['Multi-shot', 'One more projectile per shot'], ['Carpenter', 'Repairs 2% of max HP per second'], ['Salvage nets', 'XP from wrecks and barrels +30%'], ['Ram bow', 'Ramming damage +50%'], ['Boatswain', 'Special skill ready 25% faster']],
-es: [['Cañones ligeros', 'Cadencia de tiro +20 %'], ['Gran calibre', 'Daño +25 %'], ['Velas nuevas', 'Velocidad +10 %'], ['Catalejo', 'Alcance +15 %'], ['Casco reforzado', '+30 puntos de vida máx.'], ['Salva múltiple', 'Un proyectil más por disparo'], ['Carpintero', 'Repara un 2 % de la vida máx. por segundo'], ['Redes de rescate', 'XP de restos y barriles +30 %'], ['Espolón de proa', 'Daño de embestida +50 %'], ['Contramaestre', 'Habilidad especial lista un 25 % antes']]
+en: [['Light cannons', 'Fire rate +20%'], ['Heavy calibre', 'Damage +25%'], ['New sails', 'Speed +10%'], ['Spyglass', 'Range +15%'], ['Reinforced hull', '+30 max hit points'], ['Multi-shot', 'One more projectile per shot'], ['Carpenter', 'Repairs 2% of max HP per second'], ['Salvage nets', 'XP from wrecks and barrels +30%'], ['Ram bow', 'Ramming damage +50%'], ['Boatswain', 'Special skill ready 25% faster'], ['Grappling hooks', 'In contact with an enemy: +8 damage per second and steal XP'], ['Studded hull', 'Ramming and boarding damage taken −40%']],
+es: [['Cañones ligeros', 'Cadencia de tiro +20 %'], ['Gran calibre', 'Daño +25 %'], ['Velas nuevas', 'Velocidad +10 %'], ['Catalejo', 'Alcance +15 %'], ['Casco reforzado', '+30 puntos de vida máx.'], ['Salva múltiple', 'Un proyectil más por disparo'], ['Carpintero', 'Repara un 2 % de la vida máx. por segundo'], ['Redes de rescate', 'XP de restos y barriles +30 %'], ['Espolón de proa', 'Daño de embestida +50 %'], ['Contramaestre', 'Habilidad especial lista un 25 % antes'], ['Garfios de abordaje', 'En contacto con un enemigo: +8 de daño por segundo y robo de XP'], ['Casco claveteado', 'Daño de embestida y abordaje recibido −40 %']]
 };
 // Compétences : [nom, abréviation du bouton]
 const SKX = {
@@ -113,7 +115,7 @@ const I = {
   withLang(l, fn) { const o = lang; lang = l; try { return fn(); } finally { lang = o; } },
   setLang(l) { if (!UI[l]) return; lang = l; try { localStorage.setItem('flottille-lang', l); } catch (e) {} document.documentElement.lang = l; },
   t(k, p) { return fill(UI[lang][k] !== undefined ? UI[lang][k] : (UI.fr[k] !== undefined ? UI.fr[k] : k), p); },
-  cls(k) { const S = root.S, c = S.CL[k], x = CLX[lang] && CLX[lang][k]; return x ? { n: x[0], d: x[1], w: x[2] } : { n: c.n, d: c.d, w: c.w.nm }; },
+  cls(k) { const S = root.S, c = S.CL[k], x = CLX[lang] && CLX[lang][k]; return x ? { n: x[0], d: x[1], w: x[2], w2: x[3] } : { n: c.n, d: c.d, w: c.w.nm, w2: c.w2 && c.w2.nm }; },
   bon(i) { const b = root.S.BON[i], x = BONX[lang] && BONX[lang][i]; return x ? { n: x[0], d: x[1] } : { n: b.n, d: b.d }; },
   sk(k) { const s = root.S.SK[k], x = SKX[lang] && SKX[lang][k]; return x ? { n: x[0], ab: x[1] } : { n: s.n, ab: s.ab }; },
   loot(k) { const x = LTX[lang] && LTX[lang][k]; return x || root.S.LT[k].nm; },
