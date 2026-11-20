@@ -18,7 +18,7 @@ let ev = { t: 30 }, storm = null, convoy = null, UID = 0, FZ = 0, T = 0, boardCa
 // ——— Outils ———
 const R = b => S.R(b.lvl, b.c);
 const mass = b => CL[b.c].sz ** 2 * (1 + b.lvl * .02);
-const mhp = b => (100 + b.s.hp) * CL[b.c].hp * (1 + .015 * (b.lvl - 1)) * (b.hpx || 1); // un peu plus solide à chaque niveau
+const mhp = b => 100 * CL[b.c].hp * (1 + .015 * (b.lvl - 1)) * (b.hpx || 1) + b.s.hp; // base du navire (un peu plus solide à chaque niveau) + bonus fixes
 const lmhp = l => l.mhp || LT[l.k].hp;
 const avail = s => BON.filter(x => !x.ok || x.ok(s));
 const rb = b => pick(avail(b.s)).f(b.s);
@@ -172,7 +172,7 @@ function aboard(a, v, dt) {
 }
 function hurt(o, d, by) {
   if (o.dead || o.hp <= 0 || o.inv > 0) return;
-  if (o.s && by && by.s && by.lvl - o.lvl > 2) d *= Math.max(.3, 1 - .1 * (by.lvl - o.lvl - 2)); // un gros navire écrase moins facilement un petit
+  if (o.s && by && by.s && by.lvl - o.lvl > 3) d *= Math.max(.4, 1 - .08 * (by.lvl - o.lvl - 3)); // un gros navire écrase moins facilement un petit
   if (o.s) d *= DMG * (1 - (CL[o.c].arm || 0));
   o.hp -= d; o.lh = T; o.hit = by; o.fl = .12; if (o.s && by && by.s) gain(by, d * .2);
   if (o.p && by && (by.s || by.k) && (o.hitT || 0) <= T) { o.hitT = T + .25; fx.push({ k: 'hit', a: Math.round(Math.atan2(by.y - o.y, by.x - o.x) * 100) / 100, n: by.s ? by.name : null, to: o.id }); }

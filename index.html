@@ -161,7 +161,7 @@ function pickOffer(i){if(!curOffer)return;sendM({t:'pick',o:curOffer.id,i});offe
 function renderOffer(of){const key=of?of.id:null;if(key===offerKey)return;offerKey=key;curOffer=of;if(!of){offerEl.hidden=true;return}
 if(of.k==='evo'){offerEl.innerHTML='<h3>'+tr('evoTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>{const c=CL[k],x=I.cls(k);return '<button data-i="'+i+'"><canvas width="240" height="152"></canvas>'+x.n+(c.leg?' <span class="leg">'+tr('legendary')+'</span>':'')+'<small class="ds">'+x.w+' · '+x.d+'</small><small class="k st">'+stat(c)+' · '+tr('key',{n:i+1})+'</small></button>'}).join('')+'</div>';
 offerEl.querySelectorAll('button').forEach(bt=>{const c=CL[of.o[+bt.dataset.i]],x=bt.querySelector('canvas').getContext('2d');x.scale(2,2);x.translate(60,38);x.rotate(-.35);const b=snap&&snap.b.find(o=>o.i===myId);ship(x,c,Math.min(19,42/c.L),b?b.col:cfg.hull,.35,0,{sail:cfg.sail,flag:cfg.flag,trim:cfg.trim,pat:cfg.pat})})}
-else offerEl.innerHTML='<h3>'+tr('bonusTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>'<button data-i="'+i+'">'+I.bon(k).n+'<small>'+(S.BON[k].f.toString().includes('s.hp')&&me?tr('hpBon',{n:Math.round(30*CL[me.c].hp*(1+.015*(me.l-1)))}):I.bon(k).d)+'</small><small class="k">'+tr('key',{n:i+1})+'</small></button>').join('')+'</div>';
+else offerEl.innerHTML='<h3>'+tr('bonusTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>'<button data-i="'+i+'">'+I.bon(k).n+'<small>'+I.bon(k).d+'</small><small class="k">'+tr('key',{n:i+1})+'</small></button>').join('')+'</div>';
 offerEl.querySelectorAll('button').forEach(bt=>bt.onclick=()=>pickOffer(+bt.dataset.i));offerEl.hidden=false}
 
 // ——— Menu et écran de naufrage ———
