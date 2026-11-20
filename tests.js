@@ -64,4 +64,27 @@ test('équilibre : les navires d’une même époque gagnent entre 35 % et 65 % 
   D.quiet(false);
 });
 
+test('chaque événement se déroule sans erreur (kraken, serpent, tourbillon, fantômes, amiral, convoi, trésor, tempête)', () => {
+  const id = g.addPlayer({ name: 'Test' });
+  for (const k of ['kraken', 'serpent', 'whirl', 'ghosts', 'admiral', 'convoy', 'tresor', 'storm']) {
+    D.startEv(k);
+    for (let t = 0; t < 20 * 20; t++) { g.tick(1 / 20); g.drainDeaths(); if (g.alive(id)) JSON.stringify(g.snapshotFor(id, 1366, 768, 0, 0, {})); g.clearFx(); }
+    for (const b of D.boats) assert(Number.isFinite(b.x) && Number.isFinite(b.hp), k + ' casse un navire');
+    for (const l of D.loot) assert(Number.isFinite(l.x) && Number.isFinite(l.hp), k + ' casse un butin');
+  }
+  g.removePlayer(id);
+});
+
+test('toutes les langues ont tous les textes', () => {
+  global.localStorage = { getItem() {}, setItem() {} }; global.document = { documentElement: {} }; global.window = global; global.S = S;
+  require('./i18n.js'); const I = global.I18N;
+  for (const [l] of I.LANGS) { if (l === 'fr') continue; for (const k of Object.keys(I.dict('fr'))) assert(I.dict(l)[k] !== undefined, 'texte manquant en ' + l + ' : ' + k); }
+  for (const k of Object.keys(CL)) for (const [l] of I.LANGS) I.withLang(l, () => assert(I.cls(k).n, 'nom de navire manquant : ' + k));
+});
+
+test('les pseudos et avis grossiers sont filtrés', () => {
+  assert(g.rude('M3rde') && g.rude('fuck') && !g.rude('Capitaine Jean') && !g.rude('Scunthorpe'));
+  assert.strictEqual(g.cleanText('quel jeu de merde'), 'quel jeu de *****');
+});
+
 console.log('\n' + ok + ' tests réussis');

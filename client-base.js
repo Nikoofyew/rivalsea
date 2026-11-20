@@ -1,0 +1,14 @@
+// RivalSea – Mise en place : écran, zoom, variables communes
+'use strict';
+const {TAU,EVO,CREAM,NAVY,WOOD,HULLS,SAILS,TRIMS,PATS,PREM,FLAGS_ALL,FLAGS,TEAMS,SK,CL,LT,BON,cl,angD}=S;
+const I=I18N,tr=(k,p)=>I.t(k,p);
+const cv=document.getElementById('c'),g=cv.getContext('2d'),ov=document.getElementById('ov'),offerEl=document.getElementById('offer');
+let W,H,dpr,lowQ=false,ftE=16;
+function rs(){dpr=lowQ?1:Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr}
+addEventListener('resize',rs);rs();
+let weekTop=[];
+let cfg={name:'',hull:'#ff6b57',sail:'#fff8e7',flag:'skull',trim:'#fff8e7',pat:'plain',wake:'none'};
+try{Object.assign(cfg,JSON.parse(localStorage.getItem('flottille-cfg')||'{}'))}catch(e){}
+function topHTML(){const b=best?'<p class="small">🏆 '+tr('myBest',{l:best.l,c:I.cls(best.c).n,s:best.s})+'</p>':'';const L=(t,a)=>a.length?'<div class="top"><b>'+t+'</b>'+a.map((r,i)=>'<span>'+(i+1)+'. '+String(r.n).replace(/[&<>]/g,'')+(r.live?' ⛵':'')+' — '+tr('lvl',{l:r.l})+'</span>').join('')+'</div>':'';return b+'<div class="tops">'+L(tr('dayTop'),dayTop)+L(tr('weekTop'),weekTop)+'</div>'}
+const saveCfg=()=>{try{localStorage.setItem('flottille-cfg',JSON.stringify(cfg))}catch(e){}};
+

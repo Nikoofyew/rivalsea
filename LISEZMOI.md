@@ -24,9 +24,19 @@ Pour jouer à plusieurs, il faut un **arbitre commun** que tout le monde consult
 |---|---|
 | `server.js` | Le serveur : envoie les pages et gère les connexions en direct. |
 | `game.js` | Les règles du jeu : déplacements, combats, XP, bots, événements. |
-| `index.html` | Ce que voit le joueur : menu, dessin du jeu, commandes. |
+| `index.html` | La page du jeu : elle charge le style et les fichiers `client-…` ci-dessous. |
+| `style.css` | L'apparence du menu et de l'interface. |
+| `client-base.js` | Mise en place de l'écran et des variables communes. |
+| `client-reseau.js` | La connexion au serveur et l'état du jeu reçu. |
+| `client-sons.js` | Les sons, fabriqués par le navigateur. |
+| `client-profil.js` | Le profil du joueur : étoiles, défis du jour, style, badges, série de jours. |
+| `client-commandes.js` | Souris, clavier, tactile et choix de bonus. |
+| `client-menus.js` | Le menu, l'écran de naufrage et le guide des navires. |
+| `client-dessin.js` | Le dessin des navires, projectiles, décor et butin. |
+| `client-rendu.js` | L'image du jeu image par image, l'interface (mini-carte, flèches, panneaux). |
+| `.github/workflows/reveil.yml` | Réveille le serveur toutes les 10 minutes pour éviter l'attente du premier joueur. |
 | `shared.js` | Les données communes : navires, armes, butin, bonus. **C'est ici qu'on règle l'équilibrage.** |
-| `i18n.js` | Les traductions (français, anglais, espagnol). Pour corriger ou ajouter un texte, c'est ici. |
+| `i18n.js` | Les traductions (français, anglais, espagnol), et les mots interdits sont dans `game.js` (`RUDE`). Pour corriger ou ajouter un texte, c'est ici. |
 | `package.json` | La carte d'identité du projet pour les hébergeurs. |
 | `tests.js` | Les tests automatiques : `npm test` vérifie que rien n'est cassé et que l'équilibrage tient. À lancer avant chaque mise en ligne. |
 

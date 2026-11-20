@@ -30,7 +30,7 @@ function enter(c, r) { if (c.room === r) return; if (c.room && c.bid) c.room.g.r
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const PUB = __dirname;
-const PUBLIC_FILES = new Set(['/index.html', '/shared.js', '/i18n.js', '/icon-180.png', '/icon-48.png', '/icon-32.png']); // seuls fichiers envoyés aux navigateurs
+const PUBLIC_FILES = new Set(['/index.html', '/style.css', '/shared.js', '/i18n.js', '/client-base.js', '/client-reseau.js', '/client-sons.js', '/client-profil.js', '/client-commandes.js', '/client-menus.js', '/client-dessin.js', '/client-rendu.js', '/icon-180.png', '/icon-48.png', '/icon-32.png']); // seuls fichiers envoyés aux navigateurs
 const TICK = 1 / 20;          // la simulation avance 20 fois par seconde (moins de calcul pour le petit serveur)
 const SEND_EVERY = 1;         // on envoie l'état aux joueurs 20 fois par seconde
 const MAX_PLAYERS = parseInt(process.env.MAX_PLAYERS || '40', 10);
@@ -148,7 +148,7 @@ function onMessage(c, txt) {
       c.bid = r.g.addPlayer(m); send(c, { t: 'joined', id: c.bid, room: r.priv ? r.id : '', mode: r.mode }); send(c, { t: 'top', l: dayTop(), w: dayTop(1) }); break; }
     case 'leave': if (c.room !== MAIN) enter(c, MAIN); break;
     case 'avis': {
-      const v = m.v === 1 ? 1 : m.v === -1 ? -1 : 0, txt = String(m.txt || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 300);
+      const v = m.v === 1 ? 1 : m.v === -1 ? -1 : 0, txt = MAIN.g.cleanText(String(m.txt || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 300));
       if (!v && !txt) break; if (c.avis && Date.now() - c.avis < 20000) break; c.avis = Date.now();
       STATS.avis.unshift({ v, txt, d: new Date().toISOString().slice(0, 16) }); STATS.avis.length = Math.min(STATS.avis.length, 200);
       console.log('AVIS', v > 0 ? '👍' : v < 0 ? '👎' : '·', txt); break; }

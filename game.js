@@ -266,7 +266,7 @@ function startEv(k) {
     convoy.tx = h ? (s > 0 ? WS - 150 : 150) : convoy.x; convoy.ty = h ? convoy.y : (s > 0 ? WS - 150 : 150); convoy.a = Math.atan2(convoy.ty - convoy.y, convoy.tx - convoy.x);
     for (const [ox, oy] of [[0, 0], [-110, -80], [-110, 80]]) { const l = mkL('marchand', convoy.x, convoy.y); l.cv = convoy; l.ox = ox; l.oy = oy; l.hp = l.mhp = 1600; l.xpo = 1000; l.gun = rnd(1, 2); loot.push(l); }
     const lv = Math.max(10, Math.round(avgLvl()) + 1);
-    for (const [ox, oy] of [[90, -150], [90, 150]]) { const e = mk({ lvl: lv, npc: 1 }); e.name = 'Escorte'; e.col = '#2d5f8a'; e.team = -1; e.c = lv >= 20 ? 'dreadnought' : lv >= 15 ? 'vaisseau' : 'fregate'; e.hpx = 4; e.dmx = 1.7; e.hp = mhp(e); e.cv = convoy; e.ox = ox; e.oy = oy; e.x = convoy.x; e.y = convoy.y + oy; e.inv = 0; boats.push(e); }
+    for (const [ox, oy] of [[90, -150], [90, 150]]) { const e = mk({ lvl: lv, npc: 1 }); e.name = '§escorte'; e.col = '#2d5f8a'; e.team = -1; e.c = lv >= 20 ? 'dreadnought' : lv >= 15 ? 'vaisseau' : 'fregate'; e.hpx = 4; e.dmx = 1.7; e.hp = mhp(e); e.cv = convoy; e.ox = ox; e.oy = oy; e.x = convoy.x; e.y = convoy.y + oy; e.inv = 0; boats.push(e); }
     banner('convoy');
   }
   else if (k === 'whirl') { const p = freeSpot(350, 200); whirl = { x: p.x, y: p.y, r: 280, life: 45 }; for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, l = mkL('tonneau', p.x + Math.cos(a) * 200, p.y + Math.sin(a) * 200); l.life = 45; loot.push(l); } banner('whirl'); }
@@ -274,8 +274,8 @@ function startEv(k) {
     const lv = k === 'admiral' ? Math.max(18, Math.round(avgLvl()) + 5) : Math.max(8, Math.round(avgLvl()) + 2), p = freeSpot(300, 150);
     for (let i = 0; i < (k === 'admiral' ? 1 : 3); i++) {
       const e = mk({ lvl: lv, npc: 1 }); e.team = -1; e.lvl = lv; e.x = cl(p.x + (i - 1) * 140, 60, WS - 60); e.y = p.y; e.inv = 0; e.hold = 0;
-      if (k === 'admiral') { e.name = 'Amiral'; e.col = '#1c2b4a'; e.trim = '#ffcf3f'; e.c = 'forteresse'; e.hpx = 6; e.dmx = 1.3; e.boss = 1; e.life = 180; e.sty = 'chasseur'; }
-      else { e.name = 'Fantôme'; e.col = '#7fe0c0'; e.sail = '#dff7ef'; e.c = lv >= 20 ? 'dreadnought' : lv >= 15 ? 'vaisseau' : lv >= 10 ? 'fregate' : 'drakkar'; e.hpx = 2; e.dmx = 1.15; e.gh = 1; e.sty = 'chasseur'; }
+      if (k === 'admiral') { e.name = '§amiral'; e.col = '#1c2b4a'; e.trim = '#ffcf3f'; e.c = 'forteresse'; e.hpx = 6; e.dmx = 1.3; e.boss = 1; e.life = 180; e.sty = 'chasseur'; }
+      else { e.name = '§fantome'; e.col = '#7fe0c0'; e.sail = '#dff7ef'; e.c = lv >= 20 ? 'dreadnought' : lv >= 15 ? 'vaisseau' : lv >= 10 ? 'fregate' : 'drakkar'; e.hpx = 2; e.dmx = 1.15; e.gh = 1; e.sty = 'chasseur'; }
       e.hp = mhp(e); boats.push(e);
     }
     if (k === 'ghosts') ghostT = 120; banner(k === 'admiral' ? 'admiral' : 'ghosts');
@@ -287,7 +287,10 @@ function events(dt) {
   plankT -= dt;
   if (plankT <= 0) { plankT = rnd(25, 40) / AREA / 2; if (loot.filter(l => l.k === 'planche' && !l.dead).length < 12 * AREA) { const l = mkL('planche'); l.life = 60; loot.push(l); } }
   ev.t -= dt;
-  if (ev.t <= 0) { ev.t = rnd(40, 65); const o = []; if (!loot.some(l => l.k === 'kraken')) o.push('kraken'); if (!storm) o.push('storm'); if (!convoy) o.push('convoy'); if (!loot.some(l => l.k === 'tresor')) o.push('tresor'); if (!whirl) o.push('whirl'); if (!boats.some(b => b.gh)) o.push('ghosts'); if (!loot.some(l => l.k === 'serpent' || l.k === 'kraken')) o.push('serpent'); if (!boats.some(b => b.boss) && avgLvl() >= 8) o.push('admiral'); if (o.length) startEv(pick(o)); }
+  // au plus 2 grands événements en même temps, pour ne pas surcharger l'écran
+  const active = (loot.some(l => l.k === 'kraken' || l.k === 'serpent') ? 1 : 0) + (storm ? 1 : 0) + (convoy ? 1 : 0) + (whirl ? 1 : 0) + (boats.some(b => b.gh || b.boss) ? 1 : 0) + (loot.some(l => l.k === 'tresor') ? 1 : 0);
+  if (ev.t <= 0 && active >= 2) ev.t = 10;
+  if (ev.t <= 0) { ev.t = rnd(40, 65); const o = []; if (!loot.some(l => l.k === 'kraken')) o.push('kraken'); if (!storm) o.push('storm'); if (!convoy) o.push('convoy'); if (!loot.some(l => l.k === 'tresor')) o.push('tresor'); if (!whirl) o.push('whirl'); if (!boats.some(b => b.gh)) o.push('ghosts'); if (!loot.some(l => l.k === 'serpent' || l.k === 'kraken') && avgLvl() >= 8) o.push('serpent'); if (!boats.some(b => b.boss) && avgLvl() >= 12) o.push('admiral'); if (o.length) startEv(pick(o)); }
   if (whirl && (whirl.life -= dt) <= 0) whirl = null;
   if (ghostT > 0 && (ghostT -= dt) <= 0) for (const b of boats) if (b.gh) { b.gone = true; b.dead = true; }
   for (const b of boats) if (b.boss && (b.life -= dt) <= 0) { b.gone = true; b.dead = true; banner('admiralGone'); }
@@ -443,7 +446,8 @@ function tick(dt) {
 // ——— Joueurs ———
 const clean = (v, list, def) => list.includes(v) ? v : def;
 function addPlayer(m) {
-  const name = String(m.name || '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 14) || 'Moussaillon';
+  let name = String(m.name || '').replace(/[\u0000-\u001f<>§]/g, '').trim().slice(0, 14) || 'Moussaillon';
+  if (rude(name)) name = 'Moussaillon'; // pseudo grossier : remplacé
   const v = a => a.map(h => h[0]); // le style débloqué est choisi par le joueur : on vérifie seulement qu'il existe
   const b = mk({ p: 1, name, hull: clean(m.hull, v(HULLS).concat(v(PREM.hull)), '#ff6b57'), sail: clean(m.sail, v(SAILS).concat(v(PREM.sail)), '#fff8e7'), flag: clean(m.flag, Object.keys(FLAGS_ALL), 'skull'), trim: clean(m.trim, v(TRIMS), '#fff8e7'), pat: clean(m.pat, v(PATS).concat(v(PREM.pat)), 'plain'), wake: clean(m.wake, ['none'].concat(v(PREM.wake)), 'none') });
   boats.push(b); b.fz = zoneAt(b.x, b.y); b.born = T; evs.push({ k: 'join' });
@@ -451,6 +455,11 @@ function addPlayer(m) {
   if (loot.filter(l => l.k === 'peche').length < 24) for (let i = 0, n = 0; i < 12 && n < 2; i++) { const a = rnd(0, TAU), x = b.x + Math.cos(a) * rnd(200, 300), y = b.y + Math.sin(a) * rnd(200, 300); if (x < 60 || y < 60 || x > WS - 60 || y > WS - 60 || inRock(x, y, 40)) continue; const l = mkL('peche', x, y); l.slow = T + 25; l.life = 60; loot.push(l); n++; }
   return b.id;
 }
+// filtre de mots grossiers (pseudos et avis) : on compare sans accents, chiffres déguisés ni séparateurs
+const RUDE = ['merde', 'connard', 'connasse', 'salope', 'pute', 'putain', 'encule', 'enculer', 'nique', 'niquer', 'batard', 'bite', 'couille', 'pd', 'pede', 'tapette', 'negro', 'negre', 'bougnoul', 'youpin', 'nazi', 'hitler', 'fuck', 'fucker', 'shit', 'bitch', 'cunt', 'dick', 'cock', 'pussy', 'whore', 'slut', 'nigger', 'nigga', 'faggot', 'fag', 'retard', 'rape', 'puta', 'puto', 'mierda', 'cabron', 'gilipollas', 'maricon', 'polla', 'cono', 'zorra', 'joder', 'scheisse', 'hure', 'fotze', 'cazzo', 'stronzo', 'vaffanculo', 'caralho', 'porra', 'viado', 'buceta'];
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/0/g, 'o').replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/[4@]/g, 'a').replace(/[5$]/g, 's').replace(/7/g, 't');
+function rude(s) { const n = norm(s), words = n.split(/[^a-z]+/), joined = n.replace(/[^a-z]/g, ''); return RUDE.some(w => words.includes(w) || (w.length >= 5 && joined.includes(w))); }
+function cleanText(s) { return String(s).split(/(\s+)/).map(w => rude(w) ? '*'.repeat(Math.min(6, w.length)) : w).join(''); }
 const byId = id => boats.find(b => b.id === id && !b.dead);
 function removePlayer(id) { const b = byId(id); if (b) { recordRun(b); evs.push({ k: 'quit', l: b.lvl, c: b.c, t: Math.round(T - (b.born || T)) }); b.gone = true; b.dead = true; boats = boats.filter(x => x !== b); } }
 function input(id, m) { const b = byId(id); if (!b) return; const a = +m.a, f = +m.f, ma = +m.ma, md = +m.md; if (Number.isFinite(a)) b.inp.a = a; if (Number.isFinite(f)) b.inp.f = cl(f, 0, 1);
@@ -513,4 +522,4 @@ genWorld();
 for (let i = 0; i < BOTS; i++) boats.push(mk({ lvl: botLevel(BOTS) }));
 for (const k in LT) for (let i = 0; i < LT[k].n * AREA; i++) loot.push(mkL(k));
 
-module.exports = { topWeek, drainEvents() { const e = evs; evs = []; return e; }, top, tick, addPlayer, removePlayer, input, skill, pickOffer, welcome, snapshotFor, drainDeaths, clearFx, alive, stats, MODE, _debug: { startEv, gain, need, mk, mhp, quiet(v) { QUIET = !!v; }, get boats() { return boats; }, get loot() { return loot; } } };
+module.exports = { rude, cleanText, topWeek, drainEvents() { const e = evs; evs = []; return e; }, top, tick, addPlayer, removePlayer, input, skill, pickOffer, welcome, snapshotFor, drainDeaths, clearFx, alive, stats, MODE, _debug: { startEv, gain, need, mk, mhp, quiet(v) { QUIET = !!v; }, get boats() { return boats; }, get loot() { return loot; } } };
