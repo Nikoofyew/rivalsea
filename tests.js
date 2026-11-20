@@ -15,9 +15,9 @@ test('arbre des navires : chaque navire a au moins 2 choix et reste dans sa fami
   }
 });
 
-test('les 24 chemins d’évolution sont jouables', () => {
+test('les 42 chemins d’évolution sont jouables', () => {
   const paths = k => CL[k].next.length ? CL[k].next.flatMap(n => paths(n).map(p => [k, ...p])) : [[k]];
-  const all = paths('barque'); assert.strictEqual(all.length, 24);
+  const all = paths('barque'); assert.strictEqual(all.length, 42);
   for (const p of all) {
     const id = g.addPlayer({ name: 'Test' }), b = D.boats.find(x => x.id === id);
     for (let i = 1; i < p.length; i++) {

@@ -28,7 +28,7 @@ const canHide = b => S.canHide(b.c);
 const humans = () => boats.filter(b => b.p);
 function zoneAt(x, y) { for (const f of fogs) if ((x - f.x) ** 2 + (y - f.y) ** 2 < f.r * f.r * .7 * (f.life !== undefined ? cl(f.life, 0, 1) : 1)) return f.z; return -1; }
 // on voit un navire s'il n'est pas caché, si on est dans le même banc de brouillard, ou s'il est tout proche
-const seen = (o, by) => !canHide(o) || o.fz < 0 || o.fz === by.fz || Math.hypot(o.x - by.x, o.y - by.y) < SEE;
+const seen = (o, by) => o.dive > 0 ? Math.hypot(o.x - by.x, o.y - by.y) < 120 : !canHide(o) || o.fz < 0 || o.fz === by.fz || Math.hypot(o.x - by.x, o.y - by.y) < SEE;
 const seenL = (l, by) => l.fz < 0 || l.fz === by.fz || Math.hypot(l.x - by.x, l.y - by.y) < SEE || l.k === 'kraken';
 // grille des rochers : chaque case ne contient que les rochers proches, pour ne pas tous les tester à chaque fois
 const RC = 400; let rgrid = new Map();
@@ -150,7 +150,7 @@ function fire(b, salvo, sec) {
       const o = k - (n - 1) / 2; let x, y, a;
       if (w.bs) { x = b.x + ax * o * gap + sx * r * .6; y = b.y + ay * o * gap + sy * r * .6; a = Math.atan2(ey - y, ex - x) + rnd(-.03, .03); }
       else { const q = an + Math.PI / 2; x = b.x + Math.cos(q) * o * par; y = b.y + Math.sin(q) * o * par; a = an + o * sp; }
-      shots.push({ x, y, vx: Math.cos(a) * w.v, vy: Math.sin(a) * w.v, l: life, L: life, d: dm, o: b, tm: b.team, sz: w.sz, spl: w.spl, k: w.k, col: b.col });
+      shots.push({ x, y, vx: Math.cos(a) * w.v, vy: Math.sin(a) * w.v, l: life, L: life, d: dm, o: b, tm: b.team, sz: w.sz, spl: w.spl, k: w.k, col: b.col, burn: w.burn });
     }
     if (w.bs) burst(b.x + sx * r * .7, b.y + sy * r * .7, 'rgba(255,255,255,.8)', 4, 60);
   }
@@ -161,6 +161,7 @@ function useSkill(b) {
   if (k === 'boost') { b.boost = 2.5; burst(b.x, b.y, '#fff', 10, 160); }
   else if (k === 'smoke') { smoke(b.x, b.y); burst(b.x, b.y, '#e8eef2', 16, 120); }
   else if (k === 'repair') { b.hp = Math.min(mhp(b), b.hp + mhp(b) * .35); burst(b.x, b.y, '#5be3a1', 14, 140); }
+  else if (k === 'dive') { b.dive = 4; b.tgt = null; burst(b.x, b.y, 'rgba(255,255,255,.9)', 14, 120); ring(b.x, b.y, R(b), R(b) * 2.5, .5, 'rgba(255,255,255,.8)'); }
   else if (k === 'salvo') { if (b.hold > 0) return false; b.inv = 0; if (!fire(b, true)) return false; }
   b.skcd = SK[k].cd * b.s.skr * (b.p ? 1 : 1.3); say(b, b.x, b.y - R(b) - 26, 'skill', { s: k }, '#fff', 1); return true;
 }
@@ -283,7 +284,7 @@ function ai(b, dt) {
     const fa = Math.atan2(b.y - th.y, b.x - th.x) + Math.sin(T * 2.5 + b.id) * .7;
     b.tx = cl(b.x + Math.cos(fa) * 300, 100, WS - 100); b.ty = cl(b.y + Math.sin(fa) * 300, 100, WS - 100); b.f = 1;
     if (canHide(b)) { let f0 = null, fd = 900; for (const f of fogs) { const d = Math.hypot(f.x - b.x, f.y - b.y); if (d < fd) { fd = d; f0 = f; } } if (f0) { b.tx = f0.x; b.ty = f0.y; } }
-    if (b.skcd <= 0 && (c.sk === 'boost' || c.sk === 'smoke')) useSkill(b);
+    if (b.skcd <= 0 && (c.sk === 'boost' || c.sk === 'smoke' || c.sk === 'dive')) useSkill(b);
   }
   else if (e) { engage(b, e, ed, rng); if (b.skcd <= 0 && c.sk === 'salvo') useSkill(b); }
   else {
@@ -313,13 +314,16 @@ function tick(dt) {
     if (b.p) { b.f = b.inp.f; b.tx = b.x + Math.cos(b.inp.a) * 100; b.ty = b.y + Math.sin(b.inp.a) * 100; } else ai(b, dt);
     let want = Math.atan2(b.ty - b.y, b.tx - b.x); if (!b.p) want = avoid(b, want, R(b));
     const tr = 3.4 / Math.pow(c.sz, 1.3); b.a += cl(angD(want, b.a), -tr * dt, tr * dt);
-    const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1);
+    const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1) * (b.dive > 0 ? 1.15 : 1);
     b.vx = Math.cos(b.a) * sp; b.vy = Math.sin(b.a) * sp; let wx = 0, wy = 0; if (inStorm(b.x, b.y)) [wx, wy] = wind(b);
     b.svx = b.vx + wx; b.svy = b.vy + wy; b.x = cl(b.x + (b.vx + wx) * dt, 20, WS - 20); b.y = cl(b.y + (b.vy + wy) * dt, 20, WS - 20); { const p = hullPush(b.x, b.y, b.a, R(b), CL[b.c].L, rocksNear(b.x, b.y)); b.x = p[0]; b.y = p[1]; }
     // hors combat depuis 5 s : +3 % de vie par seconde
-    b.hp = Math.min(mhp(b), b.hp + (b.s.reg * mhp(b) / 100 + (c.reg || 0) + (T - (b.lh || 0) > 5 ? mhp(b) * .03 : 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt;
-    if (b.cd <= 0 && b.hold <= 0) fire(b);
-    if (c.w2) { b.cd2 -= dt; if (b.cd2 <= 0 && b.hold <= 0) fire(b, false, true); }
+    b.hp = Math.min(mhp(b), b.hp + (b.s.reg * mhp(b) / 100 + (c.reg || 0) + (T - (b.lh || 0) > 5 ? mhp(b) * .03 : 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt; if (b.dive > 0) b.dive -= dt;
+    // en feu : le navire perd des points de vie pendant quelques secondes
+    if (b.burnT > T) hurt(b, b.burnD * dt, b.burnBy);
+    const sub = b.dive > 0; // en plongée : impossible de tirer
+    if (b.cd <= 0 && b.hold <= 0 && !sub) fire(b);
+    if (c.w2) { b.cd2 -= dt; if (b.cd2 <= 0 && b.hold <= 0 && !sub) fire(b, false, true); }
     const ta = manual(b) ? b.inp.ma : b.tgt && !b.tgt.dead ? Math.atan2(b.tgt.y - b.y, b.tgt.x - b.x) : b.a; b.aim += angD(ta, b.aim) * Math.min(1, dt * 8);
   }
   // collisions entre navires et éperonnage
@@ -370,7 +374,7 @@ function tick(dt) {
     if (inRock(s.x, s.y, 0)) { s.l = 0; burst(s.x, s.y, '#f4d58d', 4, 90); break; }
     let hit = null; for (const o of boats) { const dx = o.x - s.x, dy = o.y - s.y; if (dx > 200 || dx < -200 || dy > 200 || dy < -200) continue; if (o !== s.o && o.team !== s.tm && !o.dead && Math.hypot(dx, dy) < R(o) + s.sz) { hit = o; break; } }
     if (!hit) for (const o of lootNear(s.x, s.y, 80)) if (!o.dead && !(o.cv && s.o.npc) && Math.hypot(o.x - s.x, o.y - s.y) < LT[o.k].r + s.sz) { hit = o; break; }
-    if (hit) { s.l = 0; if (s.spl) boom(s); else { hurt(hit, s.d, s.o); burst(s.x, s.y, '#fff8e7', 3, 90); } }
+    if (hit) { s.l = 0; if (s.spl) boom(s); else { hurt(hit, s.d, s.o); if (s.burn && hit.s && !hit.dead) { hit.burnT = T + s.burn; hit.burnD = s.d * .3; hit.burnBy = s.o; } burst(s.x, s.y, s.burn ? '#ff9f43' : '#fff8e7', s.burn ? 6 : 3, 90); } }
   }
   shots = shots.filter(s => s.l > 0);
   for (const b of boats) if (!b.dead && b.hp <= 0) { b.dead = true; sink(b); }
@@ -427,7 +431,7 @@ function snapshotFor(id, vw, vh, px, py, cache) {
   return {
     t: 'st', cx: r0(viewer.x), cy: r0(viewer.y), ld: leaderId,
     me: me ? { i: me.id, x: r0(me.x), y: r0(me.y), l: me.lvl, xp: r0(me.xp), nd: need(me.lvl), sc: me.sc, c: me.c, h: r0(me.hp), H: r0(mhp(me)), sk: r2(Math.max(0, me.skcd)), skm: r2(SK[CL[me.c].sk].cd * me.s.skr), fz: me.fz, tm: me.team, rng: r0(CL[me.c].w.rng * me.s.rng), of: me.offer, st: [me.s.dmg, me.s.rate, me.s.rng, me.s.multi, me.s.spd, me.s.reg, me.s.ram, me.s.brd, me.s.mres, me.s.hp].map(r2) } : null,
-    b: boats.filter(b => inV(b) && (b === me || seen(b, viewer))).map(b => ({ i: b.id, x: r0(b.x), y: r0(b.y), vx: r0(b.svx || 0), vy: r0(b.svy || 0), a: r2(b.a), m: r2(b.aim), c: b.c, l: b.lvl, h: r0(b.hp), H: r0(mhp(b)), col: b.col, sl: b.sail, fg: b.flag, tc: b.trim, pt: b.pat, wk: b.wake !== 'none' ? b.wake : undefined, n: b.name, np: b.npc ? 1 : 0, ia: !b.p && !b.npc ? 1 : 0, tm: b.team, iv: b.inv > 0 ? 1 : 0, fl: b.fl > 0 ? 1 : 0, bo: b.boost > 0 ? 1 : 0 })),
+    b: boats.filter(b => inV(b) && (b === me || seen(b, viewer))).map(b => ({ i: b.id, x: r0(b.x), y: r0(b.y), vx: r0(b.svx || 0), vy: r0(b.svy || 0), a: r2(b.a), m: r2(b.aim), c: b.c, l: b.lvl, h: r0(b.hp), H: r0(mhp(b)), col: b.col, sl: b.sail, fg: b.flag, tc: b.trim, pt: b.pat, wk: b.wake !== 'none' ? b.wake : undefined, n: b.name, np: b.npc ? 1 : 0, ia: !b.p && !b.npc ? 1 : 0, tm: b.team, iv: b.inv > 0 ? 1 : 0, fl: b.fl > 0 ? 1 : 0, bo: b.boost > 0 ? 1 : 0, bu: b.burnT > T ? 1 : undefined, dv: b.dive > 0 ? 1 : undefined })),
     l: outL, lr,
     s: shots.filter(inV).map(s => [r0(s.x), r0(s.y), r0(s.vx), r0(s.vy), s.sz, s.col, s.spl ? r0(s.spl) : 0, r2(s.l), r2(s.L), s.k || 'ball']),
     fg: fogs.filter(f => f.life !== undefined).map(f => [r0(f.x), r0(f.y), r0(f.r), f.z, r2(f.life), f.L, r2(f.ph)]),
