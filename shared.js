@@ -80,7 +80,8 @@ const LT = {
   epave: { hp: 8, xp: 0, r: 11, n: 0 },
   planche: { hp: 10, xp: 0, r: 15, n: 0, heal: .2 },   // planches de réparation : rares, soignent 20 % de la vie
   tresor: { hp: 3500, xp: 2400, r: 28, n: 0, nm: 'Trésor' },
-  kraken: { hp: 12000, xp: 4000, r: 52, n: 0, nm: 'Kraken' }
+  kraken: { hp: 12000, xp: 4000, r: 52, n: 0, nm: 'Kraken' },
+  serpent: { hp: 9000, xp: 3400, r: 40, n: 0, nm: 'Serpent de mer' }
 };
 
 const BON = [
