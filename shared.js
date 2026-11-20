@@ -8,8 +8,17 @@ const COLS = ['#ff6b57', '#ffcf3f', '#8b5cf6', '#5be3a1', '#ff8fc7', '#ff9f43', 
 const HULLS = [['#ff6b57', 'Corail'], ['#ffcf3f', 'Soleil'], ['#8b5cf6', 'Lavande'], ['#5be3a1', 'Menthe'], ['#ff8fc7', 'Rose'], ['#ff9f43', 'Orange'], ['#4dabf7', 'Azur'], ['#5c6b80', 'Ardoise'], ['#2f3640', 'Charbon'], ['#a8323e', 'Bordeaux'], ['#f4f1e8', 'Ivoire'], ['#16a085', 'Émeraude']];
 const SAILS = [['#fff8e7', 'Crème'], ['#2b2b2b', 'Noir'], ['#ff6b57', 'Rouge'], ['#4dabf7', 'Bleu'], ['#ffcf3f', 'Or'], ['#8b5cf6', 'Violet'], ['#5be3a1', 'Vert'], ['#ff8fc7', 'Rose']];
 const TRIMS = [['#fff8e7', 'Crème'], ['#ffcf3f', 'Or'], ['#2b2b2b', 'Noir'], ['#ff6b57', 'Corail'], ['#4dabf7', 'Azur'], ['#c0c7d0', 'Argent']];
+// Style à débloquer avec les étoiles des défis du jour : [valeur, nom, prix en étoiles]
+const PREM = {
+  hull: [['#d4af37', 'Or', 6], ['#00e5ff', 'Néon', 6], ['#141a33', 'Nuit', 4], ['#b8f2e6', 'Écume', 4]],
+  sail: [['#d4af37', 'Or vrai', 5], ['#00e5ff', 'Néon', 5], ['#6b3fa0', 'Pourpre royal', 4]],
+  pat: [['check', 'Damier', 5], ['rainbow', 'Arc-en-ciel', 10]],
+  flag: [['bolt', '⚡', 3], ['sun', '☀', 3], ['spark', '✦', 3]],
+  wake: [['gold', 'Doré', 8], ['fire', 'Feu', 10], ['rainbow', 'Arc-en-ciel', 15]]
+};
 const PATS = [['plain', 'Unie'], ['stripes', 'Rayée'], ['center', 'Bande'], ['half', 'Moitié'], ['tips', 'Bouts']];
 const FLAGS = { skull: '☠', star: '★', anchor: '⚓', heart: '♥', crown: '♛', swords: '⚔', moon: '☾', flower: '✿', none: '' };
+const FLAGS_ALL = Object.assign({ bolt: '⚡', sun: '☀', spark: '✦' }, FLAGS); // avec les pavillons à débloquer
 const TEAMS = [{ n: 'Rouges', col: '#ff6b57' }, { n: 'Jaunes', col: '#ffcf3f' }, { n: 'Violets', col: '#8b5cf6' }, { n: 'Verts', col: '#5be3a1' }];
 const NAMES = ['Mouette', 'Corsaire', 'Cabotin', 'Marée', 'Tempête', 'Sardine', 'Albatros', 'Boussole', 'Écume', 'Pinson', 'Tribord', 'Hublot', 'Goéland', 'Typhon', 'Crabe', 'Bigorneau'];
 
@@ -100,6 +109,6 @@ function hullPush(x, y, a, r, Lf, rocks) {
   return [x, y];
 }
 
-const S = { DMG, WS, TAU, EVO, SEE, CREAM, NAVY, WOOD, COLS, HULLS, SAILS, TRIMS, PATS, FLAGS, TEAMS, NAMES, SK, CL, LT, BON, rnd, ri, cl, pick, angD, R, need, canHide, hullPush };
+const S = { DMG, WS, TAU, EVO, SEE, CREAM, NAVY, WOOD, COLS, HULLS, SAILS, TRIMS, PATS, PREM, FLAGS, FLAGS_ALL, TEAMS, NAMES, SK, CL, LT, BON, rnd, ri, cl, pick, angD, R, need, canHide, hullPush };
 if (typeof module !== 'undefined' && module.exports) module.exports = S; else root.S = S;
 })(typeof window !== 'undefined' ? window : globalThis);
