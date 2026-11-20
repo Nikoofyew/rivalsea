@@ -74,7 +74,7 @@ const BON = [
 const rnd = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rnd(a, b + 1)), cl = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[ri(0, a.length - 1)];
 const angD = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 const R = (lvl, c) => (13 + Math.min(lvl, 30) * .7) * CL[c].sz;       // rayon d'un navire
-const need = lvl => Math.round(55 * Math.pow(1.185, lvl - 1) + lvl * 12); // XP pour passer au niveau suivant
+const need = lvl => Math.round(100 + 26 * (lvl - 1) + 1.6 * (lvl - 1) ** 2); // XP pour passer au niveau suivant
 const canHide = c => CL[c].t < 3 || !!CL[c].ghost;                      // peut se cacher dans le brouillard
 
 const S = { WS, TAU, EVO, SEE, CREAM, NAVY, WOOD, COLS, HULLS, SAILS, FLAGS, TEAMS, NAMES, SK, CL, LT, BON, rnd, ri, cl, pick, angD, R, need, canHide };
