@@ -195,9 +195,9 @@ function hurt(o, d, by) {
   if (o.p && by && (by.s || by.k) && (o.hitT || 0) <= T) { o.hitT = T + .25; fx.push({ k: 'hit', a: Math.round(Math.atan2(by.y - o.y, by.x - o.x) * 100) / 100, n: by.s ? by.name : null, lk: by.k, to: o.id }); }
 }
 function boom(s) {
-  ring(s.x, s.y, 4, s.spl, .4, '#ff9f43'); burst(s.x, s.y, '#ff9f43', 14, 240);
+  const tc = s.k === 'tentacle' ? '#9b6bd6' : '#ff9f43'; ring(s.x, s.y, 4, s.spl, .4, tc); burst(s.x, s.y, tc, 14, 240);
   for (const o of boats) { if (o === s.o || o.team === s.tm || o.dead) continue; const d = Math.hypot(o.x - s.x, o.y - s.y), m = s.spl + R(o) * .5; if (d < m) hurt(o, s.d * (1 - .65 * d / m), s.o); } // moins de dégâts sur les bords de l'explosion
-  for (const o of loot) { if (o.dead || (o.cv && s.o.npc)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < s.spl + LT[o.k].r) hurt(o, s.d * (d < s.spl * .45 ? 1 : .6), s.o); }
+  if (!s.o.k) for (const o of loot) { if (o.dead || (o.cv && s.o.npc)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < s.spl + LT[o.k].r) hurt(o, s.d * (d < s.spl * .45 ? 1 : .6), s.o); }
 }
 // ——— Meilleurs vrais joueurs du jour (remis à zéro à minuit, heure de Paris) ———
 let dayTop = [], dayKey = '', weekTop = [], weekKey = '';
@@ -281,7 +281,7 @@ function startEv(k) {
     if (k === 'ghosts') ghostT = 120; banner(k === 'admiral' ? 'admiral' : 'ghosts');
   }
   else if (k === 'serpent') { const p = freeSpot(450, 120), l = mkL('serpent', p.x, p.y); l.life = 180; l.bite = 2; loot.push(l); banner('serpent'); }
-  else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } const tl = mkL('tresor', p.x, p.y); tl.gun = 2; loot.push(tl); banner('treasure'); }
+  else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('treasure'); }
 }
 function events(dt) {
   plankT -= dt;
@@ -401,9 +401,13 @@ function tick(dt) {
       let n = null, nd = 700; for (const b of boats) { const dd = Math.hypot(b.x - l.x, b.y - l.y); if (dd < nd) { nd = dd; n = b; } }
       if (n) { const a = Math.atan2(n.y - l.y, n.x - l.x); l.a += angD(a, l.a) * Math.min(1, dt * 2); l.x += Math.cos(l.a) * 40 * dt; l.y += Math.sin(l.a) * 40 * dt; l.vx = Math.cos(l.a) * 40; l.vy = Math.sin(l.a) * 40; }
       l.slam -= dt; if (l.slam <= 0) { l.slam = 1.8; ring(l.x, l.y, d.r, d.r + 130, .5, '#c9a6ff'); for (const b of boats) if (Math.hypot(b.x - l.x, b.y - l.y) < d.r + 130 + R(b) * .5) hurt(b, 34, l); }
+      // tentacules lancées vers les navires proches : la zone d'impact est marquée, on peut l'esquiver
+      l.tent = (l.tent === undefined ? 2 : l.tent) - dt;
+      if (l.tent <= 0) { l.tent = 2.4; const vic = boats.filter(b => !b.dead && !b.npc && b.inv <= 0 && Math.hypot(b.x - l.x, b.y - l.y) < 650).sort((a, b) => Math.hypot(a.x - l.x, a.y - l.y) - Math.hypot(b.x - l.x, b.y - l.y)).slice(0, 2);
+        for (const b of vic) { const ex = b.x + (b.vx || 0) * .5, ey = b.y + (b.vy || 0) * .5, a = Math.atan2(ey - l.y, ex - l.x), x0 = l.x + Math.cos(a) * d.r, y0 = l.y + Math.sin(a) * d.r, dist = Math.hypot(ex - x0, ey - y0), ft = 1.2;
+          shots.push({ x: x0, y: y0, vx: Math.cos(a) * dist / ft, vy: Math.sin(a) * dist / ft, l: ft, L: ft, d: 45, o: l, tm: -2, sz: 8, spl: 60, k: 'tentacle', col: '#7a4fb3' }); } }
       pushOut(l, d.r * .6); continue;
     }
-    if (l.k === 'tresor') lootGuns(l, dt, 4, 26, 380, 1.6, '#ffcf3f');
     if (l.cv) { lootGuns(l, dt, 2, 16, 300, 2.2, '#e8b04a'); const [fx2, fy2] = fpos(l.cv, l.ox, l.oy), dd = Math.hypot(fx2 - l.x, fy2 - l.y); l.a += angD(dd > 8 ? Math.atan2(fy2 - l.y, fx2 - l.x) : l.cv.a, l.a) * Math.min(1, dt * 3); const v = Math.min(110, dd * 2); l.x += Math.cos(l.a) * v * dt; l.y += Math.sin(l.a) * v * dt; l.vx = Math.cos(l.a) * v; l.vy = Math.sin(l.a) * v; continue; }
     if (d.mv) {
       l.t -= dt; if (l.t <= 0) { l.t = rnd(3, 7); const s = freeSpot(100, 60); l.wx = s.x; l.wy = s.y; }
