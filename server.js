@@ -46,7 +46,7 @@ server.on('upgrade', (req, sock) => {
   sock.setNoDelay(true);
   const c = { sock, buf: Buffer.alloc(0), frag: [], bid: 0, vw: 1200, vh: 900, px: 1700, py: 1700, msgs: 0 };
   clients.add(c);
-  send(c, game.welcome());
+  send(c, game.welcome()); send(c, { t: 'top', l: game.top() });
   sock.on('data', d => { c.buf = Buffer.concat([c.buf, d]); if (c.buf.length > 1e6) return sock.destroy(); readFrames(c); });
   const bye = () => { if (!clients.delete(c)) return; if (c.bid) game.removePlayer(c.bid); };
   sock.on('close', bye); sock.on('error', bye); sock.on('end', bye);
@@ -91,7 +91,7 @@ function onMessage(c, txt) {
     case 'join':
       if (c.bid && game.alive(c.bid)) return;
       if ([...clients].filter(x => x.bid && game.alive(x.bid)).length >= MAX_PLAYERS) return send(c, { t: 'full' });
-      c.bid = game.addPlayer(m); send(c, { t: 'joined', id: c.bid }); break;
+      c.bid = game.addPlayer(m); send(c, { t: 'joined', id: c.bid }); send(c, { t: 'top', l: game.top() }); break;
     case 'in':
       if (c.bid) game.input(c.bid, m);
       if (Number.isFinite(+m.vw)) c.vw = Math.min(2600, Math.max(300, +m.vw));
@@ -107,10 +107,19 @@ let n = 0;
 setInterval(() => {
   for (const c of clients) c.msgs = 0;
   game.tick(TICK);
-  for (const d of game.drainDeaths()) for (const c of clients) if (c.bid === d.id) { send(c, Object.assign({ t: 'dead' }, d)); c.px = d.x; c.py = d.y; }
+  for (const d of game.drainDeaths()) for (const c of clients) if (c.bid === d.id) { send(c, { t: 'top', l: game.top() }); send(c, Object.assign({ t: 'dead' }, d)); c.px = d.x; c.py = d.y; }
   if (++n % SEND_EVERY) return;
-  for (const c of clients) { const st = game.snapshotFor(c.bid, c.vw, c.vh, c.px, c.py); if (st.me) { c.px = st.me.x; c.py = st.me.y; } send(c, st); }
+  for (const c of clients) { const st = game.snapshotFor(c.bid, c.vw, c.vh, c.px, c.py, c.cache || (c.cache = {})); if (st.me) { c.px = st.me.x; c.py = st.me.y; } send(c, st); }
   game.clearFx();
 }, TICK * 1000);
 
 server.listen(PORT, () => console.log('RivalSea est en ligne sur http://localhost:' + PORT + '  (mode ' + (game.MODE === 'team' ? 'équipages' : 'chacun pour soi') + ')'));
+
+// les meilleurs vrais joueurs du jour, envoyés à tous toutes les 15 secondes
+setInterval(() => { const m = { t: 'top', l: game.top() }; for (const c of clients) send(c, m); }, 15000);
+
+// ——— 5. Rester éveillé ———
+// Sur l'offre gratuite de Render, le serveur s'endort après 15 minutes sans visite et met ensuite ~50 s à se réveiller.
+// Il se rend donc visite à lui-même toutes les 10 minutes (Render fournit son adresse publique dans RENDER_EXTERNAL_URL).
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || (process.env.RENDER ? 'https://rivalsea.onrender.com' : '');
+if (SELF_URL) setInterval(() => { require('https').get(SELF_URL + '/sante', r => r.resume()).on('error', () => {}); }, 10 * 60 * 1000);

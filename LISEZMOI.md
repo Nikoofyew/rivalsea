@@ -8,14 +8,14 @@ Pour jouer à plusieurs, il faut un **arbitre commun** que tout le monde consult
 
 ```
  Joueur A (navigateur) ──┐
- Joueur B (navigateur) ──┼──►  SERVEUR  : calcule la partie 30 fois par seconde
+ Joueur B (navigateur) ──┼──►  SERVEUR  : calcule la partie 20 fois par seconde
  Joueur C (navigateur) ──┘     (positions, tirs, dégâts, XP, bots, kraken…)
 ```
 
 1. Chaque joueur ouvre l'adresse du jeu. Le serveur lui envoie la page.
 2. Le navigateur ouvre ensuite une **ligne directe** avec le serveur (une « WebSocket ») qui reste ouverte pendant toute la partie.
 3. Sur cette ligne, le navigateur envoie seulement **où le joueur veut aller** (direction de la souris), la compétence spéciale et ses choix de bonus.
-4. Le serveur calcule tout et renvoie 15 fois par seconde **ce que ce joueur a le droit de voir** : les navires cachés dans le brouillard ne sont même pas envoyés, impossible de tricher en fouillant la page.
+4. Le serveur calcule tout et renvoie 20 fois par seconde **ce que ce joueur a le droit de voir** : les navires cachés dans le brouillard ne sont même pas envoyés, impossible de tricher en fouillant la page.
 5. Le navigateur se contente de dessiner.
 
 ## Les fichiers
@@ -28,6 +28,7 @@ Pour jouer à plusieurs, il faut un **arbitre commun** que tout le monde consult
 | `shared.js` | Les données communes : navires, armes, butin, bonus. **C'est ici qu'on règle l'équilibrage.** |
 | `i18n.js` | Les traductions (français, anglais, espagnol). Pour corriger ou ajouter un texte, c'est ici. |
 | `package.json` | La carte d'identité du projet pour les hébergeurs. |
+| `tests.js` | Les tests automatiques : `npm test` vérifie que rien n'est cassé et que l'équilibrage tient. À lancer avant chaque mise en ligne. |
 
 Aucune bibliothèque à installer : il faut seulement **Node.js** (version 18 ou plus récente).
 
