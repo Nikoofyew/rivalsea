@@ -85,6 +85,7 @@ label.nm input{font:inherit;font-size:17px;border:2px solid rgba(11,61,107,.25);
 .btns .ghost{background:transparent;color:var(--ink);box-shadow:none;border:2px solid currentColor;font-size:17px}
 #offer{position:fixed;left:50%;bottom:172px;transform:translateX(-50%);width:min(640px,calc(100% - 24px));background:var(--card);color:var(--ink);border-radius:18px;padding:10px 12px 12px;box-shadow:0 6px 0 rgba(0,0,0,.2);box-sizing:border-box;text-align:center}
 #offer h3{margin:0 0 6px;font-size:18px;font-weight:800}
+#offer .opts button{position:relative}#offer .kc{position:absolute;top:-9px;left:-7px;min-width:26px;height:26px;padding:0 5px;border-radius:7px;background:#fff8e7;color:#0b3d6b;border:2px solid #0b3d6b;box-shadow:0 3px 0 #0b3d6b;font:800 15px/21px system-ui,sans-serif;text-align:center;z-index:1}
 #offer .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 #offer .opts button{background:var(--sun);color:#0b3d6b;box-shadow:0 3px 0 #c79a1a;font-size:16px;padding:6px 8px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.15}
 #offer small{font-weight:600;font-size:13px}
@@ -245,9 +246,9 @@ function stat(c){const w=c.w;let s=tr('hp')+' ×'+I.num(c.hp)+' · '+tr('speed')
 function fitT(s,w){if(g.measureText(s).width<=w)return s;while(s.length>1&&g.measureText(s+'…').width>w)s=s.slice(0,-1);return s+'…'}
 function pickOffer(i){if(!curOffer)return;sendM({t:'pick',o:curOffer.id,i});offerEl.hidden=true}
 function renderOffer(of){const key=of?of.id:null;if(key===offerKey)return;offerKey=key;curOffer=of;if(!of){offerEl.hidden=true;return}
-if(of.k==='evo'){offerEl.innerHTML='<h3>'+tr('evoTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>{const c=CL[k],x=I.cls(k);return '<button data-i="'+i+'"><canvas width="240" height="152"></canvas>'+x.n+(c.leg?' <span class="leg">'+tr('legendary')+'</span>':'')+'<small class="ds">'+x.w+' · '+x.d+'</small><small class="k st">'+stat(c)+' · '+tr('key',{n:i+1})+'</small></button>'}).join('')+'</div>';
+if(of.k==='evo'){offerEl.innerHTML='<h3>'+tr('evoTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>{const c=CL[k],x=I.cls(k);return '<button data-i="'+i+'" aria-keyshortcuts="'+(i+1)+'">'+(touchMode?'':'<kbd class="kc" aria-hidden="true">'+(i+1)+'</kbd>')+'<canvas width="240" height="152"></canvas>'+x.n+(c.leg?' <span class="leg">'+tr('legendary')+'</span>':'')+'<small class="ds">'+x.w+' · '+x.d+'</small><small class="k st">'+stat(c)+'</small></button>'}).join('')+'</div>';
 offerEl.querySelectorAll('button').forEach(bt=>{const c=CL[of.o[+bt.dataset.i]],x=bt.querySelector('canvas').getContext('2d');x.scale(2,2);x.translate(60,38);x.rotate(-.35);const b=snap&&snap.b.find(o=>o.i===myId);ship(x,c,Math.min(19,42/c.L),b?b.col:cfg.hull,.35,0,{sail:cfg.sail,flag:cfg.flag,trim:cfg.trim,pat:cfg.pat})})}
-else offerEl.innerHTML='<h3>'+tr('bonusTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>'<button data-i="'+i+'">'+I.bon(k).n+'<small>'+I.bon(k).d+'</small><small class="k">'+tr('key',{n:i+1})+'</small></button>').join('')+'</div>';
+else offerEl.innerHTML='<h3>'+tr('bonusTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>'<button data-i="'+i+'" aria-keyshortcuts="'+(i+1)+'">'+(touchMode?'':'<kbd class="kc" aria-hidden="true">'+(i+1)+'</kbd>')+''+I.bon(k).n+'<small>'+I.bon(k).d+'</small></button>').join('')+'</div>';
 offerEl.querySelectorAll('button').forEach(bt=>bt.onclick=()=>pickOffer(+bt.dataset.i));offerEl.hidden=false}
 
 // ——— Menu et écran de naufrage ———
