@@ -34,7 +34,7 @@ for(const f of fogs){if(f.x+f.r*1.2<vx0||f.x-f.r*1.2>vx1||f.y+f.r*1.2<vy0||f.y-f
 const k=(f.life!==undefined?cl(Math.min(f.life,(f.L-f.life)*3),0,1):1)*(f.z===myZ?.2:1),fx=f.x+Math.sin(T*.4+f.ph)*14,fy=f.y+Math.cos(T*.33+f.ph)*14,gr=g.createRadialGradient(fx,fy,f.r*.2,fx,fy,f.r*1.15);
 gr.addColorStop(0,'rgba(236,244,247,'+(.97*k)+')');gr.addColorStop(.7,'rgba(232,242,246,'+(.93*k)+')');gr.addColorStop(1,'rgba(232,242,246,0)');g.fillStyle=gr;g.beginPath();g.arc(fx,fy,f.r*1.15,0,TAU);g.fill()}
 // navires (le serveur n'envoie que ceux que vous avez le droit de voir)
-for(const b of snap.b){const d=ents.get(b.i);if(!d||!vis(d))continue;const c=b.gh?ghostC(b.c):CL[b.c],r=S.R(b.l,b.c),own=b.i===myId;
+for(const b of snap.b){const d=ents.get(b.i);if(!d||!vis(d))continue;const c=b.gh?ghostC(b.c):CL[b.c],r=S.R(b.l,b.c)*(b.mc?1.3:1),own=b.i===myId;
 if(b.bs){g.fillStyle='rgba(255,207,63,'+(.18+.1*Math.sin(T*3))+')';g.beginPath();g.arc(d.x,d.y,r*c.L*1.25,0,TAU);g.fill()}
 if(b.iv&&Math.floor(T*8)%2)g.globalAlpha=.5;if(b.dv)g.globalAlpha=own?.35:.25;
 if(b.bu&&parts.length<(lowQ?200:500)&&Math.random()<(lowQ?.3:.7))parts.push({x:d.x+(Math.random()-.5)*r*c.L,y:d.y+(Math.random()-.5)*r*c.Wd*1.5,vx:(Math.random()-.5)*20,vy:-30-Math.random()*30,l:.6,col:Math.random()<.5?'rgba(255,107,40,.85)':'rgba(255,207,63,.85)',r:2+Math.random()*r*.15});

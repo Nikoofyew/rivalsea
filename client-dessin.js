@@ -134,26 +134,43 @@ function drawRockTop(k){if(k.k==='ile'){g.fillStyle='#4fc28a';g.beginPath();g.ar
 for(let i=0;i<3;i++){const a=k.ph+i*2.1,px=k.x+Math.cos(a)*k.r*.45,py=k.y+Math.sin(a)*k.r*.45;g.fillStyle='#2f8f5f';for(let j=0;j<5;j++){const b=j/5*TAU+T*.2;g.beginPath();g.ellipse(px+Math.cos(b)*9,py+Math.sin(b)*9,10,4,b,0,TAU);g.fill()}g.fillStyle=WOOD;g.beginPath();g.arc(px,py,3.5,0,TAU);g.fill()}}
 else{g.fillStyle='#8d7b68';g.strokeStyle='#5f5245';g.lineWidth=2;g.beginPath();for(let i=0;i<7;i++){const a=i/7*TAU,q=k.r*(.8+.2*Math.sin(k.ph*3+i*1.7));i?g.lineTo(k.x+Math.cos(a)*q,k.y+Math.sin(a)*q):g.moveTo(k.x+Math.cos(a)*q,k.y+Math.sin(a)*q)}g.closePath();g.fill();g.stroke()}}
 const GHC={};const ghostC=k=>GHC[k]||(GHC[k]=Object.assign({},CL[k],{ghost:1}));
+// coffre de pirate vu de face : planches de bois, couvercle bombé cerclé d'or, coins renforcés et serrure
+function drawChest(r,open,hitc){const w=r*1.25,bt=r*.8,mid=-r*.05,top=-r*.95,dark='#3b220f';
+const wood=(y0,y1,a,b)=>{if(hitc)return '#fff';const gr=g.createLinearGradient(0,y0,0,y1);gr.addColorStop(0,a);gr.addColorStop(1,b);return gr};
+g.fillStyle='rgba(11,61,107,.28)';g.beginPath();g.ellipse(0,bt+r*.05,w*1.15,r*.22,0,0,TAU);g.fill();
+g.strokeStyle='rgba(255,255,255,.55)';g.lineWidth=1.5;g.beginPath();g.ellipse(0,bt+r*.05,w*1.2,r*.24,0,.15,Math.PI-.15);g.stroke();
+g.lineJoin='round';g.lineWidth=2.5;g.strokeStyle=dark;
+// caisse
+g.fillStyle=wood(mid,bt,'#a0673a','#6a3f1d');g.beginPath();g.roundRect(-w,mid,w*2,bt-mid,r*.08);g.fill();g.stroke();
+g.strokeStyle='rgba(59,34,15,.6)';g.lineWidth=1.3;for(const q of [.34,.67]){const y=mid+(bt-mid)*q;g.beginPath();g.moveTo(-w+2,y);g.lineTo(w-2,y);g.stroke()}
+// couvercle (entrouvert pour le trésor, avec l'or qui déborde)
+const lift=open?r*.35:0,ly=mid-lift,dome=(x)=>ly-(ly-top+lift*.2)*Math.sqrt(Math.max(0,1-(x/w)**2));
+if(open){g.fillStyle=hitc?'#fff':'#2a1608';g.fillRect(-w*.95,ly,w*1.9,mid-ly+2);g.fillStyle='#ffd84a';g.beginPath();g.moveTo(-w*.9,mid+1);g.quadraticCurveTo(0,mid-r*.55,w*.9,mid+1);g.fill();
+g.fillStyle='#fff3b0';for(const [cx,cy] of [[-w*.45,mid-r*.12],[w*.05,mid-r*.28],[w*.5,mid-r*.1]]){g.beginPath();g.arc(cx,cy,r*.09,0,TAU);g.fill()}}
+g.fillStyle=wood(top,ly,'#b8794a','#7a4a24');g.strokeStyle=dark;g.lineWidth=2.5;g.beginPath();g.moveTo(-w,ly);for(let k=0;k<=12;k++){const x=-w+k/6*w;g.lineTo(x,dome(x))}g.lineTo(w,ly);g.closePath();g.fill();g.stroke();
+g.strokeStyle='rgba(59,34,15,.55)';g.lineWidth=1.2;for(const f of [.45,.75]){g.beginPath();for(let k=0;k<=12;k++){const x=-w+k/6*w,y=ly-(ly-dome(x))*f;k?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
+g.strokeStyle='rgba(255,236,200,.45)';g.lineWidth=2;g.beginPath();for(let k=2;k<=6;k++){const x=-w+k/6*w,y=dome(x)+r*.12;k>2?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+// ferrures dorées
+const gold=hitc?'#fff':'#f0c24a',gs='#8a5d12';g.fillStyle=gold;g.strokeStyle=gs;g.lineWidth=1.4;
+for(const bx of [-w*.58,w*.58]){const hw=r*.12;g.beginPath();g.rect(bx-hw,mid,hw*2,bt-mid);g.fill();g.stroke();g.beginPath();g.moveTo(bx-hw,ly);g.lineTo(bx-hw,dome(bx-hw));g.lineTo(bx+hw,dome(bx+hw));g.lineTo(bx+hw,ly);g.closePath();g.fill();g.stroke()}
+g.beginPath();g.rect(-w,mid-r*.06,w*2,r*.13);g.fill();g.stroke();g.beginPath();g.rect(-w,ly-r*.06,w*2,r*.12);g.fill();g.stroke();
+for(const sx of [-1,1]){g.beginPath();g.moveTo(sx*w,bt);g.lineTo(sx*(w-r*.38),bt);g.lineTo(sx*(w-r*.38),bt-r*.12);g.lineTo(sx*(w-r*.12),bt-r*.12);g.lineTo(sx*(w-r*.12),bt-r*.38);g.lineTo(sx*w,bt-r*.38);g.closePath();g.fill();g.stroke()}
+// serrure
+g.beginPath();g.moveTo(-r*.22,mid-r*.1);g.lineTo(r*.22,mid-r*.1);g.lineTo(r*.22,mid+r*.22);g.lineTo(0,mid+r*.38);g.lineTo(-r*.22,mid+r*.22);g.closePath();g.fill();g.stroke();
+g.fillStyle=dark;g.beginPath();g.arc(0,mid+r*.06,r*.065,0,TAU);g.fill();g.beginPath();g.moveTo(-r*.04,mid+r*.08);g.lineTo(r*.04,mid+r*.08);g.lineTo(r*.025,mid+r*.24);g.lineTo(-r*.025,mid+r*.24);g.closePath();g.fill();
+g.fillStyle='#fff6d0';for(const [cx,cy] of [[-w*.58,bt-r*.12],[w*.58,bt-r*.12],[-w*.58,mid+r*.15],[w*.58,mid+r*.15]]){g.beginPath();g.arc(cx,cy,r*.04,0,TAU);g.fill()}}
 function drawLoot(l,d){const D=LT[l.k],ph=(l.i*2.399)%TAU,sp=cl((T-d.born)*2,0,1),hitc=l.fl,fade=l.lf!==undefined&&(l.k==='epave'||l.k==='planche')?cl(l.lf/3,0,1):1,r=D.r*(.4+.6*sp)*(1+Math.sin(T*2+ph)*.04),X=d.x,Y=d.y;
 g.save();g.globalAlpha=fade;g.translate(X,Y);
-if(l.k!=='kraken'&&l.k!=='serpent'){g.fillStyle='rgba(255,255,255,.18)';g.beginPath();g.arc(0,0,r*1.35,0,TAU);g.fill()}
-g.rotate(d.a);
+// petits objets : ils flottent (léger roulis et vague autour) ; désactivé en qualité réduite
+const fl=!lowQ&&(l.k==='tonneau'||l.k==='caisse'||l.k==='coffre'||l.k==='epave'||l.k==='planche'),wv=Math.sin(T*1.8+ph);
+if(l.k!=='kraken'&&l.k!=='serpent'&&l.k!=='coffre'&&l.k!=='tresor'){g.fillStyle='rgba(255,255,255,.18)';g.beginPath();g.arc(0,0,r*(1.35+(fl?wv*.07:0)),0,TAU);g.fill()}
+if(fl)g.translate(0,wv*1.6);
+g.rotate(d.a+(fl?Math.sin(T*1.3+ph*1.7)*.09:0));
 if(l.k==='tonneau'||l.k==='epave'){g.fillStyle=hitc?'#fff':l.k==='epave'?'#8f5a2e':'#b5713a';g.strokeStyle='#6b3d1c';g.lineWidth=3;g.beginPath();g.arc(0,0,r,0,TAU);g.fill();g.stroke();g.strokeStyle=l.tn||'#6b3d1c';g.beginPath();g.arc(0,0,r*.55,0,TAU);g.stroke();g.fillStyle='#6b3d1c';g.beginPath();g.arc(0,0,r*.15,0,TAU);g.fill()}
 else if(l.k==='planche'){g.rotate(-d.a);g.fillStyle='rgba(91,227,161,'+(.22+.12*Math.sin(T*3+ph))+')';g.beginPath();g.arc(0,0,r*1.7,0,TAU);g.fill();g.rotate(d.a);for(const [oy,rot] of [[-r*.45,-.12],[0,.08],[r*.45,-.05]]){g.save();g.translate(0,oy);g.rotate(rot);g.fillStyle=hitc?'#fff':'#c98a4b';g.strokeStyle='#6b3d1c';g.lineWidth=2;g.beginPath();g.roundRect(-r*1.1,-r*.2,r*2.2,r*.4,2);g.fill();g.stroke();g.fillStyle='#6b3d1c';g.beginPath();g.arc(-r*.8,0,r*.06,0,TAU);g.arc(r*.8,0,r*.06,0,TAU);g.fill();g.restore()}g.rotate(-d.a);g.fillStyle='#5be3a1';g.strokeStyle='#fff';g.lineWidth=2;const cw=r*.22,cs=r*.6;g.beginPath();g.rect(-cw,-cs,cw*2,cs*2);g.rect(-cs,-cw,cs*2,cw*2);g.fill();g.fillRect(-cw,-cs,cw*2,cs*2)}
 else if(l.k==='caisse'){g.fillStyle=hitc?'#fff':'#e0a458';g.strokeStyle='#8a5a2b';g.lineWidth=3;g.beginPath();g.roundRect(-r,-r,r*2,r*2,3);g.fill();g.stroke();g.beginPath();g.moveTo(-r,-r);g.lineTo(r,r);g.moveTo(r,-r);g.lineTo(-r,r);g.stroke()}
 else if(l.k==='coffre'||l.k==='tresor'){if(l.k==='tresor'){g.fillStyle='rgba(255,207,63,'+(.25+.15*Math.sin(T*3))+')';g.beginPath();g.arc(0,0,r*2.1,0,TAU);g.fill()}
-// coffre de pirate vu de face : caisse en planches, couvercle bombé, ferrures dorées et serrure
-g.rotate(-d.a);const w=r*1.2,bt=r*.85,mid=-r*.12,top=-r*.82,wd=hitc?'#fff':'#8b5a2b',wd2=hitc?'#fff':'#6e4220',mt=hitc?'#fff':'#e8b93a',ln='#3d2410';
-g.fillStyle='rgba(0,0,0,.22)';g.beginPath();g.ellipse(0,bt+r*.08,w*1.05,r*.18,0,0,TAU);g.fill();
-if(l.k==='tresor'){g.fillStyle='#ffd84a';g.beginPath();g.ellipse(0,mid,w*.92,r*.28,0,Math.PI,TAU);g.fill();g.fillStyle='#fff3b0';for(const [cx,cy] of [[-w*.45,mid-r*.12],[w*.1,mid-r*.2],[w*.5,mid-r*.08]]){g.beginPath();g.arc(cx,cy,r*.1,0,TAU);g.fill()}}
-g.lineWidth=l.k==='tresor'?3:2.5;g.strokeStyle=ln;g.lineJoin='round';
-g.fillStyle=wd;g.beginPath();g.rect(-w,mid,w*2,bt-mid);g.fill();g.stroke();
-g.strokeStyle='rgba(61,36,16,.55)';g.lineWidth=1.5;for(const q of [.38,.66]){g.beginPath();g.moveTo(-w,mid+(bt-mid)*q);g.lineTo(w,mid+(bt-mid)*q);g.stroke()}
-const lidY=l.k==='tresor'?mid-r*.3:mid;g.fillStyle=wd2;g.strokeStyle=ln;g.lineWidth=l.k==='tresor'?3:2.5;g.beginPath();g.moveTo(-w,lidY);g.lineTo(-w,lidY-(mid-top)*.45);g.quadraticCurveTo(0,top-(lidY-mid)-r*.35,w,lidY-(mid-top)*.45);g.lineTo(w,lidY);g.closePath();g.fill();g.stroke();
-g.fillStyle=mt;g.strokeStyle='#8a5d12';g.lineWidth=1.5;for(const bx of [-w*.62,w*.62]){g.beginPath();g.rect(bx-r*.11,mid,r*.22,bt-mid);g.fill();g.stroke();g.beginPath();g.moveTo(bx-r*.11,lidY);g.lineTo(bx-r*.11,lidY-(mid-top)*.6);g.lineTo(bx+r*.11,lidY-(mid-top)*.6);g.lineTo(bx+r*.11,lidY);g.closePath();g.fill();g.stroke()}
-g.beginPath();g.rect(-w,mid-r*.05,w*2,r*.12);g.fill();g.stroke();
-g.beginPath();g.roundRect(-r*.2,mid-r*.12,r*.4,r*.42,r*.06);g.fill();g.stroke();g.fillStyle=ln;g.beginPath();g.arc(0,mid+r*.05,r*.06,0,TAU);g.fill();g.fillRect(-r*.025,mid+r*.05,r*.05,r*.13);
-g.fillStyle=mt;for(const [cx,cy] of [[-w,bt],[w,bt],[-w,mid],[w,mid]]){g.beginPath();g.arc(cx,cy,r*.09,0,TAU);g.fill()}
+g.rotate(-d.a);drawChest(r,l.k==='tresor',hitc);
 const tw=(Math.sin(T*4+ph)+1)/2;g.fillStyle='rgba(255,255,255,'+tw+')';const sx=r*.9,sy=-r*.9,ss=r*.45*tw;g.beginPath();g.moveTo(sx,sy-ss);g.lineTo(sx+ss*.25,sy);g.lineTo(sx,sy+ss);g.lineTo(sx-ss*.25,sy);g.closePath();g.fill();g.beginPath();g.moveTo(sx-ss,sy);g.lineTo(sx,sy+ss*.25);g.lineTo(sx+ss,sy);g.lineTo(sx,sy-ss*.25);g.fill()}
 else if(l.k==='serpent'){g.fillStyle=hitc?'#fff':'#3fbf7f';g.strokeStyle='#1d6b47';g.lineWidth=4;g.beginPath();g.ellipse(0,0,r*1.15,r*.8,0,0,TAU);g.fill();g.stroke();const jw=.25+.2*Math.max(0,Math.sin(T*6));g.fillStyle='#8a1f2b';g.beginPath();g.moveTo(r*.6,0);g.lineTo(r*1.5,-r*jw*2);g.lineTo(r*1.5,r*jw*2);g.closePath();g.fill();g.fillStyle='#fff8e7';for(const s of [-1,1]){g.beginPath();g.arc(r*.35,s*r*.42,r*.2,0,TAU);g.fill()}g.fillStyle='#111';for(const s of [-1,1]){g.beginPath();g.arc(r*.42,s*r*.42,r*.1,0,TAU);g.fill()}g.strokeStyle='#ffcf3f';g.lineWidth=3;for(const s of [-1,1]){g.beginPath();g.moveTo(-r*.3,s*r*.6);g.lineTo(-r*1,s*r*1.1);g.stroke()}}
 else if(l.k==='kraken'){g.lineCap='round';for(let i=0;i<8;i++){const a=i/8*TAU+Math.sin(T+i)*.2,L2=r*(1.7+.35*Math.sin(T*2+i)),c1=a+Math.sin(T*1.5+i)*.6,e=a+.35*Math.sin(T+i);

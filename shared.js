@@ -74,8 +74,8 @@ forteresse:{n:'Forteresse flottante',t:4,f:'c',leg:1,d:'Trois tourelles de morti
 const LT = {
   tonneau: { hp: 12, xp: 18, r: 12, n: 42 },
   caisse: { hp: 30, xp: 40, r: 15, n: 14 },
-  coffre: { hp: 70, xp: 120, r: 16, n: 4, nm: 'Coffre' },
-  peche: { hp: 30, xp: 55, r: 14, n: 9, mv: 120, nm: 'Pêcheur', col: '#4dabf7', sh: { L: 1.3, Wd: .6, masts: [{ x: .05, k: 'tri' }] } },
+  coffre: { hp: 70, xp: 120, r: 18, n: 2, nm: 'Coffre' },
+  peche: { hp: 30, xp: 55, r: 14, n: 5, mv: 120, nm: 'Pêcheur', col: '#4dabf7', sh: { L: 1.3, Wd: .6, masts: [{ x: .05, k: 'tri' }] } },
   marchand: { hp: 120, xp: 180, r: 22, n: 3, mv: 85, nm: 'Marchand', col: '#c98a4b', sh: { L: 1.5, Wd: .85, masts: [{ x: .3, k: 'sq' }, { x: -.25, k: 'sq' }], ports: 2 } },
   epave: { hp: 8, xp: 0, r: 11, n: 0 },
   planche: { hp: 10, xp: 0, r: 15, n: 0, heal: .2 },   // planches de réparation : rares, soignent 20 % de la vie
