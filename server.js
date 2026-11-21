@@ -157,6 +157,7 @@ function onMessage(c, txt) {
       if (Number.isFinite(+m.vw)) c.vw = Math.min(2600, Math.max(300, +m.vw));
       if (Number.isFinite(+m.vh)) c.vh = Math.min(2000, Math.max(300, +m.vh));
       break;
+    case 'ping': if (Number.isFinite(+m.c)) send(c, { t: 'pong', c: +m.c }); break; // mesure du ping affichée en jeu
     case 'sk': if (c.bid) c.room.g.skill(c.bid); break;
     case 'pick': if (c.bid) c.room.g.pickOffer(c.bid, m.o, m.i); break;
   }

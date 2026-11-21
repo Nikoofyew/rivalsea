@@ -14,9 +14,12 @@ ws.onopen=()=>{conn='ok';updStatus()};
 ws.onclose=()=>{conn='err';world=null;if(state!=='menu'){state='menu';menu(tr('lost'))}else updStatus();setTimeout(connect,2000)};
 ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}onMsg(m)}}
 const sendM=o=>{if(ws&&ws.readyState===1)ws.send(JSON.stringify(o))};
+// ping (aller-retour vers le serveur) mesuré toutes les 2 s, et heure de la dernière image du serveur : affichés en jeu
+let pingMs=0,lastSnapAt=0;setInterval(()=>{if(state==='play')sendM({t:'ping',c:Math.round(performance.now())})},2000);
 function onMsg(m){
 if(m.t==='w'){curRoom=m.room||'';lootM.clear();world={rocks:m.rocks.map(([x,y,r,i,ph])=>({x,y,r,k:i?'ile':'recif',ph})),fogs:m.fogs.map(([x,y,r,z,ph])=>({x,y,r,z,ph}))};WSZ=m.ws;mode=m.mode;updStatus()}
 else if(m.t==='joined'){portal.start();myId=m.id;curRoom=m.room||'';if(curRoom){invite='';history.replaceState(null,'',location.pathname+'?salle='+curRoom)}state='play';kbMode=false;keys.clear();aimHeld=false;ov.hidden=true;offerKey=null;fullMsg='';run={l:1,sc:0,t:0,lead:0,krak:0,c:'',t0:T}}
+else if(m.t==='pong'){const v=performance.now()-m.c;if(v>=0&&v<5000)pingMs=pingMs?pingMs*.6+v*.4:v}
 else if(m.t==='top'){dayTop=m.l||[];weekTop=m.w||[];const t=document.getElementById('top');if(t)t.innerHTML=topHTML()}
 else if(m.t==='full'){fullMsg='full';updStatus()}
 else if(m.t==='noroom'){roomErr=tr('noRoom');invite='';if(state==='menu')menu(lastMenuMsg)}
@@ -28,7 +31,7 @@ const lootM=new Map(); // butin connu : le serveur n'envoie que ce qui change
 let ofs=null,lastSync=0;function clockSync(tm){if(tm===undefined)return 0;const raw=T-tm/1000;if(ofs===null||raw<ofs||raw-ofs>2)ofs=raw;else ofs=Math.min(raw,ofs+(T-lastSync)*.02);lastSync=T;return Math.min(.25,raw-ofs)}
 // noms des navires du jeu (amiral, fantômes, escortes) : traduits dans la langue du joueur
 const npcN=n=>typeof n==='string'&&n[0]==='§'?tr('npc.'+n.slice(1)):n;
-function applySnap(m){const late=clockSync(m.tm);for(const b of m.b)b.n=npcN(b.n);for(const f of m.fx||[]){if(f.n)f.n=npcN(f.n);if(f.p){if(f.p.n)f.p.n=npcN(f.p.n);if(f.p.v)f.p.v=npcN(f.p.v)}}m.mb=m.mb||(snap&&snap.mb)||[];m.mi=m.mi||(snap&&snap.mi)||[];m.bd=m.bd||(snap&&snap.bd)||[];snap=m;nSnap++;const ids=new Set();
+function applySnap(m){lastSnapAt=performance.now();const late=clockSync(m.tm);for(const b of m.b)b.n=npcN(b.n);for(const f of m.fx||[]){if(f.n)f.n=npcN(f.n);if(f.p){if(f.p.n)f.p.n=npcN(f.p.n);if(f.p.v)f.p.v=npcN(f.p.v)}}m.mb=m.mb||(snap&&snap.mb)||[];m.mi=m.mi||(snap&&snap.mi)||[];m.bd=m.bd||(snap&&snap.bd)||[];snap=m;nSnap++;const ids=new Set();
 const put=(o,isLoot)=>{ids.add(o.i);let d=ents.get(o.i);if(!d||Math.hypot(d.x-o.x,d.y-o.y)>500){d={x:o.x,y:o.y,a:o.a,pa:o.a,m:o.m||o.a,ox:0,oy:0,born:nSnap>2?T:-9};ents.set(o.i,d)}
 // lissage : on garde l'écart entre ce qui est affiché et la nouvelle position, puis on le fait fondre en douceur
 if(d.tx!==undefined&&o.i!==myId){const ag=Math.min(T-d.st,.45);d.ox=d.x-o.x;d.oy=d.y-o.y;if(Math.hypot(d.ox,d.oy)>300){d.ox=d.oy=0}}

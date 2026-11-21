@@ -115,6 +115,9 @@ if(!touchMode&&(aimHeld||kbMode)){g.strokeStyle=aimHeld?'#ff6b57':'rgba(255,248,
 if(curRoom){g.font='800 12px "Baloo 2",system-ui,sans-serif';g.fillStyle='rgba(255,248,231,.85)';g.textAlign='left';g.fillText('🔒 '+curRoom+(mode==='team'?' · '+tr('teams'):''),m0+70,m0+mm+27)}
 // bouton du son, sous la mini-carte
 SNB={x:m0+16,y:m0+mm+22,r:14};STB=bigS?{x:-99,y:-99,r:0}:{x:m0+50,y:m0+mm+22,r:14};if(!bigS){g.fillStyle=statsOpen?'rgba(255,207,63,.85)':'rgba(11,61,107,.6)';g.beginPath();g.arc(STB.x,STB.y,STB.r,0,TAU);g.fill();g.fillStyle=CREAM;g.font='14px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('📊',STB.x,STB.y+1);g.textBaseline='alphabetic'}g.fillStyle='rgba(11,61,107,.6)';g.beginPath();g.arc(SNB.x,SNB.y,SNB.r,0,TAU);g.fill();g.fillStyle=CREAM;g.font='15px system-ui,sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(SND.muted?'🔇':'🔊',SNB.x,SNB.y+1);g.textBaseline='alphabetic';
+// petit indicateur images/s et ping : rouge quand ça rame, pour savoir d'où vient le lag
+{const fps=Math.round(1000/ftE),pg=Math.round(pingMs),bad=fps<40||pg>180;g.font='600 12px system-ui,sans-serif';g.textAlign='left';g.fillStyle=bad?'#ff6b57':'rgba(255,248,231,.75)';g.fillText(fps+' FPS'+(pg?' · '+pg+' ms':''),bigS?SNB.x+22:STB.x+22,SNB.y+4)
+ if(state==='play'&&lastSnapAt&&performance.now()-lastSnapAt>500){const ms=tr('netSlow');g.font='800 15px "Baloo 2",system-ui,sans-serif';const tw=g.measureText(ms).width;g.fillStyle='rgba(184,64,48,.85)';g.beginPath();g.roundRect(W/2-tw/2-14,86,tw+28,28,14);g.fill();g.fillStyle=CREAM;g.textAlign='center';g.fillText(ms,W/2,105)}}
 // bouton de compétence
 const skd=SK[c.sk],sk=I.sk(c.sk),sr=38;SKB={x:W-62,y:H-74,r:sr};const rdy=me.sk<=0,fr2=rdy?0:cl(me.sk/me.skm,0,1);
 g.fillStyle=rdy?'#ff6b57':'rgba(11,61,107,.75)';g.beginPath();g.arc(SKB.x,SKB.y,sr,0,TAU);g.fill();
