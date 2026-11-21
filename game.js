@@ -50,9 +50,9 @@ const burst = (x, y, col, n, sp) => fx.push({ k: 'burst', x: Math.round(x), y: M
 const ring = (x, y, r, m, l, col) => fx.push({ k: 'ring', x: Math.round(x), y: Math.round(y), r, m, l, col });
 const avgLvl = () => { const h = humans(); return h.length ? h.reduce((a, b) => a + b.lvl, 0) / h.length : ri(2, 6); };
 // bots de tous niveaux : on remplit la tranche de niveaux la moins représentée
-const BANDS = [[1, 4, .3], [5, 9, .25], [10, 14, .2], [15, 19, .15], [20, 26, .1]];
+const BANDS = [[1, 4, .35], [5, 9, .3], [10, 14, .2], [15, 20, .15]], BOTMAX = 20; // les bots plafonnent au niveau 20 : les nouveaux venus ne voient pas que des géants
 function botLevel(want) {
-  const cnt = BANDS.map(() => 0); for (const b of boats) if (!b.p && !b.npc) { const i = BANDS.findIndex(([a, z]) => b.lvl >= a && b.lvl <= z); cnt[i < 0 ? 4 : i]++; }
+  const cnt = BANDS.map(() => 0); for (const b of boats) if (!b.p && !b.npc) { const i = BANDS.findIndex(([a, z]) => b.lvl >= a && b.lvl <= z); cnt[i < 0 ? BANDS.length - 1 : i]++; }
   let bi = 0, bd = -1e9; BANDS.forEach(([, , p], i) => { const d = p * want - cnt[i] + Math.random() * .5; if (d > bd) { bd = d; bi = i; } });
   return ri(BANDS[bi][0], BANDS[bi][1]);
 }
@@ -106,7 +106,7 @@ function offer(b) {
   else b.offer = { id: ++b.oid, k: 'bonus', o: avail(b.s).map(x => BON.indexOf(x)).sort(() => Math.random() - .5).slice(0, 3), l };
 }
 const XPR = .7; // l'XP gagnée est réduite de 30 % pour monter de niveau moins vite
-function gain(b, x) { if (!b || !b.s || b.dead || b.mc || (!b.p && b.lvl >= 30)) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
+function gain(b, x) { if (!b || !b.s || b.dead || b.mc || (!b.p && b.lvl >= (b.npc ? 30 : BOTMAX))) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
 function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.x, b.y, R(b), R(b) * 4, .7, '#ffcf3f'); say(b, b.x, b.y - R(b) - 30, 'evo', { c: k }, '#ffcf3f', 1.6); } }
 
 // ——— Monde : îles, récifs, brouillard ———
@@ -129,10 +129,12 @@ function genWorld() {
 function smoke(x, y) { const id = FZ++; for (let i = 0; i < 3; i++) fogs.push({ x: x + rnd(-60, 60), y: y + rnd(-60, 60), r: rnd(120, 160), z: id, ph: rnd(0, TAU), life: 8, L: 8 }); }
 
 // ——— Combat ———
+// les IA épargnent les débutants (niveau 1 à 4), sauf s'ils viennent de les attaquer
+const spare = (b, o) => !b.p && o.p && o.lvl < 5 && !(b.hit === o && T - b.lh < 8);
 const sideOK = (b, o) => !CL[b.c].w.bs || Math.abs(Math.sin(Math.atan2(o.y - b.y, o.x - b.x) - b.a)) > .6;
 function targets(b, rng, n) {
   const out = [], near = (arr, rad, f) => arr.filter(o => !o.dead && f(o)).map(o => [o, Math.hypot(o.x - b.x, o.y - b.y) - rad(o)]).filter(e => e[1] < rng && sideOK(b, e[0])).sort((a, c) => a[1] - c[1]);
-  if (b.inv <= 0) for (const e of near(boats, R, o => o !== b && o.team !== b.team && o.inv <= 0 && seen(o, b))) { if (out.length >= n) break; out.push(e[0]); } // protégé : on ne vise que le butin
+  if (b.inv <= 0) for (const e of near(boats, R, o => o !== b && o.team !== b.team && o.inv <= 0 && !spare(b, o) && seen(o, b))) { if (out.length >= n) break; out.push(e[0]); } // protégé : on ne vise que le butin
   if (out.length < n) for (const e of near(lootNear(b.x, b.y, rng + 80), o => LT[o.k].r, o => seenL(o, b) && !(b.npc && o.cv))) { if (out.length >= n) break; out.push(e[0]); }
   return out;
 }
@@ -222,7 +224,7 @@ function sink(v) {
   const n = cl(2 + Math.floor(v.lvl / 4), 2, 8), each = Math.round(Math.min(15 + v.tot * .08, 500) / n);
   for (let i = 0; i < n; i++) { const a = rnd(0, TAU), q = rnd(10, R(v) * 1.6), l = mkL('epave', v.x + Math.cos(a) * q, v.y + Math.sin(a) * q); l.xpo = each; l.life = 25; l.tint = v.col; loot.push(l); }
   if (v.p) { recordRun(v); evs.push({ k: 'death', l: v.lvl, c: v.c, t: Math.round(T - (v.born || T)), by: k && k.s ? (k.p ? 'joueur' : k.npc ? 'escorte' : 'bot') : k && k.k === 'kraken' ? 'kraken' : 'autre', bc: k && k.s ? k.c : null }); }
-  if (v.p) deaths.push({ id: v.id, lvl: v.lvl, c: v.c, sc: v.sc, x: Math.round(v.x), y: Math.round(v.y), by: k && k.s ? k.name : null, byk: k && k.k === 'kraken' ? 1 : 0 });
+  if (v.p) deaths.push({ id: v.id, lvl: v.lvl, c: v.c, sc: v.sc, x: Math.round(v.x), y: Math.round(v.y), by: k && k.s ? k.name : null, bl: k && k.s ? k.lvl : 0, bc: k && k.s ? k.c : '', bi: k && k.s && !k.p ? 1 : 0, byk: k && k.k === 'kraken' ? 1 : 0 });
 }
 function crack(l) {
   const d = LT[l.k], k = l.hit; if (l.gone) return;
@@ -322,14 +324,14 @@ function ai(b, dt) {
   }
   if (b.cv) {
     const [fx2, fy2] = fpos(b.cv, b.ox, b.oy); let e = null, ed = 460;
-    for (const o of boats) if (!o.npc && !o.dead && o.inv <= 0 && seen(o, b)) { const d = Math.hypot(o.x - b.cv.x, o.y - b.cv.y); if (d < ed) { ed = d; e = o; } }
+    for (const o of boats) if (!o.npc && !o.dead && o.inv <= 0 && !spare(b, o) && seen(o, b)) { const d = Math.hypot(o.x - b.cv.x, o.y - b.cv.y); if (d < ed) { ed = d; e = o; } }
     if (e) engage(b, e, Math.hypot(e.x - b.x, e.y - b.y), rng); else { b.tx = fx2; b.ty = fy2; b.f = cl(Math.hypot(fx2 - b.x, fy2 - b.y) / 80, .3, 1); }
     if (b.skcd <= 0 && e) useSkill(b); return;
   }
   // prudent : fuit tôt ; chasseur : poursuit de plus loin, surtout les joueurs ; pilleur : préfère le butin
   const sty = b.sty || 'normal', far = sty === 'chasseur' ? 2.2 : sty === 'pilleur' ? (T - (b.lh || -9) < 4 ? 1.3 : .6) : 1.3, gap = sty === 'prudent' ? 1 : 3;
   let e = null, ed = rng * far, th = null, td = 720;
-  for (const o of boats) if (o !== b && !o.dead && o.team !== b.team && seen(o, b)) { const d0 = Math.hypot(o.x - b.x, o.y - b.y), d = sty === 'chasseur' && o.p ? d0 * .7 : d0; if (d < ed && o.inv <= 0 && o.lvl >= b.lvl - 6) { ed = d; e = o; } if (d0 < td && (o.lvl > b.lvl + gap || CL[o.c].t >= c.t + 2)) { td = d0; th = o; } }
+  for (const o of boats) if (o !== b && !o.dead && o.team !== b.team && seen(o, b)) { const d0 = Math.hypot(o.x - b.x, o.y - b.y), d = sty === 'chasseur' && o.p ? d0 * .7 : d0; if (d < ed && o.inv <= 0 && o.lvl >= b.lvl - 6 && !spare(b, o)) { ed = d; e = o; } if (d0 < td && (o.lvl > b.lvl + gap || CL[o.c].t >= c.t + 2)) { td = d0; th = o; } }
   if (e) ed = Math.hypot(e.x - b.x, e.y - b.y);
   b.tx = b.wx; b.ty = b.wy; b.f = .7;
   if (th && (hpR < (sty === 'prudent' ? .8 : .6) || th.lvl > b.lvl + 5 || CL[th.c].t >= c.t + 2 || !e || e === th)) {

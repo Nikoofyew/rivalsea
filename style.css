@@ -77,3 +77,22 @@ label.nm input{font:inherit;font-size:17px;border:2px solid rgba(11,61,107,.25);
 #offer .k{font-size:11px;opacity:.7}
 @media (max-width:560px),(max-height:520px){#offer{bottom:150px;padding:8px}#offer h3{font-size:15px;margin-bottom:4px}#offer .opts{grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:6px}#offer .opts button{font-size:13px;padding:4px}#offer canvas{width:84px;height:53px}#offer .ds,#offer .st{display:none}#offer small{font-size:11px}}
 #offer .leg{font-size:11px;font-weight:800;text-transform:uppercase;background:#0b3d6b;color:#ffcf3f;border-radius:8px;padding:0 6px}
+
+/* menu : pseudo + bouton Jouer en haut */
+.quick{display:flex;gap:10px;justify-content:center;align-items:stretch;margin:12px auto 4px;max-width:520px}
+.quick input{font:inherit;font-size:18px;font-weight:800;border:2px solid rgba(11,61,107,.25);border-radius:12px;padding:8px 14px;flex:1;min-width:0;background:#fff;color:#0b3d6b}
+.quick #go{margin:0;position:static;white-space:nowrap}
+.custh{margin:14px 0 4px;font-size:16px}
+.tip{background:rgba(255,207,63,.25);border-radius:10px;padding:6px 10px;font-size:14px}
+@media (max-height:520px){.intro{display:none}.brand{font-size:28px;margin:4px 0}.brand img{width:36px;height:36px}.card{padding:14px}}
+@media (max-width:540px){.quick{flex-direction:column}}
+/* bonus : petit panneau en bas à gauche (en haut au centre sur écran tactile, à cause du joystick) */
+#offer.bon{left:12px;bottom:12px;transform:none;width:min(280px,calc(100% - 24px));padding:8px 10px}
+#offer.bon h3{font-size:14px;margin-bottom:4px}
+#offer.bon .opts{grid-template-columns:1fr;gap:5px}
+#offer.bon .opts button{font-size:14px;padding:4px 8px 4px 34px;align-items:flex-start;text-align:left}
+#offer.bon .opts small{font-size:12px}
+#offer.bon .kc{top:50%;left:4px;transform:translateY(-50%);min-width:18px;height:18px;font-size:12px;line-height:14px;box-shadow:none;border-width:1.5px}
+#offer.bon.tch{left:50%;top:56px;bottom:auto;transform:translateX(-50%);padding:5px 8px}#offer.bon.tch h3{font-size:12px;margin-bottom:3px}#offer.bon.tch h3 .k{display:none}#offer.bon.tch .opts small{font-size:11px}
+#offer.bon.tch .opts{grid-template-columns:repeat(3,1fr)}
+#offer.bon.tch .opts button{padding:4px 6px;text-align:center;align-items:center}

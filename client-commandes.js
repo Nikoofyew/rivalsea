@@ -32,9 +32,13 @@ lastIn={a,f};const fi=!touchMode&&aimHeld&&aim;sendM(Object.assign({t:'in',a:Mat
 function stat(c){const w=c.w;let s=tr('hp')+' ×'+I.num(c.hp)+' · '+tr('speed')+' ×'+I.num(c.spd);if(w.tg>1)s+=' · '+tr('targets',{n:w.tg});if(w.spl)s+=' · '+tr('explosion');if(w.bs)s+=' · '+tr('side');if(w.burn)s+=' · '+tr('burnS');if(c.reg)s+=' · '+tr('regen');if(c.ram)s+=' · '+tr('ramS',{n:I.num(c.ram)});if(c.brd)s+=' · '+tr('brdS');if(c.arm)s+=' · '+tr('armor',{n:Math.round(c.arm*100)});if(c.t<3)s+=' · '+tr('hides');return s+' · '+I.sk(c.sk).n}
 function fitT(s,w){if(g.measureText(s).width<=w)return s;while(s.length>1&&g.measureText(s+'…').width>w)s=s.slice(0,-1);return s+'…'}
 function pickOffer(i){if(!curOffer)return;sendM({t:'pick',o:curOffer.id,i});offerEl.hidden=true}
-function renderOffer(of){const key=of?of.id:null;if(key===offerKey)return;offerKey=key;curOffer=of;if(!of){offerEl.hidden=true;return}
+let offT=0;
+function renderOffer(of){const key=of?of.id:null;if(key===offerKey)return;offerKey=key;curOffer=of;clearTimeout(offT);if(!of){offerEl.hidden=true;return}
+// les bonus s'affichent en petit dans un coin et se choisissent tout seuls au bout de 15 s ; l'évolution reste au centre
+offerEl.classList.toggle('bon',of.k!=='evo');offerEl.classList.toggle('tch',!!touchMode);
+if(of.k!=='evo')offT=setTimeout(()=>{if(curOffer===of&&!offerEl.hidden)pickOffer(Math.floor(Math.random()*of.o.length))},15000);
 if(of.k==='evo'){offerEl.innerHTML='<h3>'+tr('evoTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>{const c=CL[k],x=I.cls(k);return '<button data-i="'+i+'" aria-keyshortcuts="'+(i+1)+'">'+(touchMode?'':'<kbd class="kc" aria-hidden="true">'+(i+1)+'</kbd>')+'<canvas width="240" height="152"></canvas>'+x.n+(c.leg?' <span class="leg">'+tr('legendary')+'</span>':'')+'<small class="ds">'+x.w+' · '+x.d+'</small><small class="k st">'+stat(c)+'</small></button>'}).join('')+'</div>';
 offerEl.querySelectorAll('button').forEach(bt=>{const c=CL[of.o[+bt.dataset.i]],x=bt.querySelector('canvas').getContext('2d');x.scale(2,2);x.translate(60,38);x.rotate(-.35);const b=snap&&snap.b.find(o=>o.i===myId);ship(x,c,Math.min(19,42/c.L),b?b.col:cfg.hull,.35,0,{sail:cfg.sail,flag:cfg.flag,trim:cfg.trim,pat:cfg.pat})})}
-else offerEl.innerHTML='<h3>'+tr('bonusTitle',{l:of.l})+'</h3><div class="opts">'+of.o.map((k,i)=>'<button data-i="'+i+'" aria-keyshortcuts="'+(i+1)+'">'+(touchMode?'':'<kbd class="kc" aria-hidden="true">'+(i+1)+'</kbd>')+''+I.bon(k).n+'<small>'+I.bon(k).d+'</small></button>').join('')+'</div>';
+else offerEl.innerHTML='<h3>'+tr('bonusTitle',{l:of.l})+' <small class="k">'+tr('autoPick')+'</small></h3><div class="opts">'+of.o.map((k,i)=>'<button data-i="'+i+'" aria-keyshortcuts="'+(i+1)+'">'+(touchMode?'':'<kbd class="kc" aria-hidden="true">'+(i+1)+'</kbd>')+''+I.bon(k).n+'<small>'+I.bon(k).d+'</small></button>').join('')+'</div>';
 offerEl.querySelectorAll('button').forEach(bt=>bt.onclick=()=>pickOffer(+bt.dataset.i));offerEl.hidden=false}
 

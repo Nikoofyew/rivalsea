@@ -36,19 +36,20 @@ const sw=(arr,key,nf)=>arr.map(([c],i)=>{const n=nf(i);return '<button class="do
 const ownW=PREM.wake.filter(([v])=>owns('wake',v));
 const profBtn='<button id="prf" class="ghost prfb">🏆 '+tr('profile')+' · ⭐ '+prof.stars+(prof.streak>1?' · 🔥 '+prof.streak:'')+(todayChal().some(([id])=>!prof.daily.done.includes(id))?' <span class="new">'+tr('daily')+'</span>':'')+'</button>';
 const build=()=>'<div class="card wide">'+bookBtn()+langBtns()+'<h1 class="brand"><img src="icon-180.png?v=2" alt="" width="52" height="52">RivalSea</h1>'+(msg?'<p><b>'+msg+'</b></p>':'')+
-'<p>'+tr('intro')+'</p>'+
+'<p class="intro">'+tr('intro')+'</p>'+
+// en haut : pseudo et bouton Jouer, visibles tout de suite (même sur téléphone)
+'<div class="quick"><input id="nmi" maxlength="14" aria-label="'+tr('name')+'" placeholder="'+tr('namePh')+'" value="'+(cfg.name||'').replace(/[&"<>]/g,'')+'"><button id="go">'+(curRoom||invite?tr('joinPriv',{c:curRoom||invite}):tr('join'))+'</button></div>'+roomHTML()+
+'<div id="stat">'+statusHTML()+'</div>'+profBtn+'<h3 class="custh">'+tr('customize')+'</h3>'+
 '<div class="cust"><div class="pvb"><canvas id="pv" width="340" height="212" aria-label="'+tr('preview')+'"></canvas><div class="pvn"><button id="pvl" aria-label="◀">◀</button><span id="pvt"></span><button id="pvr" aria-label="▶">▶</button></div><button id="rnd" class="rnd">'+tr('random')+'</button></div><div class="fields">'+
-'<label class="nm">'+tr('name')+' <input id="nmi" maxlength="14" placeholder="'+tr('namePh')+'" value="'+(cfg.name||'').replace(/[&"<>]/g,'')+'"></label>'+
 '<div class="row"><span>'+tr('hull')+'</span><div class="sw">'+sw(HULLS,'hull',I.hull)+'</div></div>'+
 '<div class="row"><span>'+tr('sails')+'</span><div class="sw">'+sw(SAILS,'sail',I.sail)+'</div></div>'+
 '<div class="row"><span>'+tr('trim')+'</span><div class="sw">'+sw(TRIMS,'trim',I.trim)+'</div></div>'+
 '<div class="row"><span>'+tr('pattern')+'</span><div class="sw">'+PATS.map(([k],i)=>'<button class="fl pt'+(cfg.pat===k?' on':'')+'" data-k="pat" data-v="'+k+'">'+I.pat(i)+'</button>').join('')+PREM.pat.map(([k],i)=>owns('pat',k)?'<button class="fl pt prem'+(cfg.pat===k?' on':'')+'" data-k="pat" data-v="'+k+'">'+premName('pat',i)+'</button>':'').join('')+'</div></div>'+
 '<div class="row"><span>'+tr('flag')+'</span><div class="sw">'+Object.keys(FLAGS).concat(PREM.flag.map(f=>f[0]).filter(k=>owns('flag',k))).map(k=>'<button class="fl'+(cfg.flag===k?' on':'')+'" data-k="flag" data-v="'+k+'" aria-label="'+k+'">'+(FLAGS_ALL[k]||'—')+'</button>').join('')+'</div></div>'+(ownW.length?'<div class="row"><span>'+tr('wake')+'</span><div class="sw"><button class="fl pt'+(cfg.wake==='none'?' on':'')+'" data-k="wake" data-v="none">—</button>'+ownW.map(([k])=>'<button class="fl pt prem'+(cfg.wake===k?' on':'')+'" data-k="wake" data-v="'+k+'">'+premName('wake',PREM.wake.findIndex(w=>w[0]===k))+'</button>').join('')+'</div></div>':'')+
-'</div></div>'+profBtn+'<div id="stat">'+statusHTML()+'</div>'+
+'</div></div>'+
 '<div id="top">'+topHTML()+'</div>'+
 '<p class="small">'+tr('aiNote')+'</p>'+
-'<p class="small">'+tr('controls')+'</p>'+
-'<button id="go">'+(curRoom||invite?tr('joinPriv',{c:curRoom||invite}):tr('join'))+'</button>'+roomHTML()+'</div>';
+'<p class="small">'+tr('controls')+'</p></div>';
 ov.innerHTML=build();sameH(build);
 wireLang(()=>menu(lastMenuMsg&&tr('lost')));document.getElementById('prf').onclick=profile;
 ov.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{cfg[b.dataset.k]=b.dataset.v;saveCfg();ov.querySelectorAll('[data-k="'+b.dataset.k+'"]').forEach(o=>o.classList.toggle('on',o===b));prev()});
@@ -83,8 +84,10 @@ card.querySelectorAll('.gn').forEach(b=>{b.onmouseenter=()=>show(b);b.onfocus=()
 card.addEventListener('click',hide);gt.addEventListener('scroll',hide);window.addEventListener('resize',function rs(){if(!document.body.contains(gt)){window.removeEventListener('resize',rs);return}draw()});
 wireLang(guide);document.getElementById('gbk').onclick=()=>menu(lastMenuMsg)}
 function showDead(d){ov.hidden=false;
-const by=d.by?String(npcN(d.by)).replace(/[&<>]/g,''):d.byk?tr('theKraken'):'';
-const build=()=>'<div class="card">'+langBtns()+'<h2>'+tr('sunkTitle')+'</h2><p>'+(by?tr('sunkBy',{n:by})+'<br>':'')+tr('sunkStats',{c:I.cls(d.c).n,l:d.lvl,s:d.sc})+'</p>'+(d.rec?'<p><b>🏆 '+tr('newBest')+'</b></p>':'')+'<div id="top">'+topHTML()+'</div>'+avisHTML()+(curRoom?'<p class="small">🔒 '+tr('inRoom',{c:curRoom})+'</p>':'')+'<div id="stat">'+statusHTML()+'</div><div class="btns"><button id="go">'+tr('again')+'</button><button class="ghost" id="mn">'+tr('edit')+'</button></div>'+(portal.name?'':'<button class="ghost sm shr" id="shr">📣 '+tr('share')+'</button>')+'</div>';
+const by=d.by?String(npcN(d.by)).replace(/[&<>]/g,'')+(d.bl?' <span class="small">('+(d.bi?tr('aiTag')+' · ':'')+tr('lvl',{l:d.bl})+(CL[d.bc]?' · '+I.cls(d.bc).n:'')+')</span>':''):d.byk?tr('theKraken'):'';
+// un conseil adapté : fuir les plus gros si c'est ce qui nous a coulés, sinon un conseil au hasard
+const tip=d.bl>d.lvl+2?tr('tipBig'):tr('tip'+(1+Math.floor(Math.random()*3)));
+const build=()=>'<div class="card">'+langBtns()+'<h2>'+tr('sunkTitle')+'</h2><p>'+(by?tr('sunkBy',{n:by})+'<br>':'')+tr('sunkStats',{c:I.cls(d.c).n,l:d.lvl,s:d.sc})+'</p><p class="tip">💡 '+tip+'</p>'+(d.rec?'<p><b>🏆 '+tr('newBest')+'</b></p>':'')+'<div id="top">'+topHTML()+'</div>'+avisHTML()+(curRoom?'<p class="small">🔒 '+tr('inRoom',{c:curRoom})+'</p>':'')+'<div id="stat">'+statusHTML()+'</div><div class="btns"><button id="go">'+tr('again')+'</button><button class="ghost" id="mn">'+tr('edit')+'</button></div>'+(portal.name?'':'<button class="ghost sm shr" id="shr">📣 '+tr('share')+'</button>')+'</div>';
 ov.innerHTML=build();sameH(build);
 wireLang(()=>showDead(d));
 // partager son score : partage du téléphone, sinon copie du texte
