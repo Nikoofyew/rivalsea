@@ -185,7 +185,7 @@ setInterval(() => {
 server.listen(PORT, () => console.log('RivalSea est en ligne sur http://localhost:' + PORT + '  (mode ' + (game.MODE === 'team' ? 'équipages' : 'chacun pour soi') + ')'));
 
 // les meilleurs vrais joueurs du jour, envoyés à tous toutes les 15 secondes
-function dayTop(w) { const all = []; for (const r of rooms.values()) if (!r.priv) all.push(...(w ? r.g.topWeek() : r.g.top())); const seen = new Set(); return all.sort((a, b) => b.l - a.l || b.s - a.s).filter(x => { const k = x.n + '|' + x.l + '|' + x.c; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 5); }
+function dayTop(w) { const all = []; for (const r of rooms.values()) if (!r.priv) all.push(...(w ? r.g.topWeek() : r.g.top())); const seen = new Set(); return all.sort((a, b) => ((b.kp || 0) + (b.ka || 0)) - ((a.kp || 0) + (a.ka || 0)) || (b.kp || 0) - (a.kp || 0) || b.l - a.l).filter(x => { const k = x.n + '|' + x.l + '|' + x.c; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 5); }
 setInterval(() => { const m = { t: 'top', l: dayTop(), w: dayTop(1) }; for (const c of clients) send(c, m); }, 15000);
 
 // ——— 5. Rester éveillé ———

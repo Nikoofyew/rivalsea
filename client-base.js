@@ -17,6 +17,6 @@ addEventListener('resize',rs);rs();
 let weekTop=[];
 let cfg={name:'',hull:'#ff6b57',sail:'#fff8e7',flag:'skull',trim:'#fff8e7',pat:'plain',wake:'none'};
 try{Object.assign(cfg,JSON.parse(localStorage.getItem('flottille-cfg')||'{}'))}catch(e){}
-function topHTML(){const b=best?'<p class="small">🏆 '+tr('myBest',{l:best.l,c:I.cls(best.c).n,s:best.s})+'</p>':'';const L=(t,a)=>a.length?'<div class="top"><b>'+t+'</b>'+a.map((r,i)=>'<span>'+(i+1)+'. '+String(r.n).replace(/[&<>]/g,'')+(r.live?' ⛵':'')+' — '+tr('lvl',{l:r.l})+'</span>').join('')+'</div>':'';return b+'<div class="tops">'+L(tr('dayTop'),dayTop)+L(tr('weekTop'),weekTop)+'</div>'}
+function topHTML(){const b=best?'<p class="small">🏆 '+tr('myBest',{l:best.l,c:I.cls(best.c).n,s:best.s})+'</p>':'';const L=(t,a)=>a.length?'<div class="top"><b>'+t+'</b>'+a.map((r,i)=>'<span>'+(i+1)+'. '+String(r.n).replace(/[&<>]/g,'')+(r.live?' ⛵':'')+' — '+(r.kp===undefined?tr('lvl',{l:r.l}):tr('kills',{p:r.kp,a:r.ka}))+'</span>').join('')+'</div>':'';return b+'<div class="tops">'+L(tr('dayTop'),dayTop)+L(tr('weekTop'),weekTop)+'</div>'}
 const saveCfg=()=>{try{localStorage.setItem('flottille-cfg',JSON.stringify(cfg))}catch(e){}};
 
