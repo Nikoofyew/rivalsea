@@ -11,13 +11,15 @@ const url=window.RS_SERVER||(location.protocol==='https:'?'wss://':'ws://')+loca
 try{ws=new WebSocket(url)}catch(e){conn='err';updStatus();setTimeout(connect,3000);return}
 conn='wait';updStatus();
 ws.onopen=()=>{conn='ok';updStatus()};
-ws.onclose=()=>{conn='err';world=null;if(state!=='menu'){state='menu';menu(tr('lost'))}else updStatus();setTimeout(connect,2000)};
+// connexion coupée en pleine partie (redémarrage du serveur…) : on reprend la mer tout seul dès que le serveur revient
+ws.onclose=()=>{conn='err';world=null;if(state==='play'){rejoin=curRoom||'main';state='menu';menu(tr('lostRejoin'))}else if(state!=='menu'){state='menu';menu(tr('lost'))}else updStatus();setTimeout(connect,2000)};
 ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(x){return}onMsg(m)}}
+let rejoin='';
 const sendM=o=>{if(ws&&ws.readyState===1)ws.send(JSON.stringify(o))};
 // ping (aller-retour vers le serveur) mesuré toutes les 2 s, et heure de la dernière image du serveur : affichés en jeu
 let pingMs=0,lastSnapAt=0;setInterval(()=>{if(state==='play')sendM({t:'ping',c:Math.round(performance.now())})},2000);
 function onMsg(m){
-if(m.t==='w'){curRoom=m.room||'';lootM.clear();world={rocks:m.rocks.map(([x,y,r,i,ph])=>({x,y,r,k:i?'ile':'recif',ph})),fogs:m.fogs.map(([x,y,r,z,ph])=>({x,y,r,z,ph}))};WSZ=m.ws;mode=m.mode;updStatus()}
+if(m.t==='w'){curRoom=m.room||'';lootM.clear();world={rocks:m.rocks.map(([x,y,r,i,ph])=>({x,y,r,k:i?'ile':'recif',ph})),fogs:m.fogs.map(([x,y,r,z,ph])=>({x,y,r,z,ph}))};WSZ=m.ws;mode=m.mode;updStatus();if(rejoin&&state==='menu'){const r=rejoin;rejoin='';setTimeout(()=>{if(state==='menu')join(r==='main'?'':r)},300)}}
 else if(m.t==='joined'){portal.start();myId=m.id;curRoom=m.room||'';if(curRoom){invite='';history.replaceState(null,'',location.pathname+'?salle='+curRoom)}state='play';kbMode=false;keys.clear();aimHeld=false;ov.hidden=true;offerKey=null;fullMsg='';run={l:1,sc:0,t:0,lead:0,krak:0,c:'',t0:T}}
 else if(m.t==='pong'){const v=performance.now()-m.c;if(v>=0&&v<5000)pingMs=pingMs?pingMs*.6+v*.4:v}
 else if(m.t==='top'){dayTop=m.l||[];weekTop=m.w||[];const t=document.getElementById('top');if(t)t.innerHTML=topHTML()}

@@ -108,7 +108,8 @@ function offer(b) {
   else b.offer = { id: ++b.oid, k: 'bonus', o: avail(b.s).map(x => BON.indexOf(x)).sort(() => Math.random() - .5).slice(0, 3), l };
 }
 const XPR = .7; // l'XP gagnée est réduite de 30 % pour monter de niveau moins vite
-function gain(b, x) { if (!b || !b.s || b.dead || b.mc || b.hunt || (!b.p && b.lvl >= (b.npc ? 30 : BOTMAX))) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
+const MAXL = 30; // niveau maximum : au-delà, l'XP compte seulement pour le score
+function gain(b, x) { if (!b || !b.s || b.dead || b.mc || b.hunt || (!b.p && b.lvl >= (b.npc ? MAXL : BOTMAX))) return; b.xp += x; b.tot += x; let n; while (b.lvl < MAXL && b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } if (b.lvl >= MAXL) b.xp = Math.min(b.xp, need(b.lvl)); }
 function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.x, b.y, R(b), R(b) * 4, .7, '#ffcf3f'); say(b, b.x, b.y - R(b) - 30, 'evo', { c: k }, '#ffcf3f', 1.6); } }
 
 // ——— Monde : îles, récifs, brouillard ———

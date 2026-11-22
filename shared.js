@@ -40,9 +40,9 @@ const SK = {
 const CL = {
 barque:{n:'Barque',t:0,d:'Petite barque à rames. Vos archers tirent des flèches.',w:{nm:'Arcs',k:'arrow',n:1,v:560,sz:2.5,dmg:10.9,rate:0.68,rng:230,tg:1},hp:1,spd:1.05,sz:.85,L:1.2,Wd:.7,masts:[],oars:1,hs:'classic',sk:'boost',next:['drakkar','galere','nef']},
 
-drakkar:{n:'Drakkar',t:1,f:'r',d:'Long et vif, rames et voile carrée. Pluie de flèches.',w:{nm:'Flèches en rafale',k:'arrow',n:2,par:8,v:620,sz:2.5,dmg:13.67,rate:0.6,rng:255,tg:1},hp:1.15,spd:1.25,sz:.9,L:2,Wd:.5,masts:[{x:0,k:'stripe'}],oars:1,oarsN:5,shields:1,dragon:1,hs:'long',sk:'boost',next:['goelette','chebec']},
-galere:{n:'Galère à éperon',t:1,f:'a',d:'Foncez dans l’ennemi : éperon de bronze et arbalètes.',w:{nm:'Arbalètes',k:'bolt',n:1,v:560,sz:3,dmg:11.31,rate:0.9,rng:175,tg:1},ram:2,brd:5,hp:1.3,spd:1.02,sz:1.05,L:1.65,Wd:.6,masts:[{x:.05,k:'lat'}],oars:1,oarsN:6,beak:1,castle:{a:.18},hs:'long',sk:'boost',next:['brickab','caravelle','brulot']},
-nef:{n:'Nef à baliste',t:1,f:'c',d:'Une baliste lance un gros carreau très loin.',w:{nm:'Baliste',k:'bolt',n:1,v:540,sz:5,dmg:31.26,rate:1.65,rng:330,tg:1},hp:1.25,spd:.92,sz:1.05,L:1.45,Wd:.8,masts:[{x:0,k:'sq'}],bow:1,castle:{f:.22,a:.26},hs:'round',sk:'repair',next:['fregate','bombarde','galeasse']},
+drakkar:{n:'Drakkar',t:1,f:'r',d:'Long et vif, rames et voile carrée. Pluie de flèches.',w:{nm:'Flèches en rafale',k:'arrow',n:2,par:8,v:620,sz:2.5,dmg:12.19,rate:0.6,rng:255,tg:1},hp:1.15,spd:1.25,sz:.9,L:2,Wd:.5,masts:[{x:0,k:'stripe'}],oars:1,oarsN:5,shields:1,dragon:1,hs:'long',sk:'boost',next:['goelette','chebec']},
+galere:{n:'Galère à éperon',t:1,f:'a',d:'Foncez dans l’ennemi : éperon de bronze et arbalètes.',w:{nm:'Arbalètes',k:'bolt',n:1,v:560,sz:3,dmg:12.02,rate:0.9,rng:175,tg:1},ram:2,brd:5,hp:1.3,spd:1.02,sz:1.05,L:1.65,Wd:.6,masts:[{x:.05,k:'lat'}],oars:1,oarsN:6,beak:1,castle:{a:.18},hs:'long',sk:'boost',next:['brickab','caravelle','brulot']},
+nef:{n:'Nef à baliste',t:1,f:'c',d:'Une baliste lance un gros carreau très loin.',w:{nm:'Baliste',k:'bolt',n:1,v:540,sz:5,dmg:32.95,rate:1.65,rng:330,tg:1},hp:1.25,spd:.92,sz:1.05,L:1.45,Wd:.8,masts:[{x:0,k:'sq'}],bow:1,castle:{f:.22,a:.26},hs:'round',sk:'repair',next:['fregate','bombarde','galeasse']},
 
 goelette:{n:'Goélette',t:2,f:'r',d:'Un équipage de mousquetaires, cadence infernale.',w:{nm:'Mousquetaires',k:'bullet',n:3,par:9,v:700,sz:3,dmg:6.85,rate:0.3,rng:280,tg:1},hp:1.5,spd:1.15,sz:1.05,L:1.85,Wd:.55,masts:[{x:.3,k:'gaff'},{x:-.15,k:'gaff'}],bowsprit:1,hs:'sleek',sk:'boost',next:['clipper','aviso']},
 chebec:{n:'Chébec corsaire',t:2,f:'r',d:'Rapide, mousquets et éperon léger pour finir le travail.',w:{nm:'Mousquets',k:'bullet',n:2,par:9,v:680,sz:3,dmg:7.42,rate:0.33,rng:250,tg:1},ram:2,brd:3,hp:1.45,spd:1.2,sz:1.05,L:1.75,Wd:.55,masts:[{x:.32,k:'lat'},{x:-.18,k:'lat'}],beak:1,hs:'sleek',sk:'boost',next:['clipper','aviso']},
@@ -76,7 +76,7 @@ const LT = {
   caisse: { hp: 30, xp: 40, r: 15, n: 14 },
   coffre: { hp: 70, xp: 120, r: 18, n: 2, nm: 'Coffre' },
   peche: { hp: 30, xp: 55, r: 14, n: 5, mv: 120, nm: 'Pêcheur', col: '#4dabf7', sh: { L: 1.3, Wd: .6, masts: [{ x: .05, k: 'tri' }] } },
-  marchand: { hp: 120, xp: 180, r: 22, n: 3, mv: 85, nm: 'Marchand', col: '#c98a4b', sh: { L: 1.5, Wd: .85, masts: [{ x: .3, k: 'sq' }, { x: -.25, k: 'sq' }], ports: 2 } },
+  marchand: { hp: 120, xp: 180, r: 22, n: 3, mv: 85, nm: 'Navire de commerce', col: '#c98a4b', sh: { L: 1.5, Wd: .85, masts: [{ x: .3, k: 'sq' }, { x: -.25, k: 'sq' }], ports: 2 } },
   epave: { hp: 8, xp: 0, r: 11, n: 0 },
   planche: { hp: 10, xp: 0, r: 15, n: 0, heal: .2 },   // planches de réparation : rares, soignent 20 % de la vie
   tresor: { hp: 3500, xp: 2400, r: 28, n: 0, nm: 'Trésor' },
