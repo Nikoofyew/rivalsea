@@ -108,7 +108,7 @@ function offer(b) {
   else b.offer = { id: ++b.oid, k: 'bonus', o: avail(b.s).map(x => BON.indexOf(x)).sort(() => Math.random() - .5).slice(0, 3), l };
 }
 const XPR = .7; // l'XP gagnée est réduite de 30 % pour monter de niveau moins vite
-function gain(b, x) { if (!b || !b.s || b.dead || b.mc || (!b.p && b.lvl >= (b.npc ? 30 : BOTMAX))) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
+function gain(b, x) { if (!b || !b.s || b.dead || b.mc || b.hunt || (!b.p && b.lvl >= (b.npc ? 30 : BOTMAX))) return; b.xp += x; b.tot += x; let n; while (b.xp >= (n = need(b.lvl))) { b.xp -= n; lvup(b); } }
 function evolve(b, k) { b.c = k; b.hp = mhp(b); if (boats.includes(b)) { ring(b.x, b.y, R(b), R(b) * 4, .7, '#ffcf3f'); say(b, b.x, b.y - R(b) - 30, 'evo', { c: k }, '#ffcf3f', 1.6); } }
 
 // ——— Monde : îles, récifs, brouillard ———
@@ -220,11 +220,11 @@ function sink(v) {
   if (k && k.s && !k.dead) {
     // l'XP d'un naufrage est plafonnée à un niveau et demi du vainqueur, pour éviter l'effet boule de neige
     let kx = Math.round(Math.min(40 + v.tot * .12, need(k.lvl) * 1.5) * (k.lvl - v.lvl > 6 ? .3 : 1) * XPR);
-    if (v.gh) kx += Math.round(need(k.lvl) * .6 * XPR); if (v.mc) kx += Math.round(need(k.lvl) * .4 * XPR); if (v.boss) { kx += Math.round(need(k.lvl) * 2 * XPR); banner('admiralDead', { n: k.name }); }
+    if (v.gh) kx += Math.round(need(k.lvl) * .6 * XPR); if (v.mc) kx += Math.round(need(k.lvl) * .4 * XPR); if (v.hunt) kx += Math.round(need(k.lvl) * .5 * XPR); if (v.boss) { kx += Math.round(need(k.lvl) * 2 * XPR); banner('admiralDead', { n: k.name }); }
     if (v.id === leaderId) { kx += Math.round(need(k.lvl) * XPR); banner('leaderSunk', { n: k.name, v: v.name }); if (k.p) fx.push({ k: 'ev', id: 'leader', to: k.id }); }
     if (k.p && v.lvl >= k.lvl + 5) fx.push({ k: 'ev', id: 'giant', to: k.id });
     k.sc++; if (v.p) k.kp = (k.kp || 0) + 1; else k.ka = (k.ka || 0) + 1; gain(k, kx); say(k, v.x, v.y, 'sunk', { x: kx }, '#ffcf3f', 1.4);
-    heal(k, mhp(k) * (k.id === leaderId ? KILL_HEAL / 2 : KILL_HEAL)); // chaque navire coulé rend 30 % de vie (15 % pour le meneur)
+    heal(k, mhp(k) * (k.id === leaderId ? KILL_HEAL / 2 : KILL_HEAL) * (1 - Math.min(.6, Math.max(0, k.lvl - 10) * .03))); // moins de soin à haut niveau // chaque navire coulé rend 30 % de vie (15 % pour le meneur)
   }
   // le navire coulé laisse des épaves à piller
   const n = cl(2 + Math.floor(v.lvl / 4), 2, 8), each = Math.round(Math.min(15 + v.tot * .08, 500) / n);
@@ -287,6 +287,18 @@ function startEv(k) {
   else if (k === 'serpent') { const p = freeSpot(450, 120), l = toughL(mkL('serpent', p.x, p.y)); l.life = 180; l.bite = 2; loot.push(l); banner('serpent'); }
   else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('treasure'); }
 }
+// chasseurs de primes : au-delà du niveau 18, une escouade de son niveau vient traquer le joueur de temps en temps
+function spawnHunters(p) {
+  const n = p.lvl >= 25 ? 3 : 2, a0 = rnd(0, TAU), tier = CL[p.c].t, cls = Object.keys(CL).filter(k => CL[k].t === tier);
+  for (let i = 0; i < n; i++) {
+    const a = a0 + (i - 1) * .35, x = cl(p.x + Math.cos(a) * 850, 80, WS - 80), y = cl(p.y + Math.sin(a) * 850, 80, WS - 80);
+    const e = mk({ lvl: p.lvl, npc: 1 }); e.name = '§chasseur'; e.team = -1; e.lvl = cl(p.lvl + ri(-1, 1), 2, 30); e.c = pick(cls); e.col = '#3a2a1a'; e.sail = '#b8403a'; e.trim = '#ffcf3f'; e.flag = 'skull'; e.pat = 'plain';
+    for (let k = 0; k < Math.min(18, e.lvl - 2); k++) pick(BON.filter(o => !o.ok || o.ok(e.s))).f(e.s);
+    e.hpx = 1.3; e.dmx = 1.35; e.hp = mhp(e); e.inv = 0; e.hold = 0; e.prey = p; e.life = 150; e.hunt = 1; e.sty = 'chasseur';
+    if (!inRock(x, y, 60)) { e.x = x; e.y = y; } boats.push(e);
+  }
+  fx.push({ k: 'banner', id: 'hunters', to: p.id });
+}
 function spawnMerchant() {
   const lv = cl(Math.round(avgLvl() + rnd(-3, 3)), 2, 30), e = mk({ lvl: lv, npc: 1 });
   e.name = '§marchand'; e.team = -1; e.mc = 1; e.lvl = lv; e.col = '#8b5a2b'; e.sail = '#f3e6c8'; e.trim = '#e8b93a'; e.flag = 'anchor'; e.pat = 'plain'; e.wake = 'none';
@@ -299,7 +311,8 @@ function events(dt) {
   // de temps en temps, un grand navire marchand armé traverse la mer (même allure pour tous, niveau proche de celui des joueurs)
   merchT -= dt;
   if (merchT <= 0) { merchT = rnd(50, 80) / AREA; if (humans().length && boats.filter(b => b.mc && !b.dead).length < AREA) spawnMerchant(); }
-  for (const b of boats) if (b.mc && (b.life -= dt) <= 0) { b.gone = true; b.dead = true; }
+  for (const b of boats) if ((b.mc || b.hunt) && (b.life -= dt) <= 0) { b.gone = true; b.dead = true; }
+  for (const p of humans()) if (!p.dead && p.lvl >= 18) { if (p.huntT === undefined) p.huntT = rnd(60, 100); if ((p.huntT -= dt) <= 0) { p.huntT = rnd(120, 180); if (!boats.some(b => b.hunt && !b.dead && b.prey === p)) spawnHunters(p); } }
   ev.t -= dt;
   // au plus 2 grands événements en même temps, pour ne pas surcharger l'écran
   const active = (loot.some(l => l.k === 'kraken' || l.k === 'serpent') ? 1 : 0) + (storm ? 1 : 0) + (convoy ? 1 : 0) + (whirl ? 1 : 0) + (boats.some(b => b.gh || b.boss) ? 1 : 0) + (loot.some(l => l.k === 'tresor') ? 1 : 0);
@@ -339,6 +352,7 @@ function ai(b, dt) {
     if ((b.chkT || 0) < T) { const mv = Math.hypot(b.x - (b.cx0 ?? b.x), b.y - (b.cy0 ?? b.y)); if (b.cx0 !== undefined && mv < 30 && (b.f || 0) > .4) { b.unT = T + 1.3; b.side = -(b.side || 1); b.ua = b.a + Math.PI + rnd(-.9, .9); } b.cx0 = b.x; b.cy0 = b.y; b.chkT = T + 1.5; }
     if ((b.unT || 0) > T) { b.tx = b.x + Math.cos(b.ua) * 250; b.ty = b.y + Math.sin(b.ua) * 250; b.f = 1; return; }
   }
+  if (b.hunt) { const p = b.prey; if (!p || p.dead || !boats.includes(p)) { b.life = Math.min(b.life, 3); } else { const d = Math.hypot(p.x - b.x, p.y - b.y); engage(b, p, d, c.w.rng * b.s.rng); if (b.skcd <= 0 && (d > c.w.rng * 1.1 || hpR < .5)) useSkill(b); return; } }
   if (b.mc) { // le marchand suit sa route sans poursuivre personne ; ses canons tirent tout seuls sur qui s'approche
     if (Math.hypot(b.wx - b.x, b.wy - b.y) < 200) { const s = freeSpot(150, 80); b.wx = s.x; b.wy = s.y; }
     b.tx = b.wx; b.ty = b.wy; b.f = .6; return;
@@ -351,8 +365,8 @@ function ai(b, dt) {
   }
   // prudent : fuit tôt ; chasseur : poursuit de plus loin, surtout les joueurs ; pilleur : préfère le butin
   const sty = b.sty || 'normal', far = sty === 'chasseur' ? 2.2 : sty === 'pilleur' ? (T - (b.lh || -9) < 4 ? 1.3 : .6) : 1.3, gap = sty === 'prudent' ? 1 : 3;
-  let e = null, ed = rng * far, th = null, td = 720;
-  for (const o of boats) if (o !== b && !o.dead && o.team !== b.team && seen(o, b)) { const d0 = Math.hypot(o.x - b.x, o.y - b.y), d = sty === 'chasseur' && o.p ? d0 * .7 : d0; const ds = d * (.6 + .6 * o.hp / mhp(o)); if ((o.p ? ds : d) < ed && o.inv <= 0 && o.lvl >= b.lvl - 6 && !spare(b, o)) { ed = o.p ? ds : d; e = o; } /* préfère les cibles abîmées */ if (d0 < td && (o.lvl > b.lvl + gap || CL[o.c].t >= c.t + 2)) { td = d0; th = o; } }
+  let e = null, ed = rng * far * (sty === 'chasseur' && leaderId && byId(leaderId) && byId(leaderId).p ? 1.8 : 1), th = null, td = 720;
+  for (const o of boats) if (o !== b && !o.dead && o.team !== b.team && seen(o, b)) { const d0 = Math.hypot(o.x - b.x, o.y - b.y), d = sty === 'chasseur' && o.p ? d0 * .7 : d0; const ds = d * (.6 + .6 * o.hp / mhp(o)) * (sty === 'chasseur' && o.p && o.id === leaderId ? .4 : 1); if ((o.p ? ds : d) < ed && o.inv <= 0 && (o.lvl >= b.lvl - 6 || (sty === 'chasseur' && o.id === leaderId)) && !spare(b, o)) { ed = o.p ? ds : d; e = o; } /* préfère les cibles abîmées */ if (d0 < td && (o.lvl > b.lvl + gap || CL[o.c].t >= c.t + 2)) { td = d0; th = o; } }
   if (e) ed = Math.hypot(e.x - b.x, e.y - b.y);
   b.tx = b.wx; b.ty = b.wy; b.f = .7;
   if (!th && e && e.p && hpR < .3 && e.hp > b.hp * 1.5) th = e; // presque coulé face à plus solide : on décroche

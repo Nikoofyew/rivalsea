@@ -85,13 +85,14 @@ const LT = {
 };
 
 const BON = [
-  { n: 'Canons légers', d: 'Cadence de tir +20 %', f: s => { s.rk = (s.rk || 0) + 1; s.rate = 1 / (1 + .2 * s.rk); } },
-  { n: 'Gros calibre', d: 'Dégâts +25 %', f: s => s.dmg += .25 },
+  // les bonus de dégâts, cadence et vie rapportent un peu moins à chaque reprise (×0,8) : on reste fort à haut niveau sans devenir intouchable
+  { n: 'Canons légers', d: 'Cadence de tir +20 %', f: s => { s.rk = (s.rk || 0) + 1; s.rv = (s.rv || 0) + .2 * Math.pow(.8, s.rk - 1); s.rate = 1 / (1 + s.rv); } },
+  { n: 'Gros calibre', d: 'Dégâts +25 %', f: s => { s.dk = (s.dk || 0) + 1; s.dmg += .25 * Math.pow(.8, s.dk - 1); } },
   { n: 'Voiles neuves', d: 'Vitesse +10 %', f: s => s.spd += .1, ok: s => s.spd < 1.25 },
   { n: 'Longue-vue', d: 'Portée +15 %', f: s => s.rng += .15, ok: s => s.rng < 1.55 },
-  { n: 'Coque renforcée', d: '+30 points de vie max', f: s => s.hp += 30 },
+  { n: 'Coque renforcée', d: '+30 points de vie max', f: s => { s.hk = (s.hk || 0) + 1; s.hp += Math.round(30 * Math.pow(.85, s.hk - 1)); } },
   { n: 'Salve multiple', d: 'Un projectile de plus par tir', f: s => s.multi++, ok: s => s.multi < 2 },
-  { n: 'Charpentier', d: 'Répare 2 % de la vie max par seconde', f: s => s.reg += 2, ok: s => s.reg < 4 },
+  { n: 'Charpentier', d: 'Répare 1,5 % de la vie max par seconde', f: s => s.reg += 1.5, ok: s => s.reg < 3 },
   { n: 'Filets de récupération', d: 'XP des épaves et tonneaux +30 %', f: s => s.loot += .3 },
   { n: 'Éperon de proue', d: 'Dégâts d’éperonnage +50 %', f: s => s.ram += .5 },
   { n: 'Maître d’équipage', d: 'Compétence spéciale prête 25 % plus vite', f: s => { s.sk = (s.sk || 0) + 1; s.skr = 1 / (1 + .25 * s.sk); }, ok: s => (s.sk || 0) < 3 },

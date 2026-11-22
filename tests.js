@@ -29,9 +29,9 @@ test('les 42 chemins d’évolution sont jouables', () => {
   }
 });
 
-test('les améliorations donnent toujours le même gain (+30 PV)', () => {
+test('« Coque renforcée » : +30 PV la première fois, puis un peu moins à chaque reprise', () => {
   const id = g.addPlayer({ name: 'Test' }), b = D.boats.find(x => x.id === id), hp = i => { const s = Object.assign({}, b.s); for (let k = 0; k < i; k++) S.BON[4].f(s); return 100 * CL[b.c].hp * (1 + .015 * (b.lvl - 1)) + s.hp; };
-  assert.strictEqual(Math.round(hp(1) - hp(0)), 30); assert.strictEqual(Math.round(hp(3) - hp(2)), 30); g.removePlayer(id);
+  assert.strictEqual(Math.round(hp(1) - hp(0)), 30); assert(hp(3) - hp(2) < 30 && hp(3) - hp(2) > 15); g.removePlayer(id);
 });
 
 test('3 minutes de partie sans erreur ni valeur cassée, et peu de données envoyées', () => {
