@@ -76,7 +76,7 @@ function mk(opt) {
   const b = { p: !!opt.p, id: ++UID, name: opt.name || pick(NAMES), col: opt.hull || pick(COLS), sail: opt.sail || pick(SAILS)[0], flag: opt.flag || pick(Object.keys(FLAGS)), wake: opt.wake || 'none', trim: opt.trim || (Math.random() < .5 ? '#fff8e7' : pick(TRIMS)[0]), pat: opt.pat || (Math.random() < .4 ? 'plain' : pick(PATS)[0]),
     x: sp.x, y: sp.y, a: rnd(0, TAU), aim: 0, vx: 0, vy: 0, lvl: 1, xp: 0, tot: 0, sc: 0, c: 'barque', cd: rnd(0, 1), cd2: 0, skcd: 3, boost: 0, rc: 0, inv: opt.p ? 6 : 3, hold: opt.p ? 0 : BOT_HOLD,
     tx: 0, ty: 0, f: 1, t: 0, wx: WS / 2, wy: WS / 2, pend: [], offer: null, oid: 0, fl: 0, fz: -1, inp: { a: 0, f: 0 }, npc: !!opt.npc,
-    s: { rate: 1, dmg: 1, spd: 1, rng: 1, hp: 0, multi: 0, reg: 0, loot: 1, ram: 1, skr: 1, brd: 0, mres: 1 }, hp: 1 };
+    s: { rate: 1, dmg: 1, spd: 1, rng: 1, hp: 0, multi: 0, reg: 0, loot: 1, ram: 1, skr: 1, brd: 0, mres: 1, ddps: 0, rdps: 0, rngA: 0, spdA: 0, lootA: 0, ramA: 0, skA: 0, mrA: 0 }, hp: 1 };
   b.aim = b.a; b.inp.a = b.a;
   if (!b.p) b.sty = pick(['normal', 'normal', 'prudent', 'chasseur', 'pilleur']); // chaque bot a sa façon de jouer
   b.team = MODE === 'team' && !opt.npc ? (opt.team !== undefined ? opt.team : weakTeam()) : b.id;
@@ -143,11 +143,11 @@ function targets(b, rng, n) {
 }
 const manual = b => b.p && b.inp.fi && Number.isFinite(b.inp.ma) && Number.isFinite(b.inp.md);
 function fire(b, salvo, sec) {
-  const c = CL[b.c], w = sec ? c.w2 : c.w, rng = w.rng * b.s.rng, man = manual(b) && !sec;
+  const c = CL[b.c], w = sec ? c.w2 : c.w, E = S.wEff(w, b.s), rng = E.rng, man = manual(b) && !sec;
   // visée manuelle : le joueur tire là où est sa souris (dans la limite de la portée), avec +20 % de dégâts
   const ts = man ? [{ x: b.x + Math.cos(b.inp.ma) * Math.min(b.inp.md, rng * .97), y: b.y + Math.sin(b.inp.ma) * Math.min(b.inp.md, rng * .97), vx: 0, vy: 0 }] : targets(b, rng, w.tg); if (!ts.length) return false;
-  if (sec) b.cd2 = w.rate * b.s.rate; else if (!salvo) b.cd = w.rate * b.s.rate; if (!sec) b.tgt = man ? null : ts[0];
-  const n = w.n + b.s.multi + (salvo ? 2 : 0), sp = w.sp || 0, par = w.par || (sp ? 0 : 12), dm = w.dmg * b.s.dmg * (salvo ? 1.6 : 1) * (b.p ? 1 : BOT_DMG) * (man ? 1.2 : 1) * (b.dmx || 1), r = R(b);
+  if (sec) b.cd2 = E.rate; else if (!salvo) b.cd = E.rate; if (!sec) b.tgt = man ? null : ts[0];
+  const n = E.n + (salvo ? 2 : 0), sp = w.sp || 0, par = w.par || (sp ? 0 : 12), dm = E.dmg * (salvo ? 1.6 : 1) * (b.p ? 1 : BOT_DMG) * (man ? 1.2 : 1) * (b.dmx || 1), r = R(b);
   for (const e of ts) {
     let ex = e.x, ey = e.y;
     if (w.spl) { const vx = e.vx || 0, vy = e.vy || 0; for (let it = 0; it < 3; it++) { const tt = Math.hypot(ex - b.x, ey - b.y) / w.v; ex = e.x + vx * tt * .5; ey = e.y + vy * tt * .5; } } // l'obus vise à mi-chemin de là où sera la cible : on peut l'esquiver
@@ -170,7 +170,7 @@ function useSkill(b) {
   else if (k === 'repair') { b.hp = Math.min(mhp(b), b.hp + mhp(b) * .35); burst(b.x, b.y, '#5be3a1', 14, 140); }
   else if (k === 'dive') { b.dive = 4; b.tgt = null; burst(b.x, b.y, 'rgba(255,255,255,.9)', 14, 120); ring(b.x, b.y, R(b), R(b) * 2.5, .5, 'rgba(255,255,255,.8)'); }
   else if (k === 'salvo') { if (b.hold > 0) return false; b.inv = 0; if (!fire(b, true)) return false; }
-  b.skcd = SK[k].cd * b.s.skr * (b.p ? 1 : 1.3); say(b, b.x, b.y - R(b) - 26, 'skill', { s: k }, '#fff', 1); return true;
+  b.skcd = Math.max(2, SK[k].cd - (b.s.skA || 0)) * (b.p ? 1 : 1.3); say(b, b.x, b.y - R(b) - 26, 'skill', { s: k }, '#fff', 1); return true;
 }
 function heal(b, n) {
   const m = mhp(b), x = Math.round(Math.min(n, m - b.hp)); if (x < 1) return;
@@ -179,7 +179,7 @@ function heal(b, n) {
 // abordage : l'équipage d'un navire collé à un ennemi lui inflige des dégâts continus et lui vole un peu d'XP
 function aboard(a, v, dt) {
   const p = (CL[a.c].brd || 0) + a.s.brd; if (p <= 0 || a.inv > 0 || v.inv > 0 || (a.hold || 0) > 0) return;
-  const d = p * dt * v.s.mres * (a.p ? 1 : BOT_DMG); hurt(v, d, a);
+  const d = Math.max(0, p - 4 / DMG * (v.s.mrA || 0)) * dt * (a.p ? 1 : BOT_DMG); if (d > 0) hurt(v, d, a);
   const x = Math.min(v.xp, d * .5); if (x > 0) { v.xp -= x; gain(a, x); }
   if ((a.brdT || 0) <= T) { a.brdT = T + .5; burst((a.x + v.x) / 2, (a.y + v.y) / 2, '#ffcf3f', 3, 80); }
 }
@@ -236,7 +236,7 @@ function sink(v) {
 function crack(l) {
   const d = LT[l.k], k = l.hit; if (l.gone) return;
   burst(l.x, l.y, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : l.k === 'kraken' ? '#7a4fb3' : '#b5713a', l.k === 'tonneau' || l.k === 'epave' ? 10 : l.k === 'kraken' ? 60 : 18, l.k === 'kraken' ? 400 : 200);
-  if (k && k.s && !k.dead && (l.xpo || d.xp)) { const x = Math.round((l.xpo || d.xp) * k.s.loot * XPR); gain(k, x); say(k, l.x, l.y, 'xp', { x }, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
+  if (k && k.s && !k.dead && (l.xpo || d.xp)) { const x = Math.round(((l.xpo || d.xp) + (k.s.lootA || 0)) * XPR); gain(k, x); say(k, l.x, l.y, 'xp', { x }, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
   if (d.heal && k && k.s && !k.dead) heal(k, mhp(k) * d.heal);
   if (l.k === 'serpent') { banner('serpentDead', { n: k && k.s ? k.name : null }); if (k && k.p) fx.push({ k: 'ev', id: 'kraken', to: k.id }); }
   if (l.k === 'kraken') { banner('krakenDead', { n: k && k.s ? k.name : null }); if (k && k.p) fx.push({ k: 'ev', id: 'kraken', to: k.id }); }
@@ -288,15 +288,16 @@ function startEv(k) {
   else if (k === 'serpent') { const p = freeSpot(450, 120), l = toughL(mkL('serpent', p.x, p.y)); l.life = 180; l.bite = 2; loot.push(l); banner('serpent'); }
   else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('treasure'); }
 }
-// chasseurs de primes : au-delà du niveau 18, une escouade de son niveau vient traquer le joueur de temps en temps
+// chasseurs de primes : dès le niveau 20, des escouades puissantes traquent le joueur sans relâche
 function spawnHunters(p) {
-  const n = p.lvl >= 25 ? 3 : 2, a0 = rnd(0, TAU), tier = CL[p.c].t, cls = Object.keys(CL).filter(k => CL[k].t === tier);
+  const n = p.lvl >= 28 ? 3 : 2, a0 = rnd(0, TAU), tier = CL[p.c].t, cls = Object.keys(CL).filter(k => CL[k].t === tier);
   for (let i = 0; i < n; i++) {
-    const a = a0 + (i - 1) * .35, x = cl(p.x + Math.cos(a) * 850, 80, WS - 80), y = cl(p.y + Math.sin(a) * 850, 80, WS - 80);
-    const e = mk({ lvl: p.lvl, npc: 1 }); e.name = '§chasseur'; e.team = -1; e.lvl = cl(p.lvl + ri(-1, 1), 2, 30); e.c = pick(cls); e.col = '#3a2a1a'; e.sail = '#b8403a'; e.trim = '#ffcf3f'; e.flag = 'skull'; e.pat = 'plain';
-    for (let k = 0; k < Math.min(18, e.lvl - 2); k++) pick(BON.filter(o => !o.ok || o.ok(e.s))).f(e.s);
-    e.hpx = 1.3; e.dmx = 1.35; e.hp = mhp(e); e.inv = 0; e.hold = 0; e.prey = p; e.life = 150; e.hunt = 1; e.sty = 'chasseur';
-    if (!inRock(x, y, 60)) { e.x = x; e.y = y; } boats.push(e);
+    const a = a0 + (i - 1) * .35, dd = 1000 + i * 600, x = cl(p.x + Math.cos(a) * dd, 80, WS - 80), y = cl(p.y + Math.sin(a) * dd, 80, WS - 80); // ils arrivent l'un après l'autre
+    const e = mk({ lvl: p.lvl, npc: 1 }); e.name = '§chasseur'; e.team = -1; e.lvl = cl(p.lvl + ri(0, 1), 2, 30); e.c = pick(cls); e.col = '#3a2a1a'; e.sail = '#b8403a'; e.trim = '#ffcf3f'; e.flag = 'skull'; e.pat = 'plain';
+    for (let k = 0; k < e.lvl / 2; k++) pick(BON.filter(o => !o.ok || o.ok(e.s))).f(e.s);
+    e.hpx = 1.4; e.dmx = .7; e.hp = mhp(e); e.inv = 0; e.hold = 0; e.prey = p; e.life = 180; e.hunt = 1; e.sty = 'chasseur';
+    let sx = x, sy = y; for (let k = 0; k < 8 && inRock(sx, sy, 60); k++) { const b2 = a + rnd(-1, 1); sx = cl(p.x + Math.cos(b2) * dd, 80, WS - 80); sy = cl(p.y + Math.sin(b2) * dd, 80, WS - 80); }
+    e.x = sx; e.y = sy; boats.push(e);
   }
   fx.push({ k: 'banner', id: 'hunters', to: p.id });
 }
@@ -313,7 +314,7 @@ function events(dt) {
   merchT -= dt;
   if (merchT <= 0) { merchT = rnd(50, 80) / AREA; if (humans().length && boats.filter(b => b.mc && !b.dead).length < AREA) spawnMerchant(); }
   for (const b of boats) if ((b.mc || b.hunt) && (b.life -= dt) <= 0) { b.gone = true; b.dead = true; }
-  for (const p of humans()) if (!p.dead && p.lvl >= 18) { if (p.huntT === undefined) p.huntT = rnd(60, 100); if ((p.huntT -= dt) <= 0) { p.huntT = rnd(120, 180); if (!boats.some(b => b.hunt && !b.dead && b.prey === p)) spawnHunters(p); } }
+  for (const p of humans()) if (!p.dead && p.lvl >= 20) { if (p.huntT === undefined) p.huntT = 8; if (boats.some(b => b.hunt && !b.dead && b.prey === p)) p.huntT = Math.max(p.huntT, 45); else if ((p.huntT -= dt) <= 0) { p.huntT = 45; spawnHunters(p); } } // première escouade 8 s après le niveau 20, puis 45 s après chaque escouade
   ev.t -= dt;
   // au plus 2 grands événements en même temps, pour ne pas surcharger l'écran
   const active = (loot.some(l => l.k === 'kraken' || l.k === 'serpent') ? 1 : 0) + (storm ? 1 : 0) + (convoy ? 1 : 0) + (whirl ? 1 : 0) + (boats.some(b => b.gh || b.boss) ? 1 : 0) + (loot.some(l => l.k === 'tresor') ? 1 : 0);
@@ -337,7 +338,7 @@ function engage(b, e, ed, rng) {
   // face à un vrai joueur, les IA jouent plus finement (entre IA on garde le combat simple, sur lequel l'équilibre des navires est réglé)
   if ((CL[b.c].ram || 1) >= 1.9 || (e.p && (CL[b.c].brd || 0) + b.s.brd > 0 && b.hp > e.hp)) { b.tx = e.x + (e.vx || 0) * .4; b.ty = e.y + (e.vy || 0) * .4; b.f = 1; if (ed > rng && b.skcd <= 0 && CL[b.c].sk === 'boost') useSkill(b); return; }
   if (e.p && !CL[b.c].w.bs) { // tourner autour de la cible à bonne distance, en changeant parfois de sens : on reste mobile et plus dur à toucher
-    const er = CL[e.c] ? CL[e.c].w.rng * (e.s ? e.s.rng : 1) : 0, want = er > rng * 1.1 ? rng * .5 : rng * .68;
+    const er = CL[e.c] ? CL[e.c].w.rng + (e.s ? e.s.rngA || 0 : 0) : 0, want = er > rng * 1.1 ? rng * .5 : rng * .68;
     if ((b.orbT || 0) < T) { b.orbT = T + rnd(3, 7); b.orb = Math.random() < .5 ? 1 : -1; }
     const h = Math.atan2(e.y - b.y, e.x - b.x), push = cl((ed - want) / (want * .35), -1, 1), a = h + b.orb * (Math.PI / 2 - push * 1.25);
     b.tx = b.x + Math.cos(a) * 120; b.ty = b.y + Math.sin(a) * 120; b.f = ed > rng * 1.2 ? 1 : .8; return;
@@ -346,14 +347,14 @@ function engage(b, e, ed, rng) {
   else { b.tx = e.x; b.ty = e.y; b.f = ed < rng * .65 ? .25 : .85; }
 }
 function ai(b, dt) {
-  const c = CL[b.c], rng = c.w.rng * b.s.rng, hpR = b.hp / mhp(b);
+  const c = CL[b.c], rng = c.w.rng + (b.s.rngA || 0), hpR = b.hp / mhp(b);
   b.t -= dt; if (b.t <= 0) { b.t = rnd(3, 6); const s = freeSpot(150, 80); b.wx = s.x; b.wy = s.y; }
   // bloqué contre un rocher ou un bord ? on recule en biais un court instant puis on repart
   if (!b.cv && !b.mc) {
     if ((b.chkT || 0) < T) { const mv = Math.hypot(b.x - (b.cx0 ?? b.x), b.y - (b.cy0 ?? b.y)); if (b.cx0 !== undefined && mv < 30 && (b.f || 0) > .4) { b.unT = T + 1.3; b.side = -(b.side || 1); b.ua = b.a + Math.PI + rnd(-.9, .9); } b.cx0 = b.x; b.cy0 = b.y; b.chkT = T + 1.5; }
     if ((b.unT || 0) > T) { b.tx = b.x + Math.cos(b.ua) * 250; b.ty = b.y + Math.sin(b.ua) * 250; b.f = 1; return; }
   }
-  if (b.hunt) { const p = b.prey; if (!p || p.dead || !boats.includes(p)) { b.life = Math.min(b.life, 3); } else { const d = Math.hypot(p.x - b.x, p.y - b.y); engage(b, p, d, c.w.rng * b.s.rng); if (b.skcd <= 0 && (d > c.w.rng * 1.1 || hpR < .5)) useSkill(b); return; } }
+  if (b.hunt) { const p = b.prey; if (!p || p.dead || !boats.includes(p)) { b.life = Math.min(b.life, 3); } else { const d = Math.hypot(p.x - b.x, p.y - b.y); engage(b, p, d, c.w.rng + (b.s.rngA || 0)); if (b.skcd <= 0 && (d > c.w.rng * 1.1 || hpR < .5)) useSkill(b); return; } }
   if (b.mc) { // le marchand suit sa route sans poursuivre personne ; ses canons tirent tout seuls sur qui s'approche
     if (Math.hypot(b.wx - b.x, b.wy - b.y) < 200) { const s = freeSpot(150, 80); b.wx = s.x; b.wy = s.y; }
     b.tx = b.wx; b.ty = b.wy; b.f = .6; return;
@@ -406,12 +407,12 @@ function tick(dt) {
     if (b.p) { b.f = b.inp.f; b.tx = b.x + Math.cos(b.inp.a) * 100; b.ty = b.y + Math.sin(b.inp.a) * 100; } else if ((b.id + TN) % 2 === 0) ai(b, dt * 2); // l'IA réfléchit une fois sur deux (moins de calcul pour le serveur)
     let want = Math.atan2(b.ty - b.y, b.tx - b.x); if (!b.p) want = avoid(b, want, R(b));
     const tr = 3.4 / Math.pow(c.sz, 1.3); b.a += cl(angD(want, b.a), -tr * dt, tr * dt);
-    const sp = 170 * c.spd * b.s.spd * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1) * (b.dive > 0 ? 1.15 : 1);
+    const sp = (170 * c.spd + (b.s.spdA || 0)) * b.f * (1 - Math.min(b.lvl, 30) * .006) * (b.boost > 0 ? 1.7 : 1) * (b.dive > 0 ? 1.15 : 1);
     b.vx = Math.cos(b.a) * sp; b.vy = Math.sin(b.a) * sp; let wx = 0, wy = 0; if (inStorm(b.x, b.y)) [wx, wy] = wind(b);
     if (whirl) { const dx = whirl.x - b.x, dy = whirl.y - b.y, d = Math.hypot(dx, dy); if (d < whirl.r) { const p = 1 - d / whirl.r, pull = 40 + 110 * p, a = Math.atan2(dy, dx); wx += Math.cos(a) * pull + Math.cos(a + Math.PI / 2) * 120 * p; wy += Math.sin(a) * pull + Math.sin(a + Math.PI / 2) * 120 * p; if (d < 70 && b.inv <= 0) { b.hp = Math.max(mhp(b) * .1, b.hp - mhp(b) * .05 * dt); b.lh = T; } } }
     b.svx = b.vx + wx; b.svy = b.vy + wy; b.x = cl(b.x + (b.vx + wx) * dt, 20, WS - 20); b.y = cl(b.y + (b.vy + wy) * dt, 20, WS - 20); { const p = hullPush(b.x, b.y, b.a, R(b), CL[b.c].L, rocksNear(b.x, b.y)); b.x = p[0]; b.y = p[1]; }
     // hors combat depuis 5 s : +3 % de vie par seconde
-    b.hp = Math.min(mhp(b), b.hp + (b.s.reg * mhp(b) / 100 + (c.reg || 0) + (T - (b.lh || 0) > 5 ? mhp(b) * .03 : 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt; if (b.dive > 0) b.dive -= dt;
+    b.hp = Math.min(mhp(b), b.hp + (b.s.reg + (c.reg || 0) + (T - (b.lh || 0) > 5 ? mhp(b) * .03 : 0)) * dt); b.cd -= dt; b.fl -= dt; b.skcd -= dt; b.boost -= dt; b.rc -= dt; b.inv -= dt; b.hold -= dt; if (b.dive > 0) b.dive -= dt;
     // en feu : le navire perd des points de vie pendant quelques secondes
     if (b.burnT > T) hurt(b, b.burnD * dt, b.burnBy);
     const sub = b.dive > 0; // en plongée : impossible de tirer
@@ -428,8 +429,8 @@ function tick(dt) {
     a.x -= nx * ov * mb / (ma + mb); a.y -= ny * ov * mb / (ma + mb); b.x += nx * ov * ma / (ma + mb); b.y += ny * ov * ma / (ma + mb);
     const cs = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
     if (cs > 35 && a.team !== b.team && a.rc <= 0 && b.rc <= 0) {
-      const ra = (CL[a.c].ram || 1) * a.s.ram, rb2 = (CL[b.c].ram || 1) * b.s.ram;
-      const da = Math.min(30 * rb2, .07 * cs * Math.sqrt(mb / ma) * rb2) * a.s.mres * (b.p ? 1 : BOT_DMG), db = Math.min(30 * ra, .07 * cs * Math.sqrt(ma / mb) * ra) * b.s.mres * (a.p ? 1 : BOT_DMG);
+      const ra = CL[a.c].ram || 1, rb2 = CL[b.c].ram || 1, ex = x => (x.s.ramA || 0) / DMG; // éperon : points fixes en plus ; coque cloutée : 8 points de moins par coup
+      const da = Math.max(0, Math.min(30 * rb2, .07 * cs * Math.sqrt(mb / ma) * rb2) - (a.s.mrA ? 8 / DMG * a.s.mrA : 0) + ex(b)) * (b.p ? 1 : BOT_DMG), db = Math.max(0, Math.min(30 * ra, .07 * cs * Math.sqrt(ma / mb) * ra) - (b.s.mrA ? 8 / DMG * b.s.mrA : 0) + ex(a)) * (a.p ? 1 : BOT_DMG);
       hurt(a, da, b); hurt(b, db, a); a.rc = b.rc = .6; burst((a.x + b.x) / 2, (a.y + b.y) / 2, '#c98a4b', 8, 160);
       if (db > 8) say(a, b.x, b.y - R(b), 'ram', null, '#ff9f43', 1); if (da > 8) say(b, a.x, a.y - R(a), 'ram', null, '#ff9f43', 1);
     }
@@ -544,7 +545,7 @@ function snapshotFor(id, vw, vh, px, py, cache) {
   const lr = []; for (const k of LS.keys()) if (!vis.has(k)) { lr.push(k); LS.delete(k); }
   return {
     t: 'st', tm: Math.round(T * 1000), cx: r0(viewer.x), cy: r0(viewer.y), ld: leaderId,
-    me: me ? { i: me.id, x: r0(me.x), y: r0(me.y), l: me.lvl, xp: r0(me.xp), nd: need(me.lvl), sc: me.sc, c: me.c, h: r0(me.hp), H: r0(mhp(me)), sk: r2(Math.max(0, me.skcd)), skm: r2(SK[CL[me.c].sk].cd * me.s.skr), fz: me.fz, tm: me.team, rng: r0(CL[me.c].w.rng * me.s.rng), of: me.offer, st: [me.s.dmg, me.s.rate, me.s.rng, me.s.multi, me.s.spd, me.s.reg, me.s.ram, me.s.brd, me.s.mres, me.s.hp].map(r2) } : null,
+    me: me ? { i: me.id, x: r0(me.x), y: r0(me.y), l: me.lvl, xp: r0(me.xp), nd: need(me.lvl), sc: me.sc, c: me.c, h: r0(me.hp), H: r0(mhp(me)), sk: r2(Math.max(0, me.skcd)), skm: r2(Math.max(2, SK[CL[me.c].sk].cd - (me.s.skA || 0))), fz: me.fz, tm: me.team, rng: r0(CL[me.c].w.rng * me.s.rng), of: me.offer, st: [me.s.ddps, me.s.rdps, me.s.rngA, me.s.multi, me.s.spdA, me.s.reg, me.s.ramA, me.s.brd, me.s.mrA, me.s.hp].map(r2) } : null,
     b: boats.filter(b => inV(b) && (b === me || seen(b, viewer))).map(b => ({ i: b.id, x: r0(b.x), y: r0(b.y), vx: r0(b.svx || 0), vy: r0(b.svy || 0), a: r2(b.a), m: r2(b.aim), c: b.c, l: b.lvl, h: r0(b.hp), H: r0(mhp(b)), col: b.col, sl: b.sail, fg: b.flag, tc: b.trim, pt: b.pat, wk: b.wake !== 'none' ? b.wake : undefined, n: b.name, np: b.npc ? 1 : 0, ia: !b.p && !b.npc ? 1 : 0, tm: b.team, iv: b.inv > 0 ? 1 : 0, fl: b.fl > 0 ? 1 : 0, bo: b.boost > 0 ? 1 : 0, gh: b.gh || undefined, bs: b.boss || undefined, mc: b.mc || undefined, bu: b.burnT > T ? 1 : undefined, dv: b.dive > 0 ? 1 : undefined })),
     l: outL, lr,
     s: shots.filter(inV).map(s => [r0(s.x), r0(s.y), r0(s.vx), r0(s.vy), s.sz, s.col, s.spl ? r0(s.spl) : 0, r2(s.l), r2(s.L), s.k || 'ball']),
