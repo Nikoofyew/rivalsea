@@ -206,14 +206,14 @@ const week0 = () => { const d = new Date(new Date().toLocaleString('en-US', { ti
 let tdV = '', tdT = 0;
 const today = () => { const n = Date.now(); if (!tdV || n - tdT > 30000) { tdV = new Date().toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }); tdT = n; } return tdV; };
 // meilleurs marins du jour / de la semaine : classés par navires coulés (joueurs + IA), les deux comptés à part
-const entry = (b, live) => ({ n: b.name, l: b.lvl, c: b.c, s: b.sc, kp: b.kp || 0, ka: b.ka || 0, live: live ? 1 : undefined });
+const entry = (b, live) => ({ n: b.name, l: b.lvl, c: b.c, s: b.sc, kp: b.kp || 0, ka: b.ka || 0, kk: b.kk || 0, ks: b.ks || 0, live: live ? 1 : undefined });
 const byKills = (a, c) => (c.kp + c.ka) - (a.kp + a.ka) || c.kp - a.kp || c.l - a.l;
 function recordRun(b) {
-  if (!b || !b.p || !b.sc) return; const k = today(); if (k !== dayKey) { dayKey = k; dayTop = []; }
+  if (!b || !b.p || !((b.kp || 0) + (b.ka || 0) + (b.kk || 0) + (b.ks || 0))) return; const k = today(); if (k !== dayKey) { dayKey = k; dayTop = []; }
   dayTop.push(entry(b)); dayTop.sort(byKills); dayTop = dayTop.slice(0, 5);
   const w = week(); if (w !== weekKey) { weekKey = w; weekTop = []; } weekTop.push(entry(b)); weekTop.sort(byKills); weekTop = weekTop.slice(0, 5);
 }
-const liveTop = () => boats.filter(b => b.p && !b.dead && b.sc).map(b => entry(b, 1));
+const liveTop = () => boats.filter(b => b.p && !b.dead && (b.kp || b.ka || b.kk || b.ks)).map(b => entry(b, 1));
 function topWeek() { if (week() !== weekKey) { weekKey = week(); weekTop = []; } return weekTop.concat(liveTop()).sort(byKills).slice(0, 5); }
 function top() { if (today() !== dayKey) { dayKey = today(); dayTop = []; } return dayTop.concat(liveTop()).sort(byKills).slice(0, 5); }
 function sink(v) {
@@ -224,7 +224,7 @@ function sink(v) {
     if (v.gh) kx += Math.round(need(k.lvl) * .6 * XPR); if (v.mc) kx += Math.round(need(k.lvl) * .4 * XPR); if (v.hunt) kx += Math.round(need(k.lvl) * .5 * XPR); if (v.boss) { kx += Math.round(need(k.lvl) * 2 * XPR); banner('admiralDead', { n: k.name }); }
     if (v.id === leaderId) { kx += Math.round(need(k.lvl) * XPR); banner('leaderSunk', { n: k.name, v: v.name }); if (k.p) fx.push({ k: 'ev', id: 'leader', to: k.id }); }
     if (k.p && v.lvl >= k.lvl + 5) fx.push({ k: 'ev', id: 'giant', to: k.id });
-    k.sc++; if (v.p) k.kp = (k.kp || 0) + 1; else k.ka = (k.ka || 0) + 1; gain(k, kx); say(k, v.x, v.y, 'sunk', { x: kx }, '#ffcf3f', 1.4);
+    k.sc++; if (v.p) k.kp = (k.kp || 0) + 1; else if (!v.npc) k.ka = (k.ka || 0) + 1; // classement : seulement les joueurs et les IA (pas les escortes, chasseurs, marchands…) gain(k, kx); say(k, v.x, v.y, 'sunk', { x: kx }, '#ffcf3f', 1.4);
     heal(k, mhp(k) * (k.id === leaderId ? KILL_HEAL / 2 : KILL_HEAL) * (1 - Math.min(.6, Math.max(0, k.lvl - 10) * .03))); // moins de soin à haut niveau // chaque navire coulé rend 30 % de vie (15 % pour le meneur)
   }
   // le navire coulé laisse des épaves à piller
@@ -238,6 +238,7 @@ function crack(l) {
   burst(l.x, l.y, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : l.k === 'kraken' ? '#7a4fb3' : '#b5713a', l.k === 'tonneau' || l.k === 'epave' ? 10 : l.k === 'kraken' ? 60 : 18, l.k === 'kraken' ? 400 : 200);
   if (k && k.s && !k.dead && (l.xpo || d.xp)) { const x = Math.round(((l.xpo || d.xp) + (k.s.lootA || 0)) * XPR); gain(k, x); say(k, l.x, l.y, 'xp', { x }, l.k === 'coffre' || l.k === 'tresor' ? '#ffcf3f' : '#fff8e7', 1.2); }
   if (d.heal && k && k.s && !k.dead) heal(k, mhp(k) * d.heal);
+  if (k && k.s && l.k === 'kraken') k.kk = (k.kk || 0) + 1; if (k && k.s && l.k === 'serpent') k.ks = (k.ks || 0) + 1; // monstres vaincus, affichés au classement
   if (l.k === 'serpent') { banner('serpentDead', { n: k && k.s ? k.name : null }); if (k && k.p) fx.push({ k: 'ev', id: 'kraken', to: k.id }); }
   if (l.k === 'kraken') { banner('krakenDead', { n: k && k.s ? k.name : null }); if (k && k.p) fx.push({ k: 'ev', id: 'kraken', to: k.id }); }
   if (k && k.p && l.k === 'planche') fx.push({ k: 'ev', id: 'plank', to: k.id });
