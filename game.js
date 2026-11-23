@@ -36,7 +36,7 @@ function buildRockGrid() { rgrid = new Map(); for (const k of rocks) { const r =
 const EMPTY = [];
 // grille du butin, refaite à chaque pas : on ne teste que le butin des cases voisines
 const LC = 300; let lgrid = new Map(), TN = 0;
-function buildLootGrid() { lgrid = new Map(); for (const l of loot) { if (l.dead) continue; const key = Math.floor(l.x / LC) * 1000 + Math.floor(l.y / LC); let a = lgrid.get(key); if (!a) lgrid.set(key, a = []); a.push(l); } }
+function buildLootGrid() { lgrid = new Map(); for (const l of loot) { if (l.dead || l.dv > 0) continue; const key = Math.floor(l.x / LC) * 1000 + Math.floor(l.y / LC); let a = lgrid.get(key); if (!a) lgrid.set(key, a = []); a.push(l); } }
 function lootNear(x, y, r) { const out = [], c0 = Math.floor((x - r) / LC), c1 = Math.floor((x + r) / LC), d0 = Math.floor((y - r) / LC), d1 = Math.floor((y + r) / LC); for (let cx = c0; cx <= c1; cx++) for (let cy = d0; cy <= d1; cy++) { const a = lgrid.get(cx * 1000 + cy); if (a) for (const l of a) out.push(l); } return out; }
 const rocksNear = (x, y) => rgrid.get(Math.floor(x / RC) * 1000 + Math.floor(y / RC)) || EMPTY;
 const inRock = (x, y, m) => m > 250 ? rocks.some(k => Math.hypot(x - k.x, y - k.y) < k.r + m) : rocksNear(x, y).some(k => Math.hypot(x - k.x, y - k.y) < k.r + m);
@@ -286,7 +286,7 @@ function startEv(k) {
     }
     if (k === 'ghosts') ghostT = 120; banner(k === 'admiral' ? 'admiral' : 'ghosts');
   }
-  else if (k === 'serpent') { const p = freeSpot(450, 120), l = toughL(mkL('serpent', p.x, p.y)); l.life = 180; l.bite = 2; loot.push(l); banner('serpent'); }
+  else if (k === 'serpent') { const p = freeSpot(450, 120), l = toughL(mkL('serpent', p.x, p.y)); l.life = 180; l.bite = 2; l.dvT = rnd(5, 8); l.dv = 0; loot.push(l); banner('serpent'); }
   else if (k === 'tresor') { let p = freeSpot(300, 60); if (Math.random() < .5) { const f = pick(fogs.filter(f => f.life === undefined)); if (f && !inRock(f.x, f.y, 50)) p = { x: f.x, y: f.y }; } loot.push(mkL('tresor', p.x, p.y)); banner('treasure'); }
 }
 // chasseurs de primes : dès le niveau 20, des escouades puissantes traquent le joueur sans relâche
@@ -442,9 +442,14 @@ function tick(dt) {
     if (l.k === 'serpent') {
       let n = null, nd = 900; for (const b of boats) { if (b.inv > 0 || b.npc) continue; const dd = Math.hypot(b.x - l.x, b.y - l.y); if (dd < nd) { nd = dd; n = b; } }
       const tx = n ? n.x : (l.wx || WS / 2), ty = n ? n.y : (l.wy || WS / 2); if (!n && (!l.wx || Math.hypot(tx - l.x, ty - l.y) < 80)) { const s = freeSpot(200, 60); l.wx = s.x; l.wy = s.y; }
-      const a = Math.atan2(ty - l.y, tx - l.x), sp = n && nd < 250 ? 105 : 75; l.a += angD(a, l.a) * Math.min(1, dt * 1.6); l.x = cl(l.x + Math.cos(l.a) * sp * dt, 40, WS - 40); l.y = cl(l.y + Math.sin(l.a) * sp * dt, 40, WS - 40); l.vx = Math.cos(l.a) * sp; l.vy = Math.sin(l.a) * sp;
-      // morsure : grosse attaque devant sa tête
-      l.bite -= dt; if (l.bite <= 0) { l.bite = 1.4; const hx = l.x + Math.cos(l.a) * d.r, hy = l.y + Math.sin(l.a) * d.r; let bit = false; for (const b of boats) if (Math.hypot(b.x - hx, b.y - hy) < 70 + R(b) * .6) { hurt(b, 100 * (l.pw || 1), l); bit = true; } if (bit) ring(hx, hy, 20, 90, .4, '#5be3a1'); }
+      // plongée : il disparaît sous l'eau (intouchable) et réapparaît quelques secondes plus loin, souvent près de sa proie
+      if (l.dv > 0) { l.dv -= dt; const a2 = Math.atan2(l.dy - l.y, l.dx - l.x); l.a += angD(a2, l.a) * Math.min(1, dt * 3); l.x = cl(l.x + Math.cos(l.a) * 230 * dt, 40, WS - 40); l.y = cl(l.y + Math.sin(l.a) * 230 * dt, 40, WS - 40); l.vx = Math.cos(l.a) * 230; l.vy = Math.sin(l.a) * 230;
+        if (l.dv <= 0) { l.dv = 0; l.dvT = rnd(6, 10); l.bite = .25; ring(l.x, l.y, 30, 160, .6, '#e8fbff'); } continue; }
+      l.dvT -= dt; if (l.dvT <= 0) { const da = n ? Math.atan2(n.y - l.y, n.x - l.x) + rnd(-.6, .6) : l.a + rnd(-1, 1), dd = n ? Math.max(120, Math.min(nd + 80, 420)) : rnd(300, 450); l.dx = cl(l.x + Math.cos(da) * dd, 60, WS - 60); l.dy = cl(l.y + Math.sin(da) * dd, 60, WS - 60); l.dv = cl(dd / 230, 1.2, 2.4); ring(l.x, l.y, 30, 140, .5, '#e8fbff'); continue; }
+      // il fonce sur sa proie quand elle est proche (attaques rapides au corps à corps)
+      const a = Math.atan2(ty - l.y, tx - l.x), sp = n && nd < 260 ? 175 : 85; l.a += angD(a, l.a) * Math.min(1, dt * 2.6); l.x = cl(l.x + Math.cos(l.a) * sp * dt, 40, WS - 40); l.y = cl(l.y + Math.sin(l.a) * sp * dt, 40, WS - 40); l.vx = Math.cos(l.a) * sp; l.vy = Math.sin(l.a) * sp;
+      // morsures rapides devant sa tête
+      l.bite -= dt; if (l.bite <= 0) { const hx = l.x + Math.cos(l.a) * d.r * 1.3, hy = l.y + Math.sin(l.a) * d.r * 1.3; let bit = false; for (const b of boats) if (Math.hypot(b.x - hx, b.y - hy) < 65 + R(b) * .6) { hurt(b, 65 * (l.pw || 1), l); bit = true; } l.bite = bit ? .7 : .2; if (bit) ring(hx, hy, 10, 45, .25, '#5be3a1'); }
       pushOut(l, d.r * .5); continue;
     }
     if (l.k === 'kraken') {
@@ -541,7 +546,7 @@ function snapshotFor(id, vw, vh, px, py, cache) {
     if (!inV(l) || !seenL(l, viewer)) continue; vis.add(l.id);
     const mv = LT[l.k].mv || l.cv || l.k === 'kraken', sig = r0(l.hp) + '|' + (l.fl > 0 ? 1 : 0) + '|' + (mv ? '' : Math.round(l.x / 12) + ',' + Math.round(l.y / 12));
     if (!mv && LS.get(l.id) === sig) continue; LS.set(l.id, sig);
-    outL.push({ i: l.id, k: l.k, x: r0(l.x), y: r0(l.y), vx: l.vx ? r0(l.vx) : undefined, vy: l.vy ? r0(l.vy) : undefined, a: r2(l.a), h: r0(l.hp), H: lmhp(l), cv: l.cv ? 1 : 0, tn: l.tint, lf: l.life !== undefined ? r2(l.life) : undefined, fl: l.fl > 0 ? 1 : 0 });
+    outL.push({ i: l.id, k: l.k, x: r0(l.x), y: r0(l.y), vx: l.vx ? r0(l.vx) : undefined, vy: l.vy ? r0(l.vy) : undefined, a: r2(l.a), h: r0(l.hp), H: lmhp(l), cv: l.cv ? 1 : 0, tn: l.tint, lf: l.life !== undefined ? r2(l.life) : undefined, fl: l.fl > 0 ? 1 : 0, dv: l.dv > 0 ? 1 : undefined });
   }
   const lr = []; for (const k of LS.keys()) if (!vis.has(k)) { lr.push(k); LS.delete(k); }
   return {
