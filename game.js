@@ -198,7 +198,8 @@ function boom(s) {
   if (!s.o.k) for (const o of loot) { if (o.dead || (o.cv && s.o.npc)) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < s.spl + LT[o.k].r) hurt(o, s.d * (d < s.spl * .45 ? 1 : .6), s.o); }
 }
 // ——— Meilleurs vrais joueurs du jour (remis à zéro à minuit, heure de Paris) ———
-let dayTop = [], dayKey = '', weekTop = [], weekKey = '';
+let dayTop = [], dayKey = '', weekTop = [], weekKey = '', monTop = [], monKey = '';
+const month = () => today().slice(3);
 let wkV = '', wkT = 0;
 const week = () => { const n = Date.now(); if (!wkV || n - wkT > 30000) { wkV = week0(); wkT = n; } return wkV; };
 const week0 = () => { const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' })); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.toDateString(); };
@@ -212,9 +213,11 @@ function recordRun(b) {
   if (!b || !b.p || !((b.kp || 0) + (b.ka || 0) + (b.kk || 0) + (b.ks || 0))) return; const k = today(); if (k !== dayKey) { dayKey = k; dayTop = []; }
   dayTop.push(entry(b)); dayTop.sort(byKills); dayTop = dayTop.slice(0, 5);
   const w = week(); if (w !== weekKey) { weekKey = w; weekTop = []; } weekTop.push(entry(b)); weekTop.sort(byKills); weekTop = weekTop.slice(0, 5);
+  const mo = month(); if (mo !== monKey) { monKey = mo; monTop = []; } monTop.push(entry(b)); monTop.sort(byKills); monTop = monTop.slice(0, 5);
 }
 const liveTop = () => boats.filter(b => b.p && !b.dead && (b.kp || b.ka || b.kk || b.ks)).map(b => entry(b, 1));
 function topWeek() { if (week() !== weekKey) { weekKey = week(); weekTop = []; } return weekTop.concat(liveTop()).sort(byKills).slice(0, 5); }
+function topMonth() { if (month() !== monKey) { monKey = month(); monTop = []; } return monTop.concat(liveTop()).sort(byKills).slice(0, 5); }
 function top() { if (today() !== dayKey) { dayKey = today(); dayTop = []; } return dayTop.concat(liveTop()).sort(byKills).slice(0, 5); }
 function sink(v) {
   if (v.gone) return; const k = v.hit; burst(v.x, v.y, v.col, 26, 260); burst(v.x, v.y, '#c98a4b', 14, 180);
@@ -574,4 +577,4 @@ genWorld();
 for (let i = 0; i < BOTS; i++) boats.push(mk({ lvl: botLevel(BOTS) }));
 for (const k in LT) for (let i = 0; i < LT[k].n * AREA; i++) loot.push(mkL(k));
 
-module.exports = { rude, cleanText, topWeek, drainEvents() { const e = evs; evs = []; return e; }, top, tick, addPlayer, removePlayer, input, skill, pickOffer, welcome, snapshotFor, drainDeaths, clearFx, alive, stats, MODE, _debug: { startEv, gain, need, mk, mhp, quiet(v) { QUIET = !!v; }, get boats() { return boats; }, get loot() { return loot; } } };
+module.exports = { rude, cleanText, topWeek, topMonth, drainEvents() { const e = evs; evs = []; return e; }, top, tick, addPlayer, removePlayer, input, skill, pickOffer, welcome, snapshotFor, drainDeaths, clearFx, alive, stats, MODE, _debug: { startEv, gain, need, mk, mhp, quiet(v) { QUIET = !!v; }, get boats() { return boats; }, get loot() { return loot; } } };

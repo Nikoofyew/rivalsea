@@ -22,7 +22,7 @@ function onMsg(m){
 if(m.t==='w'){curRoom=m.room||'';lootM.clear();world={rocks:m.rocks.map(([x,y,r,i,ph])=>({x,y,r,k:i?'ile':'recif',ph})),fogs:m.fogs.map(([x,y,r,z,ph])=>({x,y,r,z,ph}))};WSZ=m.ws;mode=m.mode;updStatus();if(rejoin&&state==='menu'){const r=rejoin;rejoin='';setTimeout(()=>{if(state==='menu')join(r==='main'?'':r)},300)}}
 else if(m.t==='joined'){portal.start();myId=m.id;curRoom=m.room||'';if(curRoom){invite='';history.replaceState(null,'',location.pathname+'?salle='+curRoom)}state='play';kbMode=false;keys.clear();aimHeld=false;ov.hidden=true;offerKey=null;fullMsg='';run={l:1,sc:0,t:0,lead:0,krak:0,c:'',t0:T}}
 else if(m.t==='pong'){const v=performance.now()-m.c;if(v>=0&&v<5000)pingMs=pingMs?pingMs*.6+v*.4:v}
-else if(m.t==='top'){dayTop=m.l||[];weekTop=m.w||[];const t=document.getElementById('top');if(t)t.innerHTML=topHTML()}
+else if(m.t==='top'){dayTop=m.l||[];weekTop=m.w||[];monTop=m.m||[];const t=document.getElementById('top');if(t)t.innerHTML=topHTML()}
 else if(m.t==='full'){fullMsg='full';updStatus()}
 else if(m.t==='noroom'){roomErr=tr('noRoom');invite='';if(state==='menu')menu(lastMenuMsg)}
 else if(m.t==='dead'){portal.stop();SND.play('sink');m.rec=!best||m.lvl>best.l||(m.lvl===best.l&&m.sc>best.s);if(m.rec){best={l:m.lvl,c:m.c,s:m.sc};try{localStorage.setItem('rs-best',JSON.stringify(best))}catch(e){}}state='dead';offerEl.hidden=true;offerKey=null;showDead(m)}

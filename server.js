@@ -94,7 +94,7 @@ server.on('upgrade', (req, sock) => {
   sock.setNoDelay(true);
   const c = { sock, buf: Buffer.alloc(0), frag: [], bid: 0, vw: 1200, vh: 900, px: 1700, py: 1700, msgs: 0, room: null };
   clients.add(c); STATS.visits++;
-  enter(c, MAIN); send(c, { t: 'top', l: dayTop(), w: dayTop(1) });
+  enter(c, MAIN); send(c, { t: 'top', l: dayTop(), w: dayTop(1), m: dayTop(2) });
   sock.on('data', d => { c.buf = Buffer.concat([c.buf, d]); if (c.buf.length > 1e6) return sock.destroy(); readFrames(c); });
   const bye = () => { if (!clients.delete(c)) return; if (c.bid && c.room) c.room.g.removePlayer(c.bid); };
   sock.on('close', bye); sock.on('error', bye); sock.on('end', bye);
@@ -145,7 +145,7 @@ function onMessage(c, txt) {
       else if (want === 'ffa' || want === 'team') { if (c.room.priv || c.room.mode !== want || humansIn(c.room) >= MAX_PLAYERS) r = publicRoom(want); }
       if (!r || humansIn(r) >= MAX_PLAYERS) return send(c, { t: 'full' });
       enter(c, r);
-      c.bid = r.g.addPlayer(m); send(c, { t: 'joined', id: c.bid, room: r.priv ? r.id : '', mode: r.mode }); send(c, { t: 'top', l: dayTop(), w: dayTop(1) }); break; }
+      c.bid = r.g.addPlayer(m); send(c, { t: 'joined', id: c.bid, room: r.priv ? r.id : '', mode: r.mode }); send(c, { t: 'top', l: dayTop(), w: dayTop(1), m: dayTop(2) }); break; }
     case 'leave': if (c.room !== MAIN) enter(c, MAIN); break;
     case 'avis': {
       const v = m.v === 1 ? 1 : m.v === -1 ? -1 : 0, txt = MAIN.g.cleanText(String(m.txt || '').replace(/[\u0000-\u001f<>]/g, ' ').trim().slice(0, 300));
@@ -175,7 +175,7 @@ setInterval(() => {
   for (const r of rooms.values()) {
     for (let k = 0; k < steps; k++) r.g.tick(TICK);
     for (const e of r.g.drainEvents()) note(e, r);
-    for (const d of r.g.drainDeaths()) for (const c of clients) if (c.room === r && c.bid === d.id) { send(c, { t: 'top', l: dayTop(), w: dayTop(1) }); send(c, Object.assign({ t: 'dead' }, d)); c.px = d.x; c.py = d.y; }
+    for (const d of r.g.drainDeaths()) for (const c of clients) if (c.room === r && c.bid === d.id) { send(c, { t: 'top', l: dayTop(), w: dayTop(1), m: dayTop(2) }); send(c, Object.assign({ t: 'dead' }, d)); c.px = d.x; c.py = d.y; }
     if (send1) { for (const c of clients) if (c.room === r) { const st = r.g.snapshotFor(c.bid, c.vw, c.vh, c.px, c.py, c.cache || (c.cache = {})); if (st.me) { c.px = st.me.x; c.py = st.me.y; } send(c, st); } r.g.clearFx(); }
     // une mer vide depuis 3 minutes est fermée (sauf la mer principale)
     if (r !== MAIN) { if (usersIn(r) === 0) { r.empty += TICK * steps; if (r.empty > 180) rooms.delete(r.id); } else r.empty = 0; }
@@ -185,8 +185,8 @@ setInterval(() => {
 server.listen(PORT, () => console.log('RivalSea est en ligne sur http://localhost:' + PORT + '  (mode ' + (game.MODE === 'team' ? 'équipages' : 'chacun pour soi') + ')'));
 
 // les meilleurs vrais joueurs du jour, envoyés à tous toutes les 15 secondes
-function dayTop(w) { const all = []; for (const r of rooms.values()) if (!r.priv) all.push(...(w ? r.g.topWeek() : r.g.top())); const seen = new Set(); return all.sort((a, b) => ((b.kp || 0) + (b.ka || 0)) - ((a.kp || 0) + (a.ka || 0)) || (b.kp || 0) - (a.kp || 0) || b.l - a.l).filter(x => { const k = x.n + '|' + x.l + '|' + x.c; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 5); }
-setInterval(() => { const m = { t: 'top', l: dayTop(), w: dayTop(1) }; for (const c of clients) send(c, m); }, 15000);
+function dayTop(w) { const all = []; for (const r of rooms.values()) if (!r.priv) all.push(...(w === 2 ? r.g.topMonth() : w ? r.g.topWeek() : r.g.top())); const seen = new Set(); return all.sort((a, b) => ((b.kp || 0) + (b.ka || 0)) - ((a.kp || 0) + (a.ka || 0)) || (b.kp || 0) - (a.kp || 0) || b.l - a.l).filter(x => { const k = x.n + '|' + x.l + '|' + x.c; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 5); }
+setInterval(() => { const m = { t: 'top', l: dayTop(), w: dayTop(1), m: dayTop(2) }; for (const c of clients) send(c, m); }, 15000);
 
 // ——— 5. Rester éveillé ———
 // Sur l'offre gratuite de Render, le serveur s'endort après 15 minutes sans visite et met ensuite ~50 s à se réveiller.
